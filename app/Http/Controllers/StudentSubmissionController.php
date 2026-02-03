@@ -20,20 +20,41 @@ class StudentSubmissionController extends Controller
     public function index()
     {
         $userId = auth()->id();
+        $user = auth()->user();
         $submissions = Submission::where('user_id', $userId)->get();
         
         $latestSubmission = $submissions->last();
         $submissionStatus = $latestSubmission ? $latestSubmission->status : 'PENDING';
         $progress = $submissions->count();
         
+        // Fetch actual assignment data with adviser and panels
+        $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels.panel'])
+            ->where('department', $user->department)
+            ->where('section', $user->cluster ?? '4101')
+            ->first();
+        
         $group = (object) [
-            'group_no' => auth()->user()->group_no ?? 'N/A', 
-            'department' => auth()->user()->department ?? 'N/A',
-            'adviser' => (object) ['name' => 'N/A'],
-            'panels' => collect()
+            'group_no' => $user->group_no ?? 'N/A', 
+            'department' => $user->department ?? 'N/A',
+            'adviser' => $assignment ? $assignment->adviser : (object)['name' => 'Not assigned'],
+            'panels' => $assignment ? $assignment->assignmentPanels->map(function($ap) {
+                return (object)[
+                    'name' => $ap->panel->name ?? 'N/A',
+                    'role' => $ap->role ?? 'N/A'
+                ];
+            }) : collect()
+        ];
+        
+        $progressSteps = [
+            1 => $submissions->count() >= 1,
+            2 => false,
+            3 => false,
+            4 => false,
+            5 => false,
+            6 => false
         ];
 
-        return view('std-dashboard', compact('submissions', 'submissionStatus', 'progress', 'group'));
+        return view('std-dashboard', compact('submissions', 'submissionStatus', 'progress', 'group', 'progressSteps'));
     }
 
 
@@ -50,16 +71,18 @@ class StudentSubmissionController extends Controller
         // Ensure data consistency - prioritize user model data over form data
         Submission::create([
             'user_id' => $user->id,
+            'title' => $request->documents,
             'documents' => $request->documents,
             'defense_type' => $request->defense_type,
             'department' => $user->department ?? 'N/A',
-            'cluster' => $user->section_cluster ?? 4101,
+            'cluster' => $user->cluster ?? 4101,
             'group_no' => $user->group_no ?? 0,
             'file_path' => $path,
             'status' => 'Pending',
+            'submitted_by' => $user->id,
         ]);
 
-        return redirect()->route('student.submissions.index')
+        return redirect()->route('submission')
             ->with('success', 'Proposal submitted successfully!');
     }
 
@@ -84,15 +107,58 @@ class StudentSubmissionController extends Controller
 
     public function viewSchedules()
     {
-        // Fetch defense schedules for section 4101, group 1, set A
-        $schedules = \App\Models\DefenseSchedule::with('assignment.adviser', 'assignment.assignmentPanels')
-            ->where('section', '4101')
-            ->where('group_id', '1')
-            ->where('set_letter', 'A')
-            ->orderBy('defense_date', 'asc')
-            ->get();
+        $user = auth()->user();
+        $groupNumber = $user->group_no ?? null;
+        $department = $user->department ?? null;
+        $cluster = $user->cluster ?? '4101';
         
-        return view('view-sched', compact('schedules'));
+        if (!$groupNumber || !$department) {
+            return view('view-sched', ['schedules' => collect(), 'assignment' => null]);
+        }
+        
+        // Calculate offset like in def-sched.blade.php
+        $clusterNum = intval($cluster ?? '4101');
+        $groupOffset = ($clusterNum - 4101) * 10;
+        
+        // Remove offset to get base group number (1-10)
+        $baseGroupNumber = $groupNumber - $groupOffset;
+        
+        // Map to group_id format used in def-sched
+        if ($baseGroupNumber >= 1 && $baseGroupNumber <= 5) {
+            $groupId = 'A' . $baseGroupNumber;
+        } elseif ($baseGroupNumber >= 6 && $baseGroupNumber <= 10) {
+            $groupId = 'B' . ($baseGroupNumber - 5);
+        } else {
+            // Fallback for invalid group numbers
+            $groupId = 'A1';
+        }
+        
+        // Fetch schedules - try exact match first, then fallback to any group in department
+        $schedules = \App\Models\DefenseSchedule::where('department', $department)
+            ->where('section', $cluster)
+            ->where('group_id', $groupId)
+            ->get();
+            
+        // If no schedules found, try without section filter
+        if ($schedules->isEmpty()) {
+            $schedules = \App\Models\DefenseSchedule::where('department', $department)
+                ->where('group_id', $groupId)
+                ->get();
+        }
+        
+        // Fetch assignment data - try with section first, fallback to department only
+        $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels.panel'])
+            ->where('department', $department)
+            ->where('section', $cluster)
+            ->first();
+            
+        if (!$assignment) {
+            $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels.panel'])
+                ->where('department', $department)
+                ->first();
+        }
+        
+        return view('view-sched', compact('schedules', 'assignment'));
     }
 
 public function resubmit(Request $request, $id)

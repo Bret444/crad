@@ -13,20 +13,22 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    @yield('styles')
-
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    @yield('styles')
 
 </head>
 
 <body>
     <div class="d-flex">
         <div id="sidebar" class="d-flex flex-column flex-shrink-0 sidebar">
+            <button id="sidebar-toggle" class="sidebar-chevron-toggle">
+                <i class="bi bi-chevron-left"></i>
+            </button>
             <div class="user-profile">
                 <img src="{{ asset('img/avatar.png') }}" alt="Logo" class="img-fluid rounded-circle mb-2"
-                    style="width: 60px; height: 60px;">
+                    style="width: 60px; height: 60px;" id="sidebarProfileImage">
                 <h5 class="mb-0">Student</h5>
-                <small>Juan Dela Cruz</small>
+                <small>{{ str_replace('s', '', Auth::user()->email ?? 'N/A') }}</small>
             </div>
 
             <ul class="nav nav-pills flex-column mb-auto">
@@ -68,7 +70,6 @@
         <div class="main-content-wrapper">
             <nav class="top-navbar d-flex justify-content-between align-items-center">
                 <div>
-                    <button id="sidebar-toggle" class="btn btn-light"><i class="bi bi-list"></i></button>
                 </div>
                 <div class="d-flex align-items-center">
                     <span id="current-time" class="me-3 d-none d-sm-inline"></span>
@@ -82,7 +83,6 @@
                     </div>
                     
 
-                    <a href="#" class="text-dark me-3"><i class="bi bi-search fs-5"></i></a>
 
                     <div class="dropdown">
                         <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="userDropdown"
@@ -96,10 +96,9 @@
                                 <hr class="dropdown-divider">
                             </li>
                             <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">Logout</button>
-                                </form>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </button>
                             </li>
                         </ul>
                     </div>
@@ -125,13 +124,6 @@
         <div class="sidebar-overlay"></div>
     </div>
     
-<!-- Profile Modal Trigger -->
-<li>
-    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
-        Profile
-    </a>
-</li>
-
 <!-- Profile Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -142,17 +134,62 @@
             </div>
             <div class="modal-body">
                 <div class="text-center mb-3">
-                    <img src="{{ asset('img/avatar.png') }}" alt="Profile Picture"
-                         class="rounded-circle" width="100" height="100">
+                    <div class="position-relative d-inline-block">
+                        <img src="{{ asset('img/avatar.png') }}" alt="Profile Picture" id="studentProfileImage"
+                             class="rounded-circle" width="100" height="100">
+                        <button id="studentProfileBtn"type="button" class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" 
+                                style="width: 30px; height: 30px; padding: 0;">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <input type="file" id="studentProfileInput" accept="image/*" style="display: none;" onchange="previewStudentImage(event)">
+                    </div>
                 </div>
-                <p><strong>Name:</strong> {{ Auth::user()->name ?? 'N/A' }}</p>
+                <p><strong>Group No:</strong> {{ Auth::user()->group_no ?? 'N/A' }}</p>
                 <p><strong>Email:</strong> {{ Auth::user()->email ?? 'N/A' }}</p>
                 <p><strong>Department:</strong> {{ Auth::user()->department ?? 'N/A' }}</p>
                 <p><strong>Section/Cluster:</strong> {{ Auth::user()->section_cluster ?? 'N/A' }}</p>
-                <p><strong>Group No:</strong> {{ Auth::user()->group_no ?? 'N/A' }}</p>
+                <hr>
+                <p class="fw-bold mb-2">Group Members:</p>
+                @php
+                    $groupId = str_replace('s', '', Auth::user()->email ?? '');
+                    $group = \App\Models\Group::where('group_id', $groupId)->first();
+                @endphp
+                @if($group)
+                    <ul class="list-group">
+                        @for($i = 1; $i <= 5; $i++)
+                            @if($group->{"member{$i}_name"})
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ $group->{"member{$i}_name"} }}
+                                    @if($i == $group->leader_member)
+                                        <span class="badge bg-primary">Leader</span>
+                                    @endif
+                                </li>
+                            @endif
+                        @endfor
+                    </ul>
+                @else
+                    <p class="text-muted">No group members found</p>
+                @endif
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveStudentProfile">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Save Success Modal -->
+<div class="modal fade" id="profileSaveSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">Success!</h5>
+                <p class="mb-0">Profile picture saved successfully!</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
@@ -170,39 +207,41 @@
             </div>
             <div class="modal-body p-0" style="max-height: 500px; overflow-y: auto;">
                 @forelse($notifications ?? collect() as $notification)
-                    <div class="notification-item p-3 border-bottom {{ $notification->read ? '' : 'bg-light' }}">
-                        <div class="d-flex align-items-start">
-                            <div class="notification-icon me-3">
-                                @if($notification->type == 'Approved')
-                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-check-circle text-white"></i>
-                                    </div>
-                                @elseif($notification->type == 'Rejected')
-                                    <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-x-circle text-white"></i>
-                                    </div>
-                                @else
-                                    <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-chat-left-text text-white"></i>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="notification-content flex-grow-1">
-                                <div class="notification-message fw-semibold mb-1">
-                                    {{ $notification->message }}
-                                </div>
-                                <div class="notification-meta d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        <i class="bi bi-clock me-1"></i>
-                                        {{ $notification->created_at->diffForHumans() }}
-                                    </small>
-                                    @if(!$notification->read)
-                                        <span class="badge bg-primary">New</span>
+                    <a href="{{ route('student.notification.details', $notification->id) }}" class="text-decoration-none text-dark">
+                        <div class="notification-item p-3 border-bottom {{ $notification->read ? '' : 'bg-light' }}" style="cursor: pointer; transition: background-color 0.2s;">
+                            <div class="d-flex align-items-start">
+                                <div class="notification-icon me-3">
+                                    @if($notification->type == 'Approved')
+                                        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-check-circle text-white"></i>
+                                        </div>
+                                    @elseif($notification->type == 'Rejected')
+                                        <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-x-circle text-white"></i>
+                                        </div>
+                                    @else
+                                        <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-chat-left-text text-white"></i>
+                                        </div>
                                     @endif
+                                </div>
+                                <div class="notification-content flex-grow-1">
+                                    <div class="notification-message fw-semibold mb-1">
+                                        {{ $notification->message }}
+                                    </div>
+                                    <div class="notification-meta d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ $notification->created_at->diffForHumans() }}
+                                        </small>
+                                        @if(!$notification->read)
+                                            <span class="badge bg-primary">New</span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 @empty
                     <div class="text-center py-5">
                         <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
@@ -220,6 +259,35 @@
     </div>
 </div>
 
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutConfirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">Confirm Logout</h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="fs-5 mb-0">Are you sure you want to logout from your account?</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmLogoutBtn">
+                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Logout Form (hidden) -->
+    <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
+        @csrf
+    </form>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -241,7 +309,13 @@
     <script>
         // Sidebar toggle
         document.getElementById('sidebar-toggle').addEventListener('click', function () {
-            document.body.classList.toggle('sidebar-toggled');
+            if (window.innerWidth > 991.98) {
+                // Desktop: toggle between full and icon-only
+                document.body.classList.toggle('sidebar-collapsed');
+            } else {
+                // Mobile: toggle sidebar visibility
+                document.body.classList.toggle('sidebar-toggled');
+            }
         });
 
         // Close sidebar when overlay is clicked
@@ -254,11 +328,13 @@
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
                 const now = new Date();
-                timeElement.textContent = now.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                
+                timeElement.textContent = `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
             }
         }
         setInterval(updateTime, 1000);
@@ -292,7 +368,57 @@
                     }
                 }
             });
+
+            // Logout confirmation handler
+            const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+            const logoutForm = document.getElementById('logoutForm');
+            
+            if (confirmLogoutBtn && logoutForm) {
+                confirmLogoutBtn.addEventListener('click', function() {
+                    logoutForm.submit();
+                });
+            }
         });
+    </script>
+    <script>
+        function previewStudentImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('studentProfileImage').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedImage = localStorage.getItem('studentProfileImage');
+            if (savedImage) {
+                document.getElementById('studentProfileImage').src = savedImage;
+                document.getElementById('sidebarProfileImage').src = savedImage;
+            }
+            
+            const saveBtn = document.getElementById('saveStudentProfile');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    const imageSrc = document.getElementById('studentProfileImage').src;
+                    localStorage.setItem('studentProfileImage', imageSrc);
+                    document.getElementById('sidebarProfileImage').src = imageSrc;
+                    
+                    const profileModal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+                    profileModal.hide();
+                    
+                    const successModal = new bootstrap.Modal(document.getElementById('profileSaveSuccessModal'));
+                    successModal.show();
+                });
+            }
+        });
+
+        document.getElementById('studentProfileBtn')
+  .addEventListener('click', () => {
+    document.getElementById('studentProfileInput').click();
+  });
     </script>
     @yield('scripts')
 

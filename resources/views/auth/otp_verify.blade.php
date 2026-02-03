@@ -127,7 +127,7 @@
                 </div>
 
                 <div class="text-center mb-4 text-secondary">
-                    Your OTP is valid for 3 days.
+                    Your OTP is valid for 10 minutes.
                 </div>
 
                 <form method="POST" action="{{ route('otp.verify.submit') }}">

@@ -24,19 +24,31 @@ class PanelController extends Controller
 
     public function update(Request $request, $id)
     {
-        $panel = Panel::findOrFail($id);
+        try {
+            $panel = Panel::findOrFail($id);
+            
+            $expertise = $request->expertise === 'Others' && $request->others_expertise ? $request->others_expertise : $request->expertise;
+            
+            $panel->department = $request->department;
+            $panel->name = $request->name;
+            $panel->expertise = $expertise;
+            
+            if ($request->availability) {
+                $decoded = json_decode($request->availability, true);
+                $panel->availability = is_array($decoded) ? $decoded : [];
+            } else {
+                $panel->availability = [];
+            }
+            
+            $panel->role = $request->role;
+            $panel->contact_number = $request->contact_number;
+            $panel->save();
         
-        $expertise = $request->expertise === 'Others' && $request->others_expertise ? $request->others_expertise : $request->expertise;
-        
-        $panel->department = $request->department;
-        $panel->name = $request->name;
-        $panel->expertise = $expertise;
-        $panel->availability = $request->availability ? json_decode($request->availability, true) : [];
-        $panel->role = $request->role;
-        $panel->contact_number = $request->contact_number;
-        $panel->save();
-    
-        return redirect()->route('panel-adviser')->with('success', 'Panel member updated successfully.');
+            return redirect()->route('panel-adviser')->with('success', 'Panel member updated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Panel update error: ' . $e->getMessage());
+            return back()->with('error', 'Error updating panel: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Panel $panel)
@@ -93,6 +105,17 @@ class PanelController extends Controller
                 'message' => 'Failed to permanently delete panel member: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getPanels(Request $request)
+    {
+        $query = Panel::whereNull('deleted_at');
+        
+        if ($request->has('department')) {
+            $query->where('department', $request->department);
+        }
+        
+        return response()->json($query->get());
     }
 
     public function getPanelsByCluster($clusterId)

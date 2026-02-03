@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use App\Models\Assignment;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
@@ -52,6 +54,7 @@ class StudentController extends Controller
 public function dashboard()
 {
     $userId = Auth::id();
+    $user = Auth::user();
 
     // Upcoming submissions for the student
     $upcomingSubmissions = Submission::where('user_id', $userId)
@@ -103,12 +106,33 @@ public function dashboard()
     
     $progress = collect($progressSteps)->filter()->count();
     
+    // Get group information with adviser and panel assignments
     $group = (object) [
-        'group_no' => auth()->user()->group_no ?? 'N/A', 
-        'department' => auth()->user()->department ?? 'N/A',
-        'adviser' => (object) ['name' => 'N/A'],
+        'group_no' => $user->group_no ?? 'N/A', 
+        'department' => $user->department ?? 'N/A',
+        'adviser' => null,
         'panels' => collect()
     ];
+    
+    // Find assignment for this student's group
+    if ($user->group_no && $user->section_cluster) {
+        $assignment = Assignment::with(['adviser', 'assignmentPanels.panel'])
+            ->where('department', $user->department)
+            ->where('section', $user->section_cluster)
+            ->whereJsonContains('group_number', (int)$user->group_no)
+            ->first();
+            
+        if ($assignment) {
+            $group->adviser = $assignment->adviser;
+            $group->panels = $assignment->assignmentPanels->map(function($assignmentPanel) {
+                return (object) [
+                    'name' => $assignmentPanel->name,
+                    'role' => $assignmentPanel->role,
+                    'expertise' => $assignmentPanel->expertise
+                ];
+            });
+        }
+    }
 
     return view('std-dashboard', compact('upcomingSubmissions', 'chapters', 'submissionStatus', 'progress', 'progressSteps', 'group'));
 }
@@ -165,6 +189,21 @@ public function notifications()
                 ->update(['read' => true]);
     
     return redirect()->back()->with('success', 'All notifications marked as read!');
+}
+
+public function notificationDetails($id)
+{
+    $notification = Notification::with('submission')
+                                ->where('id', $id)
+                                ->where('user_id', auth()->id())
+                                ->firstOrFail();
+    
+    // Mark as read
+    if (!$notification->read) {
+        $notification->update(['read' => true]);
+    }
+    
+    return view('notification-details', compact('notification'));
 }
 
 }

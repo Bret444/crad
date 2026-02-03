@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('styles')
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -32,6 +32,9 @@
         box-shadow: var(--card-shadow);
         min-height: 500px;
     }
+    #type-selection-view.hidden {
+        display: none !important;
+    }
     .defense-type-button {
         background-color: var(--dark-blue-button);
         color: white;
@@ -55,6 +58,11 @@
 
     #filter-bar {
         box-shadow: var(--card-shadow);
+        min-height: 400px;
+        display: block;
+    }
+    #filter-bar.hidden {
+        display: none !important;
     }
     .selected-type-display {
         font-size: 1.4rem;
@@ -87,12 +95,11 @@
         box-sizing: border-box;
     }
     
-    .table-custom tbody tr td:nth-child(1) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(2) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(3) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(4) { width: 35% !important; }
-    .table-custom tbody tr td:nth-child(5) { width: 15% !important; }
-    .table-custom tbody tr td:nth-child(6) { width: 18% !important; }
+    .table-custom tbody tr td:nth-child(1) { width: 10% !important; }
+    .table-custom tbody tr td:nth-child(2) { width: 10% !important; }
+    .table-custom tbody tr td:nth-child(3) { width: 40% !important; }
+    .table-custom tbody tr td:nth-child(4) { width: 20% !important; }
+    .table-custom tbody tr td:nth-child(5) { width: 20% !important; }
     .table-custom thead th { 
         background-color: var(--dark-blue-button);
         color: white; 
@@ -123,10 +130,18 @@
         font-style: normal;
     }
 
-    #schedule-table-body tr[data-set="B"],
-    #schedule-table-body tr[data-set="B"] .cluster-value,
-    #schedule-table-body tr[data-set="B"] .panel-details-table,
-    #schedule-table-body tr[data-set="B"] .status-column {
+    .group-number {
+        cursor: pointer;
+        color: var(--primary-blue);
+        font-weight: 500;
+    }
+    
+    .group-number:hover {
+        background-color: #e7f1ff;
+        font-weight: 600;
+    }
+    
+    #schedule-table-body tr:nth-child(n+7):nth-child(-n+11) {
         background-color: var(--group-stripe) !important;
     }
     
@@ -204,21 +219,17 @@
     .alert-modal.question .alert-icon { color: var(--primary-blue); }
 
     @media (min-width: 992px) {
-        #filter-bar {
-            display: flex !important;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1.5rem;
+        #filter-bar .d-grid {
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .filter-group {
-            flex-grow: 1;
+    }
+    @media (max-width: 991.98px) {
+        #filter-bar .d-grid {
+            gap: 1rem;
         }
         .selected-type-display {
-            flex-shrink: 0;
-        }
-        .btn-custom-merged {
-            flex-shrink: 0;
-            min-width: 120px;
+            text-align: center;
         }
     }
 </style>
@@ -237,55 +248,67 @@
         </div>
     </div>
     
-    <div id="filter-bar" class="bg-white p-4 rounded-3 mb-4 d-grid" style="display: none;">
-        <h1 class="selected-type-display" id="defense-type-display"></h1>
-        
-        <div class="filter-group">
-            <label for="dept-select" class="form-label small fw-bold">Department</label>
-            <select id="dept-select" class="form-select">
-                <option selected disabled value="">Select Department</option>
-                <option value="BSIT">BSIT</option>
-                <option value="CRIM">CRIM</option>
-                <option value="EDUC">EDUC</option>
-                <option value="BSBA">BSBA</option>
-                <option value="Psychology">Psychology</option>
-                <option value="BSHM">BSHM</option>
-                <option value="BSTM">BSTM</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="cluster-select" class="form-label small fw-bold">Cluster</label>
-            <select id="cluster-select" class="form-select">
-                <option selected disabled value="">Select Cluster</option>
-                <option value="4101">4101</option>
-                <option value="4102">4102</option>
-                <option value="4103">4103</option>
-                <option value="4104">4104</option>
-                <option value="4105">4105</option>
-                <option value="4106">4106</option>
-                <option value="4107">4107</option>
-                <option value="4108">4108</option>
-                <option value="4109">4109</option>
-                <option value="4110">4110</option>
-            </select>
-        </div>
-
-        <div class="filter-group" id="redefense-type-group" style="display: none;">
-            <label for="redefense-type-select" class="form-label small fw-bold">Defense Type</label>
-            <select id="redefense-type-select" class="form-select">
-                <option selected disabled value="">Select Defense Type</option>
-                <option value="PRE-ORAL">Pre-oral Defense</option>
-                <option value="FINAL DEFENSE">Final Defense</option>
-            </select>
+    <div id="filter-bar" class="bg-white p-4 rounded-3 mb-4 hidden">
+        <div class="d-flex align-items-center mb-4">
+            <button class="btn btn-outline-secondary me-3" id="backToFilterButton">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            <h1 class="selected-type-display mb-0" id="defense-type-display"></h1>
         </div>
         
-        <button class="btn btn-custom-merged align-self-end py-2" id="enterButton">
-            <i class="bi bi-arrow-right-circle"></i> View Evaluation
-        </button>
+        <div class="d-grid gap-3">
+            <div class="filter-group">
+                <label for="dept-select" class="form-label small fw-bold">Department</label>
+                <select id="dept-select" class="form-select">
+                    <option selected disabled value="">Select Department</option>
+                    <option value="BSIT">BSIT</option>
+                    <option value="CRIM">CRIM</option>
+                    <option value="EDUC">EDUC</option>
+                    <option value="BSBA">BSBA</option>
+                    <option value="Psychology">Psychology</option>
+                    <option value="BSHM">BSHM</option>
+                    <option value="BSTM">BSTM</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="cluster-select" class="form-label small fw-bold">Cluster</label>
+                <select id="cluster-select" class="form-select">
+                    <option selected disabled value="">Select Cluster</option>
+                    <option value="4101">4101</option>
+                    <option value="4102">4102</option>
+                    <option value="4103">4103</option>
+                    <option value="4104">4104</option>
+                    <option value="4105">4105</option>
+                    <option value="4106">4106</option>
+                    <option value="4107">4107</option>
+                    <option value="4108">4108</option>
+                    <option value="4109">4109</option>
+                    <option value="4110">4110</option>
+                </select>
+            </div>
+
+            <div class="filter-group" id="redefense-type-group" style="display: none;">
+                <label for="redefense-type-select" class="form-label small fw-bold">Defense Type</label>
+                <select id="redefense-type-select" class="form-select">
+                    <option selected disabled value="">Select Defense Type</option>
+                    <option value="PRE-ORAL">Pre-oral Defense</option>
+                    <option value="FINAL DEFENSE">Final Defense</option>
+                </select>
+            </div>
+
+            <button class="btn btn-custom-merged py-2" id="enterButton">
+                <i class="bi bi-arrow-right-circle"></i> View Evaluation
+            </button>
+        </div>
     </div>
 
     <div id="schedule-view" style="display: none;">
+        <div class="d-flex align-items-center mb-3">
+            <button class="btn btn-outline-secondary" id="backToFilterFromEval">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+        </div>
         <h2 class="text-center mb-4" id="dept-header"></h2>
 
         <div id="schedule-content" class="table-container">
@@ -293,12 +316,11 @@
                 <table class="table table-custom align-middle">
                     <thead>
                         <tr>
-                            <th style="width: 8%;">Cluster</th>
-                            <th style="width: 8%;">Set</th> 
-                            <th style="width: 8%;">Group</th>
-                            <th style="width: 35%;">Panels & Adviser</th>
-                            <th style="width: 15%;">Status</th>
-                            <th style="width: 18%;">Defense Evaluation</th>
+                            <th>Cluster</th>
+                            <th>Group</th>
+                            <th>Panels & Adviser</th>
+                            <th>Status</th>
+                            <th>Defense Evaluation</th>
                         </tr>
                     </thead>
                     <tbody id="schedule-table-body">
@@ -308,24 +330,22 @@
                             $memberNames = 'No Members';
                         @endphp
                         
-                        {{-- Set A: Groups 1-5 --}}
                         @for($groupNumber = 1; $groupNumber <= 5; $groupNumber++)
                             @php
                                 $groupId = 'A' . $groupNumber;
                             @endphp
-                            <tr data-group-id="{{ $groupId }}" data-set="A" @if($groupNumber == 5) class="set-divider" @endif>
+                            <tr data-group-id="{{ $groupId }}" @if($groupNumber == 5) class="set-divider" @endif>
                                 @if($groupNumber == 1)
                                     <td class="merged-cell cluster-value" rowspan="5">{{ request('cluster') ?? '' }}</td>
                                 @endif
-                                <td class="set-value">A</td> 
-                                <td>{{ $groupNumber }}</td> 
+                                <td class="group-number" data-group-id="{{ $groupId }}">{{ $groupNumber }}</td> 
                                 
                                 @if($groupNumber == 1)
                                     <td class="panel-details-table" rowspan="5"
                                         data-adviser="{{ $adviser }}" 
                                         data-chair="{{ $chairName }}" 
                                         data-members="{{ $memberNames }}" 
-                                        data-panel-set="A">
+                                        data-panel-group="A">
                                         <div>
                                             <strong>Adviser:</strong> {{ $adviser }} <br>
                                             <strong>Chairperson:</strong> {{ $chairName }} <br>
@@ -349,29 +369,26 @@
                             </tr>
                         @endfor
                         
-                        {{-- Divider Row --}}
                         <tr class="divider-row">
-                            <td colspan="6" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
+                            <td colspan="5" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
                         </tr>
                         
-                        {{-- Set B: Groups 1-5 --}}
                         @for($groupNumber = 1; $groupNumber <= 5; $groupNumber++)
                             @php
                                 $groupId = 'B' . $groupNumber;
                             @endphp
-                            <tr data-group-id="{{ $groupId }}" data-set="B" @if($groupNumber == 1) style="border-top: 3px solid #333;" @endif>
+                            <tr data-group-id="{{ $groupId }}" @if($groupNumber == 1) style="border-top: 3px solid #333;" @endif>
                                 @if($groupNumber == 1)
                                     <td class="merged-cell cluster-value" rowspan="5">{{ request('cluster') ?? '' }}</td>
                                 @endif
-                                <td class="set-value">B</td> 
-                                <td>{{ $groupNumber }}</td> 
+                                <td class="group-number" data-group-id="{{ $groupId }}">{{ $groupNumber }}</td> 
                                 
                                 @if($groupNumber == 1)
                                     <td class="panel-details-table" rowspan="5"
                                         data-adviser="{{ $adviser }}" 
                                         data-chair="{{ $chairName }}" 
                                         data-members="{{ $memberNames }}" 
-                                        data-panel-set="B">
+                                        data-panel-group="B">
                                         <div>
                                             <strong>Adviser:</strong> {{ $adviser }} <br>
                                             <strong>Chairperson:</strong> {{ $chairName }} <br>
@@ -463,6 +480,31 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Info Modal -->
+<div class="modal fade" id="groupInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Group Information</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Department:</strong> <span id="modalDepartment"></span></p>
+                <p><strong>Cluster:</strong> <span id="modalCluster"></span></p>
+                <p><strong>Group:</strong> <span id="modalGroup"></span></p>
+                <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+                <hr>
+                <p><strong>Adviser:</strong> <span id="modalAdviser"></span></p>
+                <p><strong>Chairperson:</strong> <span id="modalChairperson"></span></p>
+                <p><strong>Members:</strong> <span id="modalMembers"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -1066,9 +1108,8 @@
             const group = groupId.substring(1);
             
             const row = `
-                <tr data-group-id="${groupId}" data-set="${set}">
+                <tr data-group-id="${groupId}">
                     <td class="cluster-value">${cluster}</td>
-                    <td class="set-value">${set}</td>
                     <td>${group}</td>
                     <td class="panel-details-table">
                         <div>
@@ -1096,40 +1137,88 @@
     }
     
     function updateTableWithAssignments(assignments, dept, cluster) {
-        // Update cluster values in existing table
         document.querySelectorAll('.cluster-value').forEach(cell => {
             cell.textContent = cluster;
         });
         
-        // Use first assignment for consistent data across all groups
-        const firstAssignment = assignments[0] || null;
-        let adviser = 'No Adviser';
-        let chairName = 'No Chairperson';
-        let memberNames = 'No Members';
+        const groupOffset = (parseInt(cluster) - 4101) * 10;
         
-        if (firstAssignment) {
-            const panels = firstAssignment.panels || [];
-            const chairperson = panels.find(p => p.role === 'Chairperson');
-            const members = panels.filter(p => p.role === 'Member' || (p.role && p.role !== 'Chairperson'));
-            adviser = firstAssignment.adviser || 'No Adviser';
-            chairName = chairperson ? chairperson.name : 'No Chairperson';
-            memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
-        }
-        
-        // Update panel details in existing table
-        document.querySelectorAll('.panel-details-table').forEach(cell => {
-            cell.innerHTML = `
+        ['A', 'B'].forEach(panelGroup => {
+            const panelCell = document.querySelector(`[data-panel-group="${panelGroup}"]`);
+            if (!panelCell) return;
+            
+            const groupNumbers = panelGroup === 'A' ? 
+                [1, 2, 3, 4, 5].map(g => g + groupOffset) : 
+                [6, 7, 8, 9, 10].map(g => g + groupOffset);
+            
+            let assignment = null;
+            for (let i = 0; i < assignments.length; i++) {
+                const a = assignments[i];
+                const groupNumbers = Array.isArray(a.group_number) ? a.group_number : [];
+                for (let j = 0; j < groupNumbers.length; j++) {
+                    if (groupNumbers.includes(groupNumbers[j])) {
+                        assignment = a;
+                        break;
+                    }
+                }
+                if (assignment) break;
+            }
+            
+            if (!assignment) assignment = assignments[0];
+            
+            let adviser = 'No Adviser';
+            let chairName = 'No Chairperson';
+            let memberNames = 'No Members';
+            
+            if (assignment) {
+                const panels = assignment.panels || [];
+                const chairperson = panels.find(p => p.role === 'Chairperson');
+                const members = panels.filter(p => p.role === 'Member' || (p.role && p.role !== 'Chairperson'));
+                adviser = assignment.adviser || 'No Adviser';
+                chairName = chairperson ? chairperson.name : 'No Chairperson';
+                memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
+            }
+            
+            panelCell.innerHTML = `
                 <div>
                     <strong>Adviser:</strong> ${adviser} <br>
                     <strong>Chairperson:</strong> ${chairName} <br>
                     Members: ${memberNames}
                 </div>
             `;
-            cell.setAttribute('data-adviser', adviser);
-            cell.setAttribute('data-chair', chairName);
-            cell.setAttribute('data-members', memberNames);
+            panelCell.setAttribute('data-adviser', adviser);
+            panelCell.setAttribute('data-chair', chairName);
+            panelCell.setAttribute('data-members', memberNames);
         });
     }
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('group-number')) {
+            const groupId = e.target.getAttribute('data-group-id');
+            const row = e.target.closest('tr');
+            const panelGroup = groupId.charAt(0);
+            const groupNumber = e.target.textContent.trim();
+            const dept = document.getElementById('dept-select').value;
+            const cluster = document.querySelectorAll('.cluster-value')[0]?.textContent || '';
+            const statusCell = document.getElementById(`status-${groupId}`);
+            const status = statusCell ? statusCell.textContent.trim() : 'Pending';
+            
+            const panelCell = document.querySelector(`[data-panel-group="${panelGroup}"]`);
+            const adviser = panelCell?.getAttribute('data-adviser') || 'No Adviser';
+            const chair = panelCell?.getAttribute('data-chair') || 'No Chairperson';
+            const members = panelCell?.getAttribute('data-members') || 'No Members';
+            
+            document.getElementById('modalDepartment').textContent = dept;
+            document.getElementById('modalCluster').textContent = cluster;
+            document.getElementById('modalGroup').textContent = groupNumber;
+            document.getElementById('modalStatus').textContent = status;
+            document.getElementById('modalAdviser').textContent = adviser;
+            document.getElementById('modalChairperson').textContent = chair;
+            document.getElementById('modalMembers').textContent = members;
+            
+            new bootstrap.Modal(document.getElementById('groupInfoModal')).show();
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', function () {
         const typeSelectionView = document.getElementById('type-selection-view');
@@ -1171,10 +1260,11 @@
         document.querySelectorAll('.defense-type-button').forEach(button => {
             button.addEventListener('click', function() {
                 currentDefenseType = this.getAttribute('data-defense-type');
+                localStorage.setItem('selectedEvalType', currentDefenseType);
                 
-                typeSelectionView.style.display = 'none';
-                filterBar.style.display = 'grid';
-                scheduleView.style.display = 'block';
+                typeSelectionView.classList.add('hidden');
+                filterBar.classList.remove('hidden');
+                scheduleView.style.display = 'none';
 
                 document.getElementById('defense-type-display').textContent = `${currentDefenseType} EVALUATION`;
                 
@@ -1188,11 +1278,26 @@
                 deptSelect.value = '';
                 clusterSelect.value = '';
                 document.getElementById('redefense-type-select').value = '';
-                updateScheduleView();
             });
+        });
+        
+        document.getElementById('backToFilterButton').addEventListener('click', function() {
+            localStorage.removeItem('selectedEvalType');
+            typeSelectionView.classList.remove('hidden');
+            filterBar.classList.add('hidden');
+            scheduleView.style.display = 'none';
+        });
+        
+        document.getElementById('backToFilterFromEval').addEventListener('click', function() {
+            typeSelectionView.classList.add('hidden');
+            filterBar.classList.remove('hidden');
+            scheduleView.style.display = 'none';
         });
 
         enterButton.addEventListener('click', () => {
+            typeSelectionView.classList.add('hidden');
+            filterBar.classList.add('hidden');
+            scheduleView.style.display = 'block';
             updateScheduleView();
             setTimeout(loadScheduleStatus, 500);
         });
@@ -1250,9 +1355,30 @@
             });
         });
         
-        if (!currentDefenseType) {
-             scheduleView.style.display = 'none';
+        // Restore saved evaluation type
+        const savedEvalType = localStorage.getItem('selectedEvalType');
+        if (savedEvalType && !department) {
+            currentDefenseType = savedEvalType;
+            typeSelectionView.classList.add('hidden');
+            filterBar.classList.remove('hidden');
+            document.getElementById('defense-type-display').textContent = `${currentDefenseType} EVALUATION`;
+            
+            const redefenseTypeGroup = document.getElementById('redefense-type-group');
+            if (currentDefenseType === 'REDEFENSE') {
+                redefenseTypeGroup.style.display = 'block';
+            } else {
+                redefenseTypeGroup.style.display = 'none';
+            }
+        } else {
+            // Initialize page visibility
+            typeSelectionView.classList.remove('hidden');
+            filterBar.classList.add('hidden');
+            scheduleView.style.display = 'none';
         }
     });
 </script>
 @endsection
+
+
+
+

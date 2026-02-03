@@ -11,13 +11,14 @@
     <!-- Filters -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <form method="GET" action="{{ route('admin.submissions.index') }}" class="row g-3">
+            <form id="filterForm" class="row g-3">
+                @csrf
                 <div class="col-md-6">
                     <label class="form-label">Department</label>
-                    <select name="department" class="form-select">
+                    <select name="department" id="departmentFilter" class="form-select">
                         <option value="">All</option>
                         @foreach($departments as $dept)
-                            <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>
+                            <option value="{{ $dept }}">
                                 {{ $dept }}
                             </option>
                         @endforeach
@@ -25,17 +26,18 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Cluster</label>
-                    <select name="cluster" class="form-select">
+                    <select name="cluster" id="clusterFilter" class="form-select">
                         <option value="">All</option>
                         @foreach($clusters as $cl)
-                            <option value="{{ $cl }}" {{ request('cluster') == $cl ? 'selected' : '' }}>
+                            <option value="{{ $cl }}">
                                 Cluster {{ $cl }}
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <button type="button" id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                    <button type="button" id="clearFilters" class="btn btn-secondary">Clear</button>
                 </div>
             </form>
         </div>
@@ -203,6 +205,22 @@
     </div>
 </div>
 
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                <h5 class="mt-3" id="successTitle">Success!</h5>
+                <p class="mb-0" id="successMessage">Operation completed successfully!</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .border-left-primary {
     border-left: 4px solid #007bff !important;
@@ -231,7 +249,41 @@
 document.addEventListener('DOMContentLoaded', function() {
     const groupSelect = document.getElementById('groupSelect');
     const requirementsContainer = document.getElementById('requirementsContainer');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const clusterFilter = document.getElementById('clusterFilter');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const clearFiltersBtn = document.getElementById('clearFilters');
     let currentSubmissionId = null;
+    let allGroups = @json($groups);
+    
+    // Apply filters
+    applyFiltersBtn.addEventListener('click', function() {
+        const dept = departmentFilter.value;
+        const cluster = clusterFilter.value;
+        
+        // Filter groups based on selections
+        groupSelect.innerHTML = '<option value="">Select a Group</option>';
+        
+        // In a real scenario, you'd filter groups by department/cluster
+        // For now, just show all groups
+        allGroups.forEach(grp => {
+            const option = document.createElement('option');
+            option.value = grp;
+            option.textContent = 'Group ' + grp;
+            groupSelect.appendChild(option);
+        });
+        
+        groupSelect.value = '';
+        requirementsContainer.style.display = 'none';
+    });
+    
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+        departmentFilter.value = '';
+        clusterFilter.value = '';
+        groupSelect.value = '';
+        requirementsContainer.style.display = 'none';
+    });
     
     groupSelect.addEventListener('change', function() {
         const selectedGroup = this.value;
@@ -289,10 +341,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <small class="text-muted d-block mb-1"><strong>Department:</strong> ${department}</small>
                             <small class="text-muted d-block mb-3"><strong>Cluster:</strong> ${cluster}</small>
                             <div class="d-flex gap-2 mt-3">
-                                <button class="btn btn-sm btn-outline-info view-btn" title="View" data-id="${submission.id}" data-doc="${submission.documents}"><i class="fas fa-eye"></i></button>
-                                <button class="btn btn-sm btn-outline-success approve-btn" title="Approve" data-id="${submission.id}" data-doc="${submission.documents}"><i class="fas fa-check"></i></button>
-                                <button class="btn btn-sm btn-outline-danger reject-btn" title="Reject" data-id="${submission.id}" data-doc="${submission.documents}"><i class="fas fa-times"></i></button>
-                                <button class="btn btn-sm btn-outline-secondary feedback-btn" title="Feedback" data-id="${submission.id}" data-doc="${submission.documents}"><i class="fas fa-comment-dots"></i></button>
+                                <button class="btn btn-sm btn-outline-info view-btn" title="View" data-sid="${btoa(submission.id)}"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-outline-success approve-btn" title="Approve" data-sid="${btoa(submission.id)}"><i class="fas fa-check"></i></button>
+                                <button class="btn btn-sm btn-outline-danger reject-btn" title="Reject" data-sid="${btoa(submission.id)}"><i class="fas fa-times"></i></button>
+                                <button class="btn btn-sm btn-outline-secondary feedback-btn" title="Feedback" data-sid="${btoa(submission.id)}"><i class="fas fa-comment-dots"></i></button>
                             </div>
                             <span class="badge ${statusClass} mt-2" id="status-${submission.id}">${submission.status}</span>
                         </div>
@@ -338,40 +390,40 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target.tagName === 'I') {
             target = target.parentElement;
         }
-        if (!target.hasAttribute('data-id')) {
-            target = target.closest('button[data-id]');
+        if (!target.hasAttribute('data-sid')) {
+            target = target.closest('button[data-sid]');
         }
         if (!target) return;
         
-        const submissionId = target.getAttribute('data-id');
-        const documentName = target.getAttribute('data-doc');
+        const encodedId = target.getAttribute('data-sid');
+        if (!encodedId) return;
         
-        if (!submissionId || !documentName) return;
+        const submissionId = atob(encodedId);
         
         if (target.classList.contains('view-btn')) {
             currentSubmissionId = submissionId;
-            document.getElementById('viewModalTitle').textContent = 'View: ' + documentName;
-            document.getElementById('fileName').textContent = documentName.toLowerCase().replace(/\s+/g, '-') + '.pdf';
+            document.getElementById('viewModalTitle').textContent = 'View Document';
+            document.getElementById('fileName').textContent = 'document.pdf';
             document.getElementById('downloadBtn').href = `/admin/submissions/${submissionId}/download`;
             new bootstrap.Modal(document.getElementById('viewModal')).show();
         }
         
         if (target.classList.contains('approve-btn')) {
             currentSubmissionId = submissionId;
-            document.getElementById('approveDocName').textContent = documentName;
+            document.getElementById('approveDocName').textContent = 'this document';
             new bootstrap.Modal(document.getElementById('approveModal')).show();
         }
         
         if (target.classList.contains('reject-btn')) {
             currentSubmissionId = submissionId;
-            document.getElementById('rejectDocName').textContent = documentName;
+            document.getElementById('rejectDocName').textContent = 'this document';
             document.getElementById('rejectReason').value = '';
             new bootstrap.Modal(document.getElementById('rejectModal')).show();
         }
         
         if (target.classList.contains('feedback-btn')) {
             currentSubmissionId = submissionId;
-            document.getElementById('feedbackDocName').textContent = documentName;
+            document.getElementById('feedbackDocName').textContent = 'this document';
             document.getElementById('feedbackText').value = '';
             new bootstrap.Modal(document.getElementById('feedbackModal')).show();
         }
@@ -408,7 +460,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Response data:', data);
             if (data.success) {
-                alert('Document approved successfully!');
+                document.getElementById('successTitle').textContent = 'Approved!';
+                document.getElementById('successMessage').textContent = 'Document approved successfully!';
+                new bootstrap.Modal(document.getElementById('successModal')).show();
                 // Refresh the group data immediately
                 const selectedGroup = groupSelect.value;
                 if (selectedGroup) {
@@ -469,7 +523,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Reject response data:', data);
             if (data.success) {
-                alert('Document rejected successfully!');
+                document.getElementById('successTitle').textContent = 'Rejected!';
+                document.getElementById('successMessage').textContent = 'Document rejected successfully!';
+                new bootstrap.Modal(document.getElementById('successModal')).show();
                 // Refresh the group data immediately
                 const selectedGroup = groupSelect.value;
                 if (selectedGroup) {
@@ -530,7 +586,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Feedback response data:', data);
             if (data.success) {
-                alert('Feedback saved successfully!');
+                document.getElementById('successTitle').textContent = 'Feedback Saved!';
+                document.getElementById('successMessage').textContent = 'Feedback saved successfully!';
+                new bootstrap.Modal(document.getElementById('successModal')).show();
                 // Refresh the group data immediately
                 const selectedGroup = groupSelect.value;
                 if (selectedGroup) {

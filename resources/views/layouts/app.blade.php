@@ -23,6 +23,9 @@
 <body>
     <div class="d-flex">
         <div id="sidebar" class="d-flex flex-column flex-shrink-0 sidebar">
+            <button id="sidebar-toggle" class="sidebar-chevron-toggle" aria-label="Toggle sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
             <div class="user-profile">
                 <img src="{{ asset('img/sms.png') }}" alt="Logo" class="img-fluid rounded-circle mb-2"
                     style="width: 60px; height: 60px;">
@@ -55,11 +58,9 @@
                 </li>
 
                 <li>
-                    <a href="{{ url('/def-sched') }}" class="nav-link d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-calendar4-week fs-5"></i>
-                            <span>Defense Scheduling</span>
-                        </div>
+                    <a href="{{ url('/def-sched') }}" class="nav-link">
+                        <i class="bi bi-calendar4-week fs-5"></i>
+                        <span>Defense Scheduling</span>
                     </a>
                 </li>
                 
@@ -76,13 +77,31 @@
                     </a>
                 </li>
 
+                <li><hr class="dropdown-divider mx-3 my-3" style="border-top: 1px solid rgba(255, 255, 255, 0.3);"></li>
+                
+                <li>
+                    <a href="#userManagementSubmenu" class="nav-link d-flex align-items-center" data-bs-toggle="collapse" aria-expanded="false">
+                        <i class="bi bi-grid-fill"></i>
+                        <span class="flex-grow-1">Others</span>
+                        <i class="bi bi-chevron-right" id="userManagementChevron"></i>
+                    </a>
+                    <div class="collapse" id="userManagementSubmenu">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a href="{{ url('/manage-coordinator') }}" class="nav-link">
+                                    <i class="bi bi-people-fill"></i>
+                                    <span>Manage Coordinator</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
 
             </ul>
         </div>
         <div class="main-content-wrapper">
             <nav class="top-navbar d-flex justify-content-between align-items-center">
                 <div>
-                    <button id="sidebar-toggle" class="btn btn-light" aria-label="Toggle sidebar"><i class="bi bi-list"></i></button>
                 </div>
                 <div class="d-flex align-items-center">
                     <span id="current-time" class="me-3 d-none d-sm-inline"></span>
@@ -90,40 +109,41 @@
                         <a href="#" class="text-dark position-relative" id="notificationDropdown"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell fs-5"></i>
-                            <span
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ $notifications->count() ?? 0 }}
                             </span>
                         </a>
 
                         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationDropdown"
-                            style="width: 300px; max-height: 400px; overflow-y: auto;">
+                            style="width: 320px; max-height: 400px; overflow-y: auto;">
                             <li class="dropdown-header fw-bold">Notifications</li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
 
-                            <li class="dropdown-item">
-                                <i class="bi bi-check-circle text-success"></i> Proposal submitted successfully
-                                <br><small class="text-muted">2 mins ago</small>
-                            </li>
-                            <li class="dropdown-item">
-                                <i class="bi bi-exclamation-circle text-warning"></i> Panel assigned to your project
-                                <br><small class="text-muted">10 mins ago</small>
-                            </li>
-                            <li class="dropdown-item">
-                                <i class="bi bi-calendar-event text-primary"></i> Defense scheduled for Sept 10
-                                <br><small class="text-muted">1 hr ago</small>
-                            </li>
+                            @forelse($notifications ?? [] as $notification)
+                                <li>
+                                    <a href="{{ $notification['action'] ?? '#' }}" class="dropdown-item">
+                                        <i class="{{ $notification['icon'] ?? 'bi-info-circle' }} text-{{ $notification['type'] ?? 'secondary' }}"></i> 
+                                        {{ $notification['message'] }}
+                                        <br><small class="text-muted">{{ $notification['time'] ?? 'now' }}</small>
+                                    </a>
+                                </li>
+                            @empty
+                                <li class="dropdown-item text-center text-muted">
+                                    No notifications
+                                </li>
+                            @endforelse
 
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a href="#" class="dropdown-item text-center">View all</a></li>
+                            @if(($notifications ?? collect())->count() > 0)
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a href="{{ route('admin.dashboard') }}" class="dropdown-item text-center">View all</a></li>
+                            @endif
                         </ul>
                     </div>
 
-                    <a href="#" class="text-dark me-3" aria-label="Search"><i class="bi bi-search fs-5"></i></a>
 
                     <div class="dropdown">
                         <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="userDropdown"
@@ -132,13 +152,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><h6 class="dropdown-header">{{ Auth::user()->name ?? 'Admin' }}</h6></li>
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">Logout</button>
-                                </form>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </button>
                             </li>
                         </ul>
                     </div>
@@ -149,7 +168,31 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ url('admin-dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                        @if(Request::is('def-sched'))
+                            <li class="breadcrumb-item"><a href="{{ url('def-sched') }}">Defense Scheduling</a></li>
+                            @if(request('defense_type') == 'PRE-ORAL')
+                                <li class="breadcrumb-item active" aria-current="page">Pre-oral Defense</li>
+                            @elseif(request('defense_type') == 'FINAL DEFENSE')
+                                <li class="breadcrumb-item active" aria-current="page">Final Defense</li>
+                            @elseif(request('defense_type') == 'REDEFENSE')
+                                <li class="breadcrumb-item active" aria-current="page">Re-defense</li>
+                            @else
+                                <li class="breadcrumb-item active" aria-current="page">Defense Scheduling</li>
+                            @endif
+                        @elseif(Request::is('def-eval'))
+                            <li class="breadcrumb-item"><a href="{{ url('def-eval') }}">Defense Evaluation</a></li>
+                            @if(request('defense_type') == 'PRE-ORAL')
+                                <li class="breadcrumb-item active" aria-current="page">Pre-oral Defense</li>
+                            @elseif(request('defense_type') == 'FINAL DEFENSE')
+                                <li class="breadcrumb-item active" aria-current="page">Final Defense</li>
+                            @elseif(request('defense_type') == 'REDEFENSE')
+                                <li class="breadcrumb-item active" aria-current="page">Re-defense</li>
+                            @else
+                                <li class="breadcrumb-item active" aria-current="page">Defense Evaluation</li>
+                            @endif
+                        @else
+                            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                        @endif
                     </ol>
                 </nav>
 
@@ -192,13 +235,98 @@
         <div class="sidebar-overlay"></div>
     </div>
 
+    <!-- Profile Save Success Modal -->
+    <div class="modal fade" id="profileSaveSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Success!</h5>
+                    <p class="mb-0">Profile picture saved successfully!</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileModalLabel">Admin Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="position-relative d-inline-block">
+                            <img src="{{ asset('img/sms.png') }}" alt="Profile Picture" id="adminProfileImage"
+                                 class="rounded-circle" width="100" height="100">
+                            <button id="adminProfileBtn" type="button" class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" 
+                                    style="width: 30px; height: 30px; padding: 0;">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <input type="file" id="adminProfileInput" accept="image/*" style="display: none;" onchange="previewAdminImage(event)">
+                        </div>
+                    </div>
+                    <p><strong>Name:</strong> {{ Auth::user()->name ?? 'Admin' }}</p>
+                    <p><strong>Email:</strong> {{ Auth::user()->email ?? 'admin@crad.edu' }}</p>
+                    <p><strong>Role:</strong> Administrator</p>
+                    <p><strong>Department:</strong> Center for Research and Development</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAdminProfile">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutConfirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title">Confirm Logout</h5>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="fs-5 mb-0">Are you sure you want to logout from your account?</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmLogoutBtn">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Form (hidden) -->
+    <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
+        @csrf
+    </form>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
 
     <script>
         // Sidebar toggle
         document.getElementById('sidebar-toggle').addEventListener('click', function () {
-            document.body.classList.toggle('sidebar-toggled');
+            if (window.innerWidth > 991.98) {
+                // Desktop: toggle between full and icon-only
+                document.body.classList.toggle('sidebar-collapsed');
+            } else {
+                // Mobile: toggle sidebar visibility
+                document.body.classList.toggle('sidebar-toggled');
+            }
         });
 
         // Close sidebar when overlay is clicked
@@ -211,11 +339,13 @@
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
                 const now = new Date();
-                timeElement.textContent = now.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                
+                timeElement.textContent = `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
             }
         }
         setInterval(updateTime, 1000);
@@ -249,7 +379,68 @@
                     }
                 }
             });
+
+            // Chevron rotation for User Management
+            const userManagementSubmenu = document.getElementById('userManagementSubmenu');
+            const userManagementChevron = document.getElementById('userManagementChevron');
+            
+            if (userManagementSubmenu && userManagementChevron) {
+                userManagementSubmenu.addEventListener('show.bs.collapse', function() {
+                    userManagementChevron.classList.remove('bi-chevron-right');
+                    userManagementChevron.classList.add('bi-chevron-down');
+                });
+                
+                userManagementSubmenu.addEventListener('hide.bs.collapse', function() {
+                    userManagementChevron.classList.remove('bi-chevron-down');
+                    userManagementChevron.classList.add('bi-chevron-right');
+                });
+            }
+
+            // Logout confirmation handler
+            const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+            const logoutForm = document.getElementById('logoutForm');
+            
+            if (confirmLogoutBtn) {
+                confirmLogoutBtn.addEventListener('click', function() {
+                    logoutForm.submit();
+                });
+            }
         });
+    </script>
+    <script>
+        function previewAdminImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('adminProfileImage').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedImage = localStorage.getItem('adminProfileImage');
+            if (savedImage) {
+                document.getElementById('adminProfileImage').src = savedImage;
+            }
+            
+            document.getElementById('saveAdminProfile').addEventListener('click', function() {
+                const imageSrc = document.getElementById('adminProfileImage').src;
+                localStorage.setItem('adminProfileImage', imageSrc);
+                
+                const profileModal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+                profileModal.hide();
+                
+                const successModal = new bootstrap.Modal(document.getElementById('profileSaveSuccessModal'));
+                successModal.show();
+            });
+        });
+
+        document.getElementById('adminProfileBtn')
+        .addEventListener('click', () => {
+        document.getElementById('adminProfileInput').click();
+      });
     </script>
     @yield('scripts')
 

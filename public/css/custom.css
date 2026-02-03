@@ -25,6 +25,43 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     transition: margin-left 0.3s ease-in-out;
     color: #fff !important;
+    z-index: 1030;
+    border-radius: 0 30px 30px 0;
+}
+
+/* Hamburger button inside sidebar */
+.sidebar-chevron-toggle {
+    position: fixed;
+    left: 265px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #284b9a, #1b346b) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease-in-out;
+    z-index: 1031;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sidebar-chevron-toggle:hover {
+    background: linear-gradient(135deg, #3B71CA, #284b9a) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-chevron-toggle i {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+}
+
+body.sidebar-collapsed .sidebar-chevron-toggle i {
+    transform: rotate(180deg);
 }
 
 .sidebar .user-profile {
@@ -122,6 +159,35 @@
             width: 100%;
         }
 
+        /* --- Icon-only Sidebar State --- */
+        body.sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+        body.sidebar-collapsed .sidebar-chevron-toggle {
+            left: 55px;
+        }
+        body.sidebar-collapsed .main-content-wrapper {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        body.sidebar-collapsed .sidebar .user-profile {
+            padding: 1rem 0.5rem;
+        }
+        body.sidebar-collapsed .sidebar .user-profile h5,
+        body.sidebar-collapsed .sidebar .user-profile small {
+            display: none;
+        }
+        body.sidebar-collapsed .sidebar .nav-link span {
+            display: none;
+        }
+        body.sidebar-collapsed .sidebar .nav-link {
+            justify-content: center;
+            padding: 0.75rem 0.5rem;
+        }
+        body.sidebar-collapsed .sidebar .nav-link i {
+            margin-right: 0;
+        }
+
         .breadcrumb {
             background: rgba(255,255,255,0.9);
             border-radius: 10px;
@@ -170,17 +236,53 @@
 
         @media (max-width: 991.98px) {
             .sidebar {
-                margin-left: -280px;
+                margin-left: 0;
+                width: 70px;
+            }
+            .sidebar-chevron-toggle {
+                left: 55px;
+            }
+            .sidebar .user-profile h5,
+            .sidebar .user-profile small {
+                display: none;
+            }
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link {
+                justify-content: center;
+                padding: 0.75rem 0.5rem;
+            }
+            .sidebar .nav-link i {
+                margin-right: 0;
             }
             .main-content-wrapper {
-                margin-left: 0;
-                width: 100%;
+                margin-left: 70px;
+                width: calc(100% - 70px);
             }
             body.sidebar-toggled .sidebar {
-                margin-left: 0;
+                width: 280px;
             }
-            body.sidebar-toggled .sidebar-overlay {
+            body.sidebar-toggled .sidebar-chevron-toggle {
+                left: 265px;
+            }
+            body.sidebar-toggled .sidebar .user-profile h5,
+            body.sidebar-toggled .sidebar .user-profile small {
                 display: block;
+            }
+            body.sidebar-toggled .sidebar .nav-link span {
+                display: inline;
+            }
+            body.sidebar-toggled .sidebar .nav-link {
+                justify-content: flex-start;
+                padding: 0.75rem 1.5rem;
+            }
+            body.sidebar-toggled .sidebar .nav-link i {
+                margin-right: 0.75rem;
+            }
+            body.sidebar-toggled .main-content-wrapper {
+                margin-left: 280px;
+                width: calc(100% - 280px);
             }
         }
     

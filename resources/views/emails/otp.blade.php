@@ -61,14 +61,14 @@
         <tr>
             <td class="content-cell" style="padding: 30px; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                 <h1 class="main-heading" style="color: #5044e4; font-size: 24px; text-align: center; margin-top: 0; margin-bottom: 20px;">Your One-Time Password (OTP)</h1>
-                <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">Hello,</p>
+                <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">Hello, Admin</p>
                 <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">You have requested a one-time password to log in. Please use the following code to complete your sign-in:</p>
                 
                 <div class="otp-box" style="background-color: #e6f7ff; border: 2px solid #5044e4; color: #5044e4; font-size: 32px; font-weight: bold; text-align: center; padding: 15px; border-radius: 8px; margin: 20px 0; letter-spacing: 2px;">
                     {{ $otp }}
                 </div>
 
-                <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">This code is valid for 3 days.</p>
+                <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">This code is valid for 10 minutes.</p>
                 <p class="text" style="font-size: 16px; line-height: 1.5; color: #333333;">If you did not request this, please ignore this email.</p>
             </td>
         </tr>

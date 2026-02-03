@@ -8,13 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('submissions', function (Blueprint $table) {
-            $table->dropColumn('id');
-        });
-        
-        Schema::table('submissions', function (Blueprint $table) {
-            $table->id()->first();
-        });
+        // This migration is no longer needed - ID column is already properly configured
+        // Keeping as no-op to avoid breaking existing databases
     }
 
     public function down(): void

@@ -14,14 +14,16 @@ use App\Http\Controllers\AdviserController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\PanelAdviserController;
 use App\Http\Controllers\DefenseScheduleController;
+use App\Http\Controllers\CoordinatorController;
 
-// Login Page is now the Homepage
-Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
+// Redirect root to login page
+Route::get('/', fn() => redirect()->route('login'));
 
 // Login & Authentication Routes
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/check-lockout', [LoginController::class, 'checkLockout'])->name('check.lockout');
+Route::post('/check-lockout', [LoginController::class, 'checkLockout']);
 
 // One-Time Password (OTP) Routes
 Route::get('/otp-verify', [OtpAuthController::class, 'showVerifyForm'])->name('otp.verify.form');
@@ -29,7 +31,7 @@ Route::post('/otp-verify', [OtpAuthController::class, 'verifyOtp'])->name('otp.v
 
 // Dashboard
 Route::get('/admin-dashboard', fn() => view('admin-dashboard'))
-    ->middleware(['auth'])
+    ->middleware(['auth' , 'admin'])
     ->name('admin-dashboard');
 
     
@@ -51,7 +53,7 @@ Route::get('/analytics', fn() => view('analytics'));
 
 
 // Student routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'student'])->group(function () {
     Route::get('/std-dashboard', [StudentController::class, 'dashboard'])->name('std-dashboard');
     Route::get('/submission', [StudentSubmissionController::class, 'submission'])->name('submission');
     Route::post('/files', [StudentController::class, 'store'])->name('student.files.store');
@@ -79,69 +81,74 @@ Route::middleware(['auth' , 'admin'])->group(function () {
 // Track proposal page
 Route::get('/track-proposal', [AdminSubmissionController::class, 'trackProposal'])
     ->name('admin.track-proposal')
-    ->middleware('auth');
+    ->middleware('auth', 'admin');
 
 // Update submission status
 Route::post('/submissions/{id}/update-status', [AdminSubmissionController::class, 'updateStatus'])
     ->name('admin.submissions.updateStatus')
-    ->middleware('auth');
+    ->middleware('auth', 'admin');
 
-    Route::prefix('student')->middleware(['auth'])->group(function () {
-        Route::get('/submission', [StudentSubmissionController::class, 'index'])->name('student.submissions.index');
-    
+    Route::prefix('student')->middleware(['auth' , 'student'])->group(function () {
         // Route for viewing a single submission file
         Route::get('/submission/file/{submission}', [StudentSubmissionController::class, 'viewFile'])->name('submission.file');
-
     });
 
 // For admins
 Route::get('/admin/track-proposal/view/{submission}', [AdminSubmissionController::class, 'viewFile'])
-->middleware('auth')
+->middleware('auth' , 'admin')
 ->name('admin.track-proposal.view');
 
 
 
 
 // Committee Management
-Route::post('/committee/store', [CommitteeController::class, 'store'])->name('committee.store');
-Route::post('/committee/{id}/assign', [CommitteeController::class, 'assign'])->name('committee.assign');
-Route::put('/committee/{id}/update', [CommitteeController::class, 'update'])->name('committee.update');
-Route::delete('/committee/{id}/delete', [CommitteeController::class, 'destroy'])->name('committee.destroy');
+Route::post('/committee/store', [CommitteeController::class, 'store'])->middleware('auth', 'admin')->name('committee.store');
+Route::post('/committee/{id}/assign', [CommitteeController::class, 'assign'])->middleware('auth', 'admin')->name('committee.assign');
+Route::put('/committee/{id}/update', [CommitteeController::class, 'update'])->middleware('auth', 'admin')->name('committee.update');
+Route::delete('/committee/{id}/delete', [CommitteeController::class, 'destroy'])->middleware('auth', 'admin')->name('committee.destroy');
 
 //route-std
 Route::get('/view-panel-adviser', [StudentSubmissionController::class, 'viewPanelAdviser'])
     ->name('student.view-panel-adviser')
-    ->middleware('auth');
+    ->middleware('auth', 'student');
 
 Route::get('/view-sched', [StudentSubmissionController::class, 'viewSchedules'])
     ->name('student.view-sched')
-    ->middleware('auth');
+    ->middleware('auth', 'student');
 
+Route::get('/notification/{id}', [StudentController::class, 'notificationDetails'])
+    ->name('student.notification.details')
+    ->middleware('auth', 'student');
 // Panel-Adviser page (admin)
 Route::get('/panel-adviser', [PanelAdviserController::class, 'showPanelAdviserPage'])
+    ->middleware('auth', 'admin')
     ->name('panel-adviser');
+   
 //resubmit
 Route::put('/student/files/{id}/resubmit', [StudentSubmissionController::class, 'resubmit'])
+    ->middleware('auth', 'student')
     ->name('student.files.resubmit');
+     
 
     //Adviser & Panel
-Route::post('/advisers', [AdviserController::class, 'store'])->name('advisers.store');
-Route::put('/advisers/{adviser}', [AdviserController::class, 'update'])->name('advisers.update');
-Route::delete('/advisers/{adviser}', [AdviserController::class, 'destroy'])->name('advisers.destroy');
-Route::get('/advisers/archived', [AdviserController::class, 'archived'])->name('advisers.archived');
-Route::post('/advisers/{id}/restore', [AdviserController::class, 'restore'])->name('advisers.restore');
-Route::delete('/advisers/{id}/force-delete', [AdviserController::class, 'forceDelete'])->name('advisers.force-delete');
+Route::post('/advisers', [AdviserController::class, 'store'])->middleware('auth', 'admin')->name('advisers.store');
+Route::put('/advisers/{adviser}', [AdviserController::class, 'update'])->middleware('auth', 'admin')->name('advisers.update');
+Route::post('/advisers/{adviser}/manage-advisory', [AdviserController::class, 'manageAdvisory'])->middleware('auth', 'admin')->name('advisers.manageAdvisory');
+Route::delete('/advisers/{adviser}', [AdviserController::class, 'destroy'])->middleware('auth', 'admin')->name('advisers.destroy');
+Route::get('/advisers/archived', [AdviserController::class, 'archived'])->middleware('auth', 'admin')->name('advisers.archived');
+Route::post('/advisers/{id}/restore', [AdviserController::class, 'restore'])->middleware('auth', 'admin')->name('advisers.restore');
+Route::delete('/advisers/{id}/force-delete', [AdviserController::class, 'forceDelete'])->middleware('auth', 'admin')->name('advisers.force-delete');
 
-Route::post('/panels', [PanelController::class, 'store'])->name('panels.store');
-Route::put('/panels/{panel}', [PanelController::class, 'update'])->name('panels.update');
-Route::delete('/panels/{panel}', [PanelController::class, 'destroy'])->name('panels.destroy');
-Route::get('/panels/archived', [PanelController::class, 'archived'])->name('panels.archived');
-Route::post('/panels/{id}/restore', [PanelController::class, 'restore'])->name('panels.restore');
-Route::delete('/panels/{id}/force-delete', [PanelController::class, 'forceDelete'])->name('panels.force-delete');
+Route::post('/panels', [PanelController::class, 'store'])->middleware('auth', 'admin')->name('panels.store');
+Route::put('/panels/{panel}', [PanelController::class, 'update'])->middleware('auth', 'admin')->name('panels.update');
+Route::delete('/panels/{panel}', [PanelController::class, 'destroy'])->middleware('auth', 'admin')->name('panels.destroy');
+Route::get('/panels/archived', [PanelController::class, 'archived'])->middleware('auth', 'admin')->name('panels.archived');
+Route::post('/panels/{id}/restore', [PanelController::class, 'restore'])->middleware('auth', 'admin')->name('panels.restore');
+Route::delete('/panels/{id}/force-delete', [PanelController::class, 'forceDelete'])->middleware('auth', 'admin')->name('panels.force-delete');
 
-Route::post('/assignments/store', [AssignmentController::class, 'store'])->name('assignments.store');
+Route::post('/assignments/store', [AssignmentController::class, 'store'])->middleware('auth', 'admin')->name('assignments.store');
 
-Route::prefix('api')->group(function () {
+Route::prefix('api')->middleware('auth', 'admin')->group(function () {
     Route::get('/advisers/{department}', [AssignmentController::class, 'getAdvisers']);
     Route::get('/panel-members/{department}', [AssignmentController::class, 'getPanelMembers']);
 
@@ -150,57 +157,112 @@ Route::prefix('api')->group(function () {
     Route::post('/finalize/{department}/{section}', [AssignmentController::class, 'finalizeAssignment']);
 });
 
-Route::get('/api/advisers/{clusterId}', [AdviserController::class, 'getAdvisersByCluster']);
-Route::get('/api/panels/{clusterId}', [PanelController::class, 'getPanelsByCluster']);
+Route::get('/api/advisers/{clusterId}', [AdviserController::class, 'getAdvisersByCluster'])->middleware('auth', 'admin');
+Route::get('/api/panels/{clusterId}', [PanelController::class, 'getPanelsByCluster'])->middleware('auth', 'admin');
+Route::get('/api/panels', [PanelController::class, 'getPanels'])->middleware('auth', 'admin');
 
 
-Route::post('/adviser', [AdviserController::class, 'store'])->name('adviser.store');
-Route::post('/panel', [PanelController::class, 'store'])->name('panel.store');
-Route::post('/assignment/finalize', [AssignmentController::class, 'finalize'])->name('assignment.finalize');
+Route::post('/adviser', [AdviserController::class, 'store'])->middleware('auth', 'admin')->name('adviser.store');
+Route::post('/panel', [PanelController::class, 'store'])->middleware('auth', 'admin')->name('panel.store');
+Route::post('/assignment/finalize', [AssignmentController::class, 'finalize'])->middleware('auth', 'admin')->name('assignment.finalize');
 
 
 
 
 
 
-Route::post('/panel-adviser/finalize', [PanelAdviserController::class, 'finalize'])->name('panel.adviser.finalize');
+Route::post('/panel-adviser/finalize', [PanelAdviserController::class, 'finalize'])->middleware('auth', 'admin')->name('panel.adviser.finalize');
 
 // add availability (calls controller method)
-Route::post('/panels/{panel}/availability', [PanelAdviserController::class, 'addPanelAvailability'])->name('panels.availability.add');
+Route::post('/panels/{panel}/availability', [PanelAdviserController::class, 'addPanelAvailability'])->middleware('auth', 'admin')->name('panels.availability.add');
 
 // web.php
-Route::get('/panel-adviser/filter', [PanelAdviserController::class, 'filter'])->name('panel.adviser.filter');
+Route::get('/panel-adviser/filter', [PanelAdviserController::class, 'filter'])->middleware('auth', 'admin')->name('panel.adviser.filter');
 
 //  ajax
-Route::post('/submissions/{submission}/adviser/ajax', [PanelAdviserController::class, 'updateAdviserAjax'])->name('adviser.update.ajax');
-Route::post('/submissions/{submission}/panels/ajax', [PanelAdviserController::class, 'updatePanelsAjax'])->name('panels.update.ajax');
+Route::post('/submissions/{submission}/adviser/ajax', [PanelAdviserController::class, 'updateAdviserAjax'])->middleware('auth', 'admin')->name('adviser.update.ajax');
+Route::post('/submissions/{submission}/panels/ajax', [PanelAdviserController::class, 'updatePanelsAjax'])->middleware('auth', 'admin')->name('panels.update.ajax');
 
 //api-assigns
 Route::get('/api/assignments', [PanelAdviserController::class, 'apiAssignments'])
+    ->middleware('auth', 'admin')
     ->name('api.assignments');
 
-    Route::post('/assignments/store', [AssignmentController::class, 'store'])->name('assignments.store');
-    Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
+Route::get('/api/advisers', [AdviserController::class, 'apiAdvisers'])
+    ->middleware('auth', 'admin')
+    ->name('api.advisers');
+
+    Route::post('/assignments/store', [AssignmentController::class, 'store'])->middleware('auth', 'admin')->name('assignments.store');
+    Route::put('/assignments/{assignment}', [AssignmentController::class, 'update'])->middleware('auth', 'admin')->name('assignments.update');
+    Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy'])->middleware('auth', 'admin')->name('assignments.destroy');
  
 // Defense Schedule Routes
 Route::get('/def-sched', function () {
     return view('def-sched');
-})->name('def-sched');
+})->middleware('auth' ,'admin')->name('def-sched');
 
-Route::post('/defense-schedules', [DefenseScheduleController::class, 'store']);
-Route::get('/defense-schedules/by-type', [DefenseScheduleController::class, 'getByType']);
-Route::put('/defense-schedules/{id}/status', [DefenseScheduleController::class, 'updateStatus']);
-Route::get('/defense-schedules/check-eligibility', [DefenseScheduleController::class, 'checkEligibility']);
+Route::post('/defense-schedules', [DefenseScheduleController::class, 'store'])->middleware('auth');
+Route::get('/defense-schedules/by-type', [DefenseScheduleController::class, 'getByType'])->middleware('auth');
+Route::get('/defense-schedules/calendar', [DefenseScheduleController::class, 'getCalendarData'])->middleware('auth');
+Route::put('/defense-schedules/{id}/status', [DefenseScheduleController::class, 'updateStatus'])->middleware('auth');
+Route::get('/defense-schedules/check-eligibility', [DefenseScheduleController::class, 'checkEligibility'])->middleware('auth');
+Route::delete('/defense-schedules/reset', [DefenseScheduleController::class, 'resetSchedules'])->middleware('auth');
 
 // Defense Evaluation Routes  
 Route::get('/def-eval', function () {
     return view('def-eval');
-})->name('def-eval');
+})->middleware('auth', 'admin')->name('def-eval');
 
 // Panel Availability API Routes
-Route::post('/api/panel-availability', [DefenseScheduleController::class, 'checkPanelAvailability']);
-Route::post('/api/panel-availability-schedule', [DefenseScheduleController::class, 'getPanelAvailabilitySchedule']);
+Route::post('/api/panel-availability', [DefenseScheduleController::class, 'checkPanelAvailability'])->middleware('auth');
+Route::post('/api/panel-availability-schedule', [DefenseScheduleController::class, 'getPanelAvailabilitySchedule'])->middleware('auth');
 
 // Defense Evaluation API Routes
-Route::post('/api/evaluations', [\App\Http\Controllers\DefenseEvaluationController::class, 'saveEvaluation']);
-Route::get('/api/group-status', [\App\Http\Controllers\DefenseEvaluationController::class, 'getGroupStatus']);
+Route::post('/api/evaluations', [\App\Http\Controllers\DefenseEvaluationController::class, 'saveEvaluation'])->middleware('auth');
+Route::get('/api/group-status', [\App\Http\Controllers\DefenseEvaluationController::class, 'getGroupStatus'])->middleware('auth');
+
+// Manage Coordinator Routes
+Route::middleware('auth' , 'admin')->group(function () {
+    Route::get('/manage-coordinator', [CoordinatorController::class, 'index'])->name('manage-coordinator');
+    Route::get('/coordinators/archives-data', [CoordinatorController::class, 'archivesData'])->name('coordinators.archives.data');
+    Route::post('/coordinators', [CoordinatorController::class, 'store'])->name('coordinators.store');
+    Route::put('/coordinators/{id}', [CoordinatorController::class, 'update'])->name('coordinators.update');
+    Route::delete('/coordinators/{id}', [CoordinatorController::class, 'destroy'])->name('coordinators.destroy');
+    Route::post('/coordinators/{id}/restore', [CoordinatorController::class, 'restore'])->name('coordinators.restore');
+});
+
+// Coordinator Dashboard
+Route::get('/coordinator-dashboard', [CoordinatorController::class, 'dashboard'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator-dashboard');
+
+Route::get('/coordinator-title-proposal', [CoordinatorController::class, 'titleProposal'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator-title-proposal');
+
+Route::get('/coordinator/submissions/group/{group}', [CoordinatorController::class, 'getSubmissionsByGroup'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator.submissions.group');
+
+Route::post('/coordinator/submissions/{id}/update-status', [CoordinatorController::class, 'updateSubmissionStatus'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator.submissions.updateStatus');
+
+Route::get('/coordinator/submissions/{id}/download', [CoordinatorController::class, 'downloadSubmission'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator.submissions.download');
+
+Route::get('/coordinator-manage-adviser', [CoordinatorController::class, 'manageAdviser'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator-manage-adviser');
+
+Route::get('/coordinator-manage-groups', [\App\Http\Controllers\GroupController::class, 'index'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator-manage-groups');
+
+Route::post('/groups', [\App\Http\Controllers\GroupController::class, 'store'])->middleware('auth', 'coordinator')->name('groups.store');
+Route::put('/groups/{id}', [\App\Http\Controllers\GroupController::class, 'update'])->middleware('auth', 'coordinator')->name('groups.update');
+Route::delete('/groups/{id}', [\App\Http\Controllers\GroupController::class, 'destroy'])->middleware('auth', 'coordinator')->name('groups.destroy');
+Route::get('/groups/archived', [\App\Http\Controllers\GroupController::class, 'archived'])->middleware('auth', 'coordinator')->name('groups.archived');
+Route::post('/groups/{id}/restore', [\App\Http\Controllers\GroupController::class, 'restore'])->middleware('auth', 'coordinator')->name('groups.restore');
+Route::get('/api/groups/by-number/{groupNumber}', [\App\Http\Controllers\GroupController::class, 'getByGroupNumber'])->middleware('auth')->name('groups.getByNumber');

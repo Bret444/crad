@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Mail\OtpMail;
 use Illuminate\Support\Facades\Mail;
@@ -45,11 +46,11 @@ class OtpAuthController extends Controller
         } else {
             // Generate new OTP
             $otp = rand(100000, 999999);
-            $expiresAt = now()->addDays(3);
+            $expiresAt = now()->addMinutes(10);
             
             // Update the user record with the new OTP and its expiration
-            $user->otp = $otp;
-            $user->otp_expires_at = $expiresAt;
+            $user->otp = Hash::make($otp);    
+            $user->otp_expires_at = now()->addMinutes(10);            
             $user->save();
             
             // Send the OTP via email only for new OTP
@@ -76,52 +77,61 @@ class OtpAuthController extends Controller
      */
     public function verifyOtp(Request $request)
     {
-        // ... (Your original verifyOtp code, which is correct for AJAX) ...
-        $request->validate(['otp' => 'required|digits:6']);
-        
-        $user = User::find(session('otp_user_id'));
+        try {
+            $request->validate(['otp' => 'required|digits:6']);
+            
+            $user = User::find(session('otp_user_id'));
 
-        if (!$user) {
-            session()->forget('otp_user_id');
-            return response()->json([
-                'success' => false,
-                'message' => 'User session not found. Please login again.'
-            ]);
-        }
+            if (!$user) {
+                session()->forget('otp_user_id');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User session not found. Please login again.'
+                ]);
+            }
 
-        if ($user->otp_expires_at < now()) {
+            if ($user->otp_expires_at < now()) {
+                $user->otp = null;
+                $user->otp_expires_at = null;
+                $user->save();
+                session()->forget('otp_user_id');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OTP has expired. Please login again.'
+                ]);
+            }
+
+            if (!Hash::check($request->otp, $user->otp)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Incorrect OTP. Please try again.'
+                ]);
+            }
+
+            // OTP is valid
+            Auth::login($user);
+
+            // Clear OTP after successful verification
+            $user->email_verified_at = now();
             $user->otp = null;
             $user->otp_expires_at = null;
             $user->save();
+            
             session()->forget('otp_user_id');
+
+            $redirectUrl = $user->is_admin ? '/admin-dashboard' : '/std-dashboard';
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Login successful!',
+                'redirect_url' => $redirectUrl
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('OTP verification error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'OTP has expired. Please login again.'
-            ]);
+                'message' => 'An error occurred. Please try again later.'
+            ], 500);
         }
-
-        if ((string)$user->otp !== (string)$request->otp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Incorrect OTP. Please try again.'
-            ]);
-        }
-
-        // OTP is valid
-        Auth::login($user);
-
-        // Keep OTP valid for 3 days - don't clear it
-        $user->email_verified_at = now();
-        $user->save();
-        
-        session()->forget('otp_user_id');
-
-        $redirectUrl = $user->is_admin ? '/admin-dashboard' : '/std-dashboard';
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful!',
-            'redirect_url' => $redirectUrl
-        ]);
     }
 }

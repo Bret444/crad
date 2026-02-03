@@ -12,9 +12,15 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('department')->nullable();
-            $table->integer('cluster')->nullable();
-            $table->integer('group_no')->nullable();
+            if (!Schema::hasColumn('users', 'department')) {
+                $table->string('department')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'cluster')) {
+                $table->integer('cluster')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'group_no')) {
+                $table->integer('group_no')->nullable();
+            }
         });
     }
     

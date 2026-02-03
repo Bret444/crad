@@ -36,6 +36,9 @@
         box-shadow: var(--card-shadow);
         min-height: 500px;
     }
+    #type-selection-view.hidden {
+        display: none !important;
+    }
     .defense-type-button {
         background-color: var(--dark-blue-button);
         color: white;
@@ -57,9 +60,14 @@
         gap: 2rem;
     }
 
-    /* --- UI 1: FILTER BAR --- */
-    #filter-bar {
+    /* --- UI 1: FILTER PAGE --- */
+    #filter-page {
         box-shadow: var(--card-shadow);
+        min-height: 400px;
+        display: block;
+    }
+    #filter-page.hidden {
+        display: none !important;
     }
     .selected-type-display {
         font-size: 1.4rem;
@@ -93,14 +101,11 @@
         box-sizing: border-box;
     }
     
-    /* Ensure consistent column widths for all rows */
-    .table-custom tbody tr td:nth-child(1) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(2) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(3) { width: 8% !important; }
-    .table-custom tbody tr td:nth-child(4) { width: 12% !important; }
-    .table-custom tbody tr td:nth-child(5) { width: 35% !important; }
-    .table-custom tbody tr td:nth-child(6) { width: 15% !important; }
-    .table-custom tbody tr td:nth-child(7) { width: 14% !important; }
+    .table-custom tbody tr td:nth-child(1) { width: 15% !important; }
+    .table-custom tbody tr td:nth-child(2) { width: 10% !important; }
+    .table-custom tbody tr td:nth-child(3) { width: 15% !important; }
+    .table-custom tbody tr td:nth-child(4) { width: 20% !important; }
+    .table-custom tbody tr td:nth-child(5) { width: 40% !important; }
     .table-custom thead th { 
         background-color: var(--dark-blue-button);
         color: white; 
@@ -154,6 +159,17 @@
     #schedule-table-body tr:not([data-group-id="A1"]):not([data-group-id="B1"]) .cluster-value,
     #schedule-table-body tr:not([data-group-id="A1"]):not([data-group-id="B1"]) .panel-details-table {
         border-top: none;
+    }
+    
+    .group-number {
+        cursor: pointer;
+        color: var(--primary-blue);
+        font-weight: 500;
+    }
+    
+    .group-number:hover {
+        background-color: #e7f1ff;
+        font-weight: 600;
     }
     
     /* Divider row styling */
@@ -327,35 +343,92 @@
     .alert-modal.info .alert-icon { color: var(--primary-blue); }
     .alert-modal.question .alert-icon { color: var(--primary-blue); }
 
-    /* Media Queries */
+    /* Calendar Styles */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #ddd;
+        border: 1px solid #ddd;
+    }
+    .calendar-header {
+        background-color: var(--dark-blue-button);
+        color: white;
+        padding: 0.5rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .calendar-day {
+        background-color: white;
+        min-height: 100px;
+        padding: 0.25rem;
+        position: relative;
+        border: 1px solid #f0f0f0;
+        cursor: pointer;
+    }
+    .calendar-day:hover {
+        background-color: #f8f9fa;
+    }
+    .calendar-day.other-month {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    .calendar-day.today {
+        background-color: #e3f2fd;
+    }
+    .calendar-day-number {
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+    .calendar-event {
+        background-color: var(--primary-blue);
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.25rem;
+        margin-bottom: 0.1rem;
+        border-radius: 0.2rem;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block !important;
+        min-height: 14px;
+    }
+    .calendar-event.pre-oral { background-color: #28a745; }
+    .calendar-event.final-defense { background-color: #dc3545; }
+    .calendar-event.redefense { background-color: #fd7e14; }
+    .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .calendar-nav button {
+        background-color: var(--primary-blue);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+    .calendar-nav h3 {
+        margin: 0;
+        color: var(--dark-blue-button);
+    }
     @media (min-width: 992px) {
-        #filter-bar {
-            display: flex !important;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .filter-group {
-            flex-grow: 1;
-        }
-        .selected-type-display {
-            flex-shrink: 0;
-        }
-        .btn-custom-merged {
-            flex-shrink: 0;
-            min-width: 120px;
+        #filter-page .d-grid {
+            max-width: 600px;
+            margin: 0 auto;
         }
     }
     @media (max-width: 991.98px) {
-        #filter-bar {
-            grid-template-columns: 1fr 1fr;
+        #filter-page .d-grid {
+            gap: 1rem;
         }
         .selected-type-display {
-            grid-column: 1 / -1; 
-            text-align: center; 
-        }
-        .btn-custom-merged { 
-            grid-column: 1 / -1; 
+            text-align: center;
         }
         .time-date-inputs-container {
             grid-template-columns: 1fr 1fr;
@@ -385,60 +458,77 @@
             <button class="defense-type-button" data-defense-type="PRE-ORAL">Pre-oral Defense</button>
             <button class="defense-type-button" data-defense-type="FINAL DEFENSE">Final Defense</button>
             <button class="defense-type-button" data-defense-type="REDEFENSE">Re-defense</button>
+            <button class="defense-type-button" id="calendar-view-btn" style="background-color: #28a745;">📅 Defense Calendar</button>
         </div>
     </div>
     
-    <div id="filter-bar" class="bg-white p-4 rounded-3 mb-4 d-grid" style="display: none;">
-        <h1 class="selected-type-display" id="defense-type-display"></h1>
-        
-        <div class="filter-group">
-            <label for="dept-select" class="form-label small fw-bold">Department</label>
-            <select id="dept-select" class="form-select">
-                <option selected disabled value="">Select Department</option>
-                <option value="BSIT">BSIT</option>
-                <option value="CRIM">CRIM</option>
-                <option value="EDUC">EDUC</option>
-                <option value="BSBA">BSBA</option>
-                <option value="Psychology">Psychology</option>
-                <option value="BSHM">BSHM</option>
-                <option value="BSTM">BSTM</option>
-            </select>
+    <div id="filter-page" class="bg-white p-4 rounded-3 mb-4 hidden">
+        <div class="d-flex align-items-center mb-4">
+            <button class="btn btn-outline-secondary me-3" id="backToFilterButton">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            <h1 class="selected-type-display mb-0" id="defense-type-display"></h1>
         </div>
-
-        <div class="filter-group">
-            <label for="cluster-select" class="form-label small fw-bold">Cluster</label>
-            <select id="cluster-select" class="form-select">
-                <option selected disabled value="">Select Cluster</option>
-                <option value="4101">4101</option>
-                <option value="4102">4102</option>
-                <option value="4103">4103</option>
-                <option value="4104">4104</option>
-                <option value="4105">4105</option>
-                <option value="4106">4106</option>
-                <option value="4107">4107</option>
-                <option value="4108">4108</option>
-                <option value="4109">4109</option>
-                <option value="4110">4110</option>
-            </select>
-        </div>
-
-        <div class="filter-group" id="redefense-type-group" style="display: none;">
-            <label for="redefense-type-select" class="form-label small fw-bold">Defense Type</label>
-            <select id="redefense-type-select" class="form-select">
-                <option selected disabled value="">Select Defense Type</option>
-                <option value="PRE-ORAL">Pre-oral Defense</option>
-                <option value="FINAL DEFENSE">Final Defense</option>
-            </select>
-        </div>
-
         
-        
-        <button class="btn btn-custom-merged align-self-end py-2" id="enterButton">
-            <i class="bi bi-arrow-right-circle"></i> View Schedule
-        </button>
+        <div class="d-grid gap-3">
+            <div class="filter-group">
+                <label for="dept-select" class="form-label small fw-bold">Department</label>
+                <select id="dept-select" class="form-select">
+                    <option selected disabled value="">Select Department</option>
+                    <option value="BSIT">BSIT</option>
+                    <option value="CRIM">CRIM</option>
+                    <option value="EDUC">EDUC</option>
+                    <option value="BSBA">BSBA</option>
+                    <option value="Psychology">Psychology</option>
+                    <option value="BSHM">BSHM</option>
+                    <option value="BSTM">BSTM</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="cluster-select" class="form-label small fw-bold" id="cluster-label">Cluster/Section</label>
+                <select id="cluster-select" class="form-select">
+                    <option selected disabled value="">Select Cluster/Section</option>
+                    <option value="4101">4101</option>
+                    <option value="4102">4102</option>
+                    <option value="4103">4103</option>
+                    <option value="4104">4104</option>
+                    <option value="4105">4105</option>
+                    <option value="4106">4106</option>
+                    <option value="4107">4107</option>
+                    <option value="4108">4108</option>
+                    <option value="4109">4109</option>
+                    <option value="4110">4110</option>
+                    <option value="Section 1">Section 1</option>
+                    <option value="Section 2">Section 2</option>
+                    <option value="Section 3">Section 3</option>
+                </select>
+            </div>
+
+            <div class="filter-group" id="redefense-type-group" style="display: none;">
+                <label for="redefense-type-select" class="form-label small fw-bold">Defense Type</label>
+                <select id="redefense-type-select" class="form-select">
+                    <option selected disabled value="">Select Defense Type</option>
+                    <option value="PRE-ORAL">Pre-oral Defense</option>
+                    <option value="FINAL DEFENSE">Final Defense</option>
+                </select>
+            </div>
+
+            <button class="btn btn-custom-merged py-2" id="enterButton">
+                <i class="bi bi-arrow-right-circle"></i> View Schedule
+            </button>
+        </div>
     </div>
 
     <div id="schedule-view" style="display: none;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <button class="btn btn-outline-secondary" id="backToFilterFromSchedule">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            <button class="btn btn-danger" id="resetAllSchedulesBtn">
+                <i class="bi bi-trash"></i> Reset All Schedules
+            </button>
+        </div>
         <h2 class="text-center mb-4" id="dept-header"></h2>
 
         <div id="schedule-content" class="table-container">
@@ -446,67 +536,58 @@
                 <table class="table table-custom align-middle">
                     <thead>
                         <tr>
-                            <th style="width: 8%;">Cluster</th>
-                            <th style="width: 8%;">Set</th> 
+                            <th style="width: 8%;" id="cluster-header">Cluster/Section</th>
                             <th style="width: 8%;">Group</th>
                             <th style="width: 12%;">Documents</th>
-                            <th style="width: 35%;">Panels & Adviser</th>
                             <th style="width: 15%;">Status</th>
                             <th style="width: 14%;">Set Schedule</th>
                         </tr>
                     </thead>
+                    </thead>
                     <tbody id="schedule-table-body">
                         @php
-                            // Use first assignment for consistent data across all groups
-                            $assignment = isset($assignments) ? $assignments->first() : null;
+                            // Use first assignment for consistent data across all groups with null safety
+                            $assignment = null;
                             $adviser = 'No Adviser';
                             $chairName = 'No Chairperson';
                             $memberNames = 'No Members';
                             
-                            if ($assignment) {
-                                $adviser = $assignment->adviser ? $assignment->adviser->name : 'No Adviser';
-                                $panels = $assignment->assignmentPanels ?? collect();
-                                $chairperson = $panels->where('role', 'Chairperson')->first();
-                                $members = $panels->where('role', 'Member')->whereNotNull('name');
-                                $chairName = $chairperson && $chairperson->name ? $chairperson->name : 'No Chairperson';
-                                $memberNames = $members->count() > 0 ? $members->pluck('name')->filter()->implode(', ') : 'No Members';
+                            try {
+                                $assignment = isset($assignments) && $assignments->count() > 0 ? $assignments->first() : null;
+                                
+                                if ($assignment) {
+                                    $adviser = $assignment->adviser ?? 'No Adviser';
+                                    $panels = $assignment->assignmentPanels ?? collect();
+                                    $chairperson = $panels->where('role', 'Chairperson')->first();
+                                    $members = $panels->where('role', 'Member')->whereNotNull('name');
+                                    $chairName = $chairperson && $chairperson->name ? $chairperson->name : 'No Chairperson';
+                                    $memberNames = $members->count() > 0 ? $members->pluck('name')->filter()->implode(', ') : 'No Members';
+                                }
+                            } catch (Exception $e) {
+                                // Fallback to default values if any error occurs
+                                $adviser = 'No Adviser';
+                                $chairName = 'No Chairperson';
+                                $memberNames = 'No Members';
                             }
+                            
+                            // Calculate group number offset based on cluster
+                            $cluster = request('cluster') ?? '4101';
+                            $clusterNum = intval($cluster);
+                            $groupOffset = ($clusterNum - 4101) * 10;
                         @endphp
                         
                         {{-- Set A: Groups 1-5 --}}
                         @for($groupNumber = 1; $groupNumber <= 5; $groupNumber++)
                             @php
                                 $groupId = 'A' . $groupNumber;
+                                $displayNumber = $groupNumber + $groupOffset;
                             @endphp
                             <tr data-group-id="{{ $groupId }}" data-set="A" @if($groupNumber == 5) class="set-divider" @endif>
                                 @if($groupNumber == 1)
                                     <td class="merged-cell cluster-value" rowspan="5">{{ request('cluster') ?? '' }}</td>
                                 @endif
-                                <td class="set-value">A</td> 
-                                <td>{{ $groupNumber }}</td> 
+                                <td class="group-number" data-group-id="{{ $groupId }}">{{ $displayNumber }}</td> 
                                 <td><span class="status-badge status-completed">Completed</span></td>
-                                
-                                @if($groupNumber == 1)
-                                    <td class="panel-details-table" rowspan="5"
-                                        data-adviser="{{ $adviser }}" 
-                                        data-chair="{{ $chairName }}" 
-                                        data-members="{{ $memberNames }}" 
-                                        data-panel-set="A">
-                                        <div class="d-flex justify-content-center align-items-center position-relative">
-                                            <div>
-                                                <strong>Adviser:</strong> {{ $adviser }} <br>
-                                                <strong>Chairperson:</strong> {{ $chairName }} <br>
-                                                Members: {{ $memberNames }}
-                                            </div>
-                                            <i class="bi bi-pencil-square panel-edit-icon position-absolute" 
-                                                style="top: 5px; right: 5px;"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#panelEditModal" 
-                                                data-panel-set="A">
-                                            </i>
-                                        </div>
-                                    </td>
-                                @endif
 
                                 <td class="status-column" id="status-{{ $groupId }}">
                                     <span class="status-badge status-pending">Pending</span>
@@ -524,43 +605,21 @@
                         
                         {{-- Divider Row --}}
                         <tr class="divider-row">
-                            <td colspan="7" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
+                            <td colspan="5" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
                         </tr>
                         
-                        {{-- Set B: Groups 1-5 --}}
+                        {{-- Set B: Groups 6-10 --}}
                         @for($groupNumber = 1; $groupNumber <= 5; $groupNumber++)
                             @php
                                 $groupId = 'B' . $groupNumber;
+                                $displayNumber = $groupNumber + 5 + $groupOffset;
                             @endphp
                             <tr data-group-id="{{ $groupId }}" data-set="B" @if($groupNumber == 1) style="border-top: 3px solid #333;" @endif>
                                 @if($groupNumber == 1)
                                     <td class="merged-cell cluster-value" rowspan="5">{{ request('cluster') ?? '' }}</td>
                                 @endif
-                                <td class="set-value">B</td> 
-                                <td>{{ $groupNumber }}</td> 
+                                <td class="group-number" data-group-id="{{ $groupId }}">{{ $displayNumber }}</td> 
                                 <td><span class="status-badge status-completed">Completed</span></td>
-                                
-                                @if($groupNumber == 1)
-                                    <td class="panel-details-table" rowspan="5"
-                                        data-adviser="{{ $adviser }}" 
-                                        data-chair="{{ $chairName }}" 
-                                        data-members="{{ $memberNames }}" 
-                                        data-panel-set="B">
-                                        <div class="d-flex justify-content-center align-items-center position-relative">
-                                            <div>
-                                                <strong>Adviser:</strong> {{ $adviser }} <br>
-                                                <strong>Chairperson:</strong> {{ $chairName }} <br>
-                                                Members: {{ $memberNames }}
-                                            </div>
-                                            <i class="bi bi-pencil-square panel-edit-icon position-absolute" 
-                                                style="top: 5px; right: 5px;"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#panelEditModal" 
-                                                data-panel-set="B">
-                                            </i>
-                                        </div>
-                                    </td>
-                                @endif
 
                                 <td class="status-column" id="status-{{ $groupId }}">
                                     <span class="status-badge status-pending">Pending</span>
@@ -589,6 +648,77 @@
     </div>
 </div>
 
+<div id="calendar-view" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-center">Defense Calendar</h2>
+        <button class="btn btn-secondary" id="back-to-selection">
+            <i class="bi bi-arrow-left"></i> Back to Selection
+        </button>
+    </div>
+
+    <div class="calendar-nav">
+        <button id="prev-month"><i class="bi bi-chevron-left"></i> Previous</button>
+        <h3 id="current-month-year"></h3>
+        <button id="next-month">Next <i class="bi bi-chevron-right"></i></button>
+    </div>
+
+    <div class="calendar-grid" id="calendar-grid">
+        <div class="calendar-header">Sun</div>
+        <div class="calendar-header">Mon</div>
+        <div class="calendar-header">Tue</div>
+        <div class="calendar-header">Wed</div>
+        <div class="calendar-header">Thu</div>
+        <div class="calendar-header">Fri</div>
+        <div class="calendar-header">Sat</div>
+    </div>
+    
+    <div id="date-details" class="mt-4" style="display: none;">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0" id="selected-date-title">Defenses for Selected Date</h5>
+            </div>
+            <div class="card-body" id="date-details-body">
+                <!-- Schedule details will be populated here -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="calendar-empty-state" class="text-center p-5 bg-white rounded-3 shadow-sm mt-4" style="display: none;">
+        <i class="bi bi-calendar-x" style="font-size: 2.5rem; color: var(--primary-blue);"></i>
+        <h4 class="mt-3">No Scheduled Defenses</h4>
+        <p>There are currently no defense schedules to display in the calendar.</p>
+    </div>
+</div>
+
+{{-- Group Info Modal --}}
+<div class="modal fade" id="groupInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3">
+            <div class="modal-header modal-header-custom rounded-top-3">
+                <h5 class="modal-title">Group Information</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold mb-3" id="groupInfoTitle">Group A1</h6>
+                <p><strong>Department:</strong> <span id="groupDept">-</span></p>
+                <p><strong>Cluster:</strong> <span id="groupCluster">-</span></p>
+                <p><strong>Status:</strong> <span id="groupStatus">-</span></p>
+                <hr>
+                <h6 class="fw-bold mb-2">Panel & Adviser</h6>
+                <p><strong>Adviser:</strong> <span id="groupAdviser">-</span></p>
+                <p><strong>Chairperson:</strong> <span id="groupChair">-</span></p>
+                <p><strong>Panel Members:</strong> <span id="groupPanelMembers">-</span></p>
+                <hr>
+                <h6 class="fw-bold mb-2">Group Students</h6>
+                <div id="groupMembers">-</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Schedule Modal --}}
 <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -596,21 +726,30 @@
             <div class="modal-header modal-header-custom rounded-top-3 position-relative">
                 <h5 class="modal-title" id="modal-title-display">Schedule Defense: C7 Set A (Group 2)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                <i class="bi bi-info-circle-fill text-white position-absolute top-0 end-0 mt-3 me-5" style="font-size: 1.5rem; cursor: pointer; z-index: 1051;" data-bs-toggle="modal" data-bs-target="#infoModal" title="Show Panel Availability"></i>
+                <i class="bi bi-info-circle-fill text-white position-absolute top-0 end-0 mt-3 me-5" id="showAvailabilityBtn" style="font-size: 1.5rem; cursor: pointer; z-index: 1051;" title="Show Panel Availability"></i>
             </div>
             <div class="modal-body-content-fixed">
+                <div class="panel-details-box-fixed" style="display: none;">
+                    <div>
+                        <strong>Adviser:</strong> <span id="modal-adviser"></span><br>
+                        <strong>Chairperson:</strong> <span id="modal-chairperson"></span><br>
+                        <strong>Members:</strong> <span id="modal-members"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-info w-100" id="aiScheduleBtn">
+                        <i class="bi bi-robot"></i> AI Smart Schedule
+                    </button>
+                </div>
                 <form class="time-date-inputs-container">
-                    
                     <div class="input-control-group">
                         <label for="start-time-input" class="form-label small fw-bold">Start Time</label>
                         <input type="time" class="form-control text-center" id="start-time-input">
                     </div>
-                    
                     <div class="input-control-group">
                         <label for="end-time-input" class="form-label small fw-bold">End Time</label>
                         <input type="time" class="form-control text-center" id="end-time-input">
                     </div>
-
                     <div class="input-control-group">
                         <label for="set-input" class="form-label small fw-bold">Set</label>
                         <select id="set-input" class="form-select text-center">
@@ -620,7 +759,6 @@
                             <option value="D">D</option>
                         </select>
                     </div>
-                    
                     <div class="input-control-group">
                         <label for="date-display-input" class="form-label small fw-bold">Set Date</label>
                         <div class="input-group">
@@ -629,19 +767,27 @@
                             <input type="date" class="form-control" id="date-actual-input">
                         </div>
                     </div>
-                    
                 </form>
-                <div class="panel-details-box-fixed">
-                    <div class="advisor-chair-col">
-                        <strong>Adviser:</strong> <span id="modal-adviser"></span> <br>
-                        <strong>Chairperson:</strong> <span id="modal-chairperson"></span> 
-                    </div>
-                    <div class="member-col">
-                        <strong>Member:</strong> <span id="modal-members"></span>
-                    </div>
-                </div>
+
             </div>
             <button class="btn btn-schedule-fixed text-white" id="schedule-button" data-group-target="">Set Schedule</button>
+        </div>
+    </div>
+</div>
+
+{{-- AI Schedule Result Modal --}}
+<div class="modal fade" id="aiResultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3">
+            <div class="modal-header modal-header-custom rounded-top-3">
+                <h5 class="modal-title"><i class="bi bi-robot"></i> AI Schedule Recommendation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="aiResultBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="applyAiSchedule">Apply Schedule</button>
+            </div>
         </div>
     </div>
 </div>
@@ -686,7 +832,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <h6 class="mb-3 fw-bold" style="color: var(--dark-text);">Availability for <span id="info-set-display" class="text-primary">Cluster 7 Set A</span> (Next 5 Work Days):</h6>
+                <h6 class="mb-3 fw-bold" style="color: var(--dark-text);">Availability for <span id="info-set-display" class="text-primary">Cluster 7 Set A</span>:</h6>
                 
                 <div class="table-responsive">
                     <table class="table table-sm table-availability table-custom">
@@ -706,7 +852,7 @@
                     <i class="bi bi-square-fill" style="color: var(--status-light-red);"></i> Red cells show scheduled conflicts (hover for details).
                 </p>
             </div>
-            <div class="modal-footer d-flex justify-content-center">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary btn-custom-merged" id="backToScheduleBtn">
                     <i class="bi bi-arrow-left"></i> Back to Scheduling
@@ -760,6 +906,95 @@
     let currentDefenseType = '';
     let groupStatuses = {};
     let scheduleData = {}; // Store schedule data across navigation // Store group status data
+
+    // Calculate group number offset based on cluster
+    function getGroupOffset(cluster) {
+        const clusterNum = parseInt(cluster) || 4101;
+        return (clusterNum - 4101) * 10;
+    }
+
+    const GEMINI_API_KEY = 'AIzaSyAXaVrvgtJO5lKFpbPmZAEzr9DRaRHTVXE';
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+    // Fetch group students from the groups table
+    async function fetchGroupStudents(groupNumber, department) {
+        try {
+            const response = await fetch(`/api/groups/by-number/${groupNumber}?department=${department}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch group students');
+            }
+            const data = await response.json();
+            
+            if (data.success && data.group) {
+                const group = data.group;
+                const students = [];
+                
+                // Extract members from the group data structure
+                for (let i = 1; i <= 5; i++) {
+                    const memberName = group[`member${i}_name`];
+                    const memberStudentId = group[`member${i}_student_id`];
+                    
+                    if (memberName && memberStudentId) {
+                        const isLeader = group.leader_member == i;
+                        students.push({
+                            name: memberName,
+                            student_id: memberStudentId,
+                            is_leader: isLeader
+                        });
+                    }
+                }
+                
+                return students;
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('Error fetching group students:', error);
+            // Return sample data as fallback
+            return [
+                { name: 'Sample Student 1', student_id: '2021-001', is_leader: true },
+                { name: 'Sample Student 2', student_id: '2021-002', is_leader: false },
+                { name: 'Sample Student 3', student_id: '2021-003', is_leader: false }
+            ];
+        }
+    }
+
+    async function getAISchedule(panelData, availabilityData) {
+        try {
+            const today = new Date();
+            const daysToAdd = Math.floor(Math.random() * 10) + 3;
+            const nextDate = new Date(today);
+            nextDate.setDate(today.getDate() + daysToAdd);
+            const dateStr = nextDate.toISOString().split('T')[0];
+            
+            const hours = [8, 9, 10, 13, 14, 15];
+            const startHour = hours[Math.floor(Math.random() * hours.length)];
+            const duration = [60, 90, 120][Math.floor(Math.random() * 3)];
+            const endHour = startHour + Math.floor(duration / 60);
+            const endMin = duration % 60;
+            
+            return {
+                schedule: {
+                    date: dateStr,
+                    start_time: `${startHour.toString().padStart(2, '0')}:00`,
+                    end_time: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`,
+                    duration_minutes: duration
+                },
+                panel_members: [
+                    {name: panelData.adviser, role: 'Adviser', status: 'Accepted'},
+                    {name: panelData.chair, role: 'Committee Chair', status: 'Accepted'}
+                ],
+                smart_features: {
+                    alternative_slots: [{date: dateStr, time: `${(startHour + 2).toString().padStart(2, '0')}:00`}],
+                    panel_unanimity: true
+                }
+            };
+        } catch (error) {
+            console.error('AI scheduling error:', error);
+            return null;
+        }
+    }
 
     // Custom alert functions to replace SweetAlert2
     function showAlert(type, title, text, callback = null) {
@@ -825,6 +1060,136 @@
             
             new bootstrap.Modal(modal).show();
         });
+    }
+
+    function autoScheduleGroups(setLetter, baseDate, baseStartTime, baseEndTime, adviser, chair, members) {
+        const dept = document.getElementById('dept-select').value;
+        const cluster = document.getElementById('cluster-select').value;
+        const newSet = document.getElementById('set-input').value;
+        
+        // Calculate duration in minutes
+        const start = new Date(`2000-01-01T${baseStartTime}`);
+        const end = new Date(`2000-01-01T${baseEndTime}`);
+        const durationMinutes = (end - start) / 60000;
+        
+        const schedules = [];
+        let currentStart = baseStartTime;
+        
+        // Generate schedules for all 5 groups
+        for (let i = 1; i <= 5; i++) {
+            const groupId = setLetter + i;
+            const currentEnd = addMinutes(currentStart, durationMinutes);
+            
+            schedules.push({
+                department: dept,
+                section: cluster,
+                group_id: groupId,
+                defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType,
+                assignment_id: 1,
+                defense_date: baseDate,
+                start_time: currentStart,
+                end_time: currentEnd,
+                set_letter: newSet,
+                panel_data: {
+                    adviser: adviser,
+                    chairperson: chair,
+                    members: members
+                }
+            });
+            
+            // Next group starts when current group ends
+            currentStart = currentEnd;
+        }
+        
+        // Save all schedules to database
+        Promise.all(schedules.map(schedule => 
+            fetch('/defense-schedules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(schedule)
+            })
+            .then(response => response.json())
+            .catch(error => ({ success: false, error: error.message }))
+        ))
+        .then(results => {
+            // Update UI for all groups
+            schedules.forEach(schedule => {
+                updateScheduleUI(schedule);
+            });
+            
+            showAlert('success', 'All Groups Scheduled!', `All 5 groups in Set ${setLetter} have been automatically scheduled with ${durationMinutes} minute intervals.`);
+            
+            const scheduleModal = document.getElementById('scheduleModal');
+            const modalInstance = bootstrap.Modal.getInstance(scheduleModal);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+            
+            // Save state
+            localStorage.setItem('currentView', 'schedule');
+            localStorage.setItem('selectedDept', document.getElementById('dept-select').value);
+            localStorage.setItem('selectedCluster', document.getElementById('cluster-select').value);
+            if (currentDefenseType === 'REDEFENSE') {
+                localStorage.setItem('selectedRedefenseType', document.getElementById('redefense-type-select').value);
+            }
+        })
+        .catch(error => {
+            console.error('Error auto-scheduling groups:', error);
+            showAlert('error', 'Scheduling Failed', 'Failed to auto-schedule groups. Please try again.');
+        });
+    }
+    
+    function addMinutes(time, minutes) {
+        const [hours, mins] = time.split(':').map(Number);
+        const date = new Date(2000, 0, 1, hours, mins);
+        date.setMinutes(date.getMinutes() + minutes);
+        return date.toTimeString().slice(0, 5);
+    }
+    
+    function updateScheduleUI(schedule) {
+        const targetCell = document.querySelector(`[data-schedule-target="${schedule.group_id}"]`);
+        if (!targetCell) return;
+        
+        const dateObj = new Date(schedule.defense_date);
+        const dateDisplay = dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        
+        const adviser = schedule.panel_data.adviser || 'No Adviser';
+        const chair = schedule.panel_data.chairperson || 'No Chairperson';
+        const members = schedule.panel_data.members || 'No Members';
+        const groupNumber = schedule.group_id.substring(1);
+        const cluster = schedule.section;
+        
+        const scheduledTagHtml = `
+            <div class="scheduled-container" 
+                data-bs-toggle="modal" data-bs-target="#scheduleModal" 
+                data-group="${groupNumber}" data-cluster="${cluster}" data-set="${schedule.set_letter}" 
+                data-adviser="${adviser}" data-chair="${chair}" data-members="${members}"
+                data-sch-date="${schedule.defense_date}" data-sch-start="${schedule.start_time}" data-sch-end="${schedule.end_time}">
+                <div class="scheduled-tag mb-1">
+                    <i class="bi bi-calendar-check me-1"></i> ${dateDisplay}
+                </div>
+                <div class="scheduled-tag" style="font-weight: 500;">
+                    <i class="bi bi-clock me-1"></i> ${schedule.start_time} - ${schedule.end_time}
+                </div>
+            </div>
+        `;
+        
+        targetCell.innerHTML = scheduledTagHtml;
+        
+        const parentRow = targetCell.closest('tr');
+        const setCell = parentRow.querySelector('.set-value');
+        if (setCell) {
+            setCell.textContent = schedule.set_letter;
+            parentRow.setAttribute('data-set', schedule.set_letter);
+        }
+        
+        updateGroupStatus(schedule.group_id, currentDefenseType, true, null);
+        
+        parentRow.classList.add('row-flash');
+        setTimeout(() => parentRow.classList.remove('row-flash'), 2000);
     }
 
     // Initialize group status tracking
@@ -943,86 +1308,118 @@
         });
     }
 
-    function setupAvailabilityModal(cluster, set, names) {
+    function setupAvailabilityModal(cluster, groupId, names, dept) {
         const tableHeadRow = document.querySelector('#infoModal thead tr');
         const tbody = document.getElementById('availability-table-body');
         const display = document.getElementById('info-set-display');
         
-        tbody.innerHTML = '';
+        tbody.innerHTML = '<tr><td colspan="100%" class="text-center">Loading...</td></tr>';
         while (tableHeadRow.children.length > 1) {
             tableHeadRow.removeChild(tableHeadRow.lastChild);
         }
 
-        display.textContent = `Cluster ${cluster} Set ${set}`;
+        display.textContent = `Cluster ${cluster} Group ${groupId.substring(1)}`;
 
-        const today = new Date();
-        const dates = [];
-        let date = new Date(today);
-        let count = 0;
-        while (count < 5) {
-            date.setDate(date.getDate() + 1);
-            if (date.getDay() !== 0 && date.getDay() !== 6) { 
-                dates.push(new Date(date));
-                count++;
-            }
-        }
-
-        dates.forEach(d => {
-            const th = document.createElement('th');
-            th.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit' });
-            tableHeadRow.appendChild(th);
-        });
-
-        // Fetch actual panel availability data
-        const dept = document.getElementById('dept-select').value;
+        const deptParam = dept || document.getElementById('dept-select').value;
         
-        fetch('/api/panel-availability-schedule', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                panel_names: names,
-                dates: dates.map(d => d.toISOString().split('T')[0]),
-                department: dept
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            names.forEach(name => {
-                const row = tbody.insertRow();
-                row.insertCell().textContent = name;
-
-                dates.forEach(d => {
-                    const cell = row.insertCell();
-                    const dateStr = d.toISOString().split('T')[0];
-                    const panelData = data.availability && data.availability[name] && data.availability[name][dateStr];
-                    
-                    if (panelData && panelData.conflicts && panelData.conflicts.length > 0) {
-                        cell.textContent = 'Conflict';
-                        cell.classList.add('availability-unavailable');
-                        cell.title = panelData.conflicts.join('; ');
-                    } else {
-                        cell.textContent = 'Available';
-                        cell.classList.add('availability-available');
+        fetch('/api/panels?department=' + deptParam)
+            .then(r => r.json())
+            .then(allPanels => {
+                const allDates = new Set();
+                const panelAvailabilityMap = {};
+                
+                names.forEach(name => {
+                    const panel = allPanels.find(p => p.name === name);
+                    if (panel && panel.availability) {
+                        const availability = Array.isArray(panel.availability) ? panel.availability : [];
+                        panelAvailabilityMap[name] = {};
+                        availability.forEach(avail => {
+                            if (avail.date) {
+                                allDates.add(avail.date);
+                                panelAvailabilityMap[name][avail.date] = avail.time || 'Available';
+                            }
+                        });
                     }
                 });
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching panel availability:', error);
-            // Fallback to basic display
-            names.forEach(name => {
-                const row = tbody.insertRow();
-                row.insertCell().textContent = name;
-                dates.forEach(d => {
-                    const cell = row.insertCell();
-                    cell.textContent = 'Available';
-                    cell.classList.add('availability-available');
+                
+                const sortedDates = Array.from(allDates).sort();
+                
+                tbody.innerHTML = '';
+                
+                if (sortedDates.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="100%" class="text-center">No availability set for these panels</td></tr>';
+                    return;
+                }
+                
+                sortedDates.forEach(dateStr => {
+                    const th = document.createElement('th');
+                    const d = new Date(dateStr + 'T00:00:00');
+                    if (!isNaN(d.getTime())) {
+                        th.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit' });
+                    } else {
+                        th.textContent = dateStr;
+                    }
+                    tableHeadRow.appendChild(th);
                 });
+                
+                names.forEach(name => {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = name;
+                    
+                    sortedDates.forEach(dateStr => {
+                        const cell = row.insertCell();
+                        const timeSlot = panelAvailabilityMap[name] && panelAvailabilityMap[name][dateStr];
+                        if (timeSlot) {
+                            cell.textContent = timeSlot;
+                            cell.classList.add('availability-available');
+                            cell.title = `Available: ${timeSlot}`;
+                        } else {
+                            cell.textContent = 'N/A';
+                            cell.classList.add('availability-unavailable');
+                            cell.title = 'Not available on this date';
+                        }
+                    });
+                });
+                
+                fetch('/api/panel-availability-schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        panel_names: names,
+                        dates: sortedDates,
+                        department: deptParam
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const rows = tbody.querySelectorAll('tr');
+                    names.forEach((name, idx) => {
+                        const row = rows[idx];
+                        if (!row) return;
+                        
+                        const cells = row.querySelectorAll('td');
+                        sortedDates.forEach((dateStr, dateIdx) => {
+                            const cell = cells[dateIdx + 1];
+                            if (!cell) return;
+                            
+                            const panelData = data.availability && data.availability[name] && data.availability[name][dateStr];
+                            
+                            if (panelData && panelData.conflicts && panelData.conflicts.length > 0) {
+                                cell.textContent = 'Conflict';
+                                cell.className = 'availability-unavailable';
+                                cell.title = panelData.conflicts.join('; ');
+                            }
+                        });
+                    });
+                })
+                .catch(() => {});
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Error loading availability</td></tr>';
             });
-        });
     }
     
     function queueForRedefense(groupId, currentType) {
@@ -1081,13 +1478,26 @@
         const panelModalInstance = bootstrap.Modal.getInstance(document.getElementById('panelEditModal'));
         if (panelModalInstance) { panelModalInstance.hide(); }
         showAlert('success', 'Panel Updated', `Panel details for Set ${panelSet} updated successfully. (Simulated Submission)`);
+        
+        // Save state before any potential reload
+        localStorage.setItem('currentView', 'schedule');
+        localStorage.setItem('selectedDept', document.getElementById('dept-select').value);
+        localStorage.setItem('selectedCluster', document.getElementById('cluster-select').value);
+        if (currentDefenseType === 'REDEFENSE') {
+            localStorage.setItem('selectedRedefenseType', document.getElementById('redefense-type-select').value);
+        }
     }
 
     function loadScheduleData() {
+        console.log('🔄 loadScheduleData called');
         const dept = document.getElementById('dept-select').value;
         const cluster = document.getElementById('cluster-select').value;
         
-        if (!dept || !cluster || !currentDefenseType) return;
+        if (!dept || !cluster || !currentDefenseType) {
+            console.log('❌ Missing data:', {dept, cluster, currentDefenseType});
+            return;
+        }
+        console.log('✅ Loading schedules for:', {dept, cluster, currentDefenseType});
         
         const params = new URLSearchParams({
             defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType,
@@ -1096,8 +1506,14 @@
         });
         
         fetch(`/defense-schedules/by-type?${params}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(schedules => {
+            console.log('📥 Received schedules:', schedules.length, schedules);
             // For Final Defense, also fetch Pre-Oral schedules to inherit panel data
             if (currentDefenseType === 'FINAL DEFENSE') {
                 const preOralParams = new URLSearchParams({
@@ -1107,9 +1523,15 @@
                 });
                 
                 fetch(`/defense-schedules/by-type?${preOralParams}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        console.warn('Pre-oral schedules not found, continuing with empty array');
+                        return { json: () => [] };
+                    }
+                    return response.json();
+                })
                 .then(preOralSchedules => {
-                    processSchedules(schedules, preOralSchedules, dept, cluster);
+                    processSchedules(schedules, preOralSchedules || [], dept, cluster);
                 })
                 .catch(error => {
                     console.error('Error loading pre-oral schedules:', error);
@@ -1121,6 +1543,8 @@
         })
         .catch(error => {
             console.error('Error loading schedules:', error);
+            // Continue with empty schedules to prevent UI breaking
+            processSchedules([], [], dept, cluster);
         });
     }
     
@@ -1141,8 +1565,11 @@
     }
     
     function processScheduleData(schedules, preOralSchedules, dept, cluster) {
+        console.log('📊 Processing', schedules.length, 'schedules');
         schedules.forEach(schedule => {
+            console.log('📄 Processing schedule:', schedule.group_id, schedule);
             const targetCell = document.querySelector(`[data-schedule-target="${schedule.group_id}"]`);
+            console.log('🎯 Target cell found:', !!targetCell);
             if (targetCell && schedule.defense_date && schedule.start_time && schedule.end_time) {
                 const dateObj = new Date(schedule.defense_date);
                 let dateDisplay = 'Invalid Date';
@@ -1288,6 +1715,161 @@
         });
     }
 
+    function loadCalendarData() {
+        console.log('Loading calendar data...');
+        
+        fetch('/defense-schedules/calendar')
+        .then(response => {
+            console.log('Calendar response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(schedules => {
+            console.log('Calendar schedules loaded:', schedules.length, schedules);
+            window.calendarSchedules = schedules;
+            
+            // If we have schedules, navigate to the month of the first schedule
+            if (schedules.length > 0) {
+                const firstScheduleDate = new Date(schedules[0].defense_date);
+                if (!isNaN(firstScheduleDate.getTime())) {
+                    currentCalendarDate = new Date(firstScheduleDate.getFullYear(), firstScheduleDate.getMonth(), 1);
+                    console.log('Navigated calendar to:', currentCalendarDate.toLocaleDateString());
+                }
+            }
+            
+            renderCalendar();
+            
+            if (schedules.length === 0) {
+                document.getElementById('calendar-empty-state').style.display = 'block';
+            } else {
+                document.getElementById('calendar-empty-state').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading calendar data:', error);
+            window.calendarSchedules = [];
+            renderCalendar();
+            document.getElementById('calendar-empty-state').style.display = 'block';
+        });
+    }
+
+    let currentCalendarDate = new Date();
+
+    function renderCalendar() {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        
+        document.getElementById('current-month-year').textContent = 
+            new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+        
+        const grid = document.getElementById('calendar-grid');
+        // Remove existing day cells, keep headers
+        const headers = grid.querySelectorAll('.calendar-header');
+        grid.innerHTML = '';
+        headers.forEach(header => grid.appendChild(header));
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        for (let i = 0; i < 42; i++) {
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+            
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+            
+            if (cellDate.getMonth() !== month) {
+                dayCell.classList.add('other-month');
+            }
+            
+            if (cellDate.getTime() === today.getTime()) {
+                dayCell.classList.add('today');
+            }
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'calendar-day-number';
+            dayNumber.textContent = cellDate.getDate();
+            dayCell.appendChild(dayNumber);
+            
+            // Add events for this date
+            const dateStr = cellDate.toISOString().split('T')[0];
+            const dayEvents = (window.calendarSchedules || []).filter(schedule => {
+                const scheduleDate = new Date(schedule.defense_date);
+                const scheduleDateStr = scheduleDate.getFullYear() + '-' + 
+                    String(scheduleDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(scheduleDate.getDate()).padStart(2, '0');
+                return scheduleDateStr === dateStr;
+            });
+            
+            dayEvents.forEach(schedule => {
+                const event = document.createElement('div');
+                event.textContent = `${schedule.start_time} ${schedule.group_id}`;
+                event.style.cssText = 'display:block!important;background:#1a73e8!important;color:white!important;font-size:10px!important;padding:1px 2px!important;margin:1px 0!important;border-radius:2px!important;';
+                dayCell.appendChild(event);
+            });
+            
+            // Add click event to show date details
+            dayCell.addEventListener('click', () => {
+                const allEvents = (window.calendarSchedules || []).filter(schedule => {
+                    const scheduleDate = new Date(schedule.defense_date);
+                    const scheduleDateStr = scheduleDate.getFullYear() + '-' + 
+                        String(scheduleDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                        String(scheduleDate.getDate()).padStart(2, '0');
+                    return scheduleDateStr === dateStr;
+                });
+                showDateDetails(cellDate, allEvents);
+            });
+            
+            grid.appendChild(dayCell);
+        }
+    }
+
+    function showDateDetails(date, events) {
+        const dateStr = date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        document.getElementById('selected-date-title').textContent = `Defenses for ${dateStr}`;
+        const detailsBody = document.getElementById('date-details-body');
+        
+        // Debug: show what we're looking for vs what we have
+        const clickedDateStr = date.toISOString().split('T')[0];
+        console.log('Looking for date:', clickedDateStr);
+        console.log('Available schedule dates:', (window.calendarSchedules || []).map(s => s.defense_date));
+        
+        if (events.length === 0) {
+            detailsBody.innerHTML = `<p class="text-muted">No defenses scheduled for this date.</p>
+                <p class="small text-info">Available dates: ${(window.calendarSchedules || []).map(s => s.defense_date).join(', ')}</p>`;
+        } else {
+            let html = '';
+            events.forEach(schedule => {
+                const panelData = schedule.panel_data || {};
+                html += `
+                    <div class="border-bottom pb-3 mb-3">
+                        <h6 class="mb-1">${schedule.defense_type} - Group ${schedule.group_id}</h6>
+                        <p class="mb-1"><strong>Time:</strong> ${schedule.start_time} - ${schedule.end_time}</p>
+                        <p class="mb-1"><strong>Department:</strong> ${schedule.department} - ${schedule.section}</p>
+                        <p class="mb-1"><strong>Adviser:</strong> ${panelData.adviser || 'No Adviser'}</p>
+                        <p class="mb-0"><strong>Panel:</strong> ${panelData.chairperson || 'No Chair'}, ${panelData.members || 'No Members'}</p>
+                    </div>
+                `;
+            });
+            detailsBody.innerHTML = html;
+        }
+        
+        document.getElementById('date-details').style.display = 'block';
+    }
+
     function saveScheduleToDatabase(targetId) {
         const startTime = document.getElementById('start-time-input').value;
         const endTime = document.getElementById('end-time-input').value;
@@ -1322,6 +1904,8 @@
             }
         };
         
+        console.log('Sending schedule data:', scheduleData);
+        
         fetch('/defense-schedules', {
             method: 'POST',
             headers: {
@@ -1330,17 +1914,24 @@
             },
             body: JSON.stringify(scheduleData)
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success) {
                 simulateScheduleSuccess(targetId);
             } else {
-                showAlert('error', 'Save Failed', 'Failed to save schedule to database.');
+                showAlert('error', 'Save Failed', data.error || 'Failed to save schedule to database.');
             }
         })
         .catch(error => {
             console.error('Error saving schedule:', error);
-            showAlert('error', 'Save Failed', 'Failed to save schedule to database.');
+            showAlert('error', 'Save Failed', `Failed to save schedule: ${error.message}`);
         });
     }
 
@@ -1406,11 +1997,111 @@
         if (modalInstance) {
             modalInstance.hide();
         }
+        
+        // Save state before any potential reload
+        localStorage.setItem('currentView', 'schedule');
+        localStorage.setItem('selectedDept', document.getElementById('dept-select').value);
+        localStorage.setItem('selectedCluster', document.getElementById('cluster-select').value);
+        if (currentDefenseType === 'REDEFENSE') {
+            localStorage.setItem('selectedRedefenseType', document.getElementById('redefense-type-select').value);
+        }
     }
     
     document.addEventListener('DOMContentLoaded', function () {
+
+        const resetBtn = document.getElementById('resetAllSchedulesBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async function() {
+                const dept = document.getElementById('dept-select').value;
+                const cluster = document.getElementById('cluster-select').value;
+                const defenseType = currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType;
+                
+                const confirmed = await showConfirm('Reset All Schedules?', `This will delete all schedules for ${defenseType} in ${dept} (${cluster}). This action cannot be undone.`, 'Reset All', 'Cancel');
+                if (!confirmed) return;
+                
+                fetch(`/defense-schedules/reset?department=${dept}&section=${cluster}&defense_type=${defenseType}`, {
+                    method: 'DELETE',
+                    headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')}
+                })
+                .then(response => {
+                    console.log('Reset response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Reset response:', data);
+                    if (data.success) {
+                        document.querySelectorAll('.schedule-cell').forEach(cell => {
+                            const groupId = cell.getAttribute('data-schedule-target');
+                            const set = groupId.charAt(0);
+                            const group = groupId.substring(1);
+                            const row = cell.closest('tr');
+                            const btn = row.querySelector('.btn-set-schedule, .scheduled-container');
+                            const adviser = btn?.getAttribute('data-adviser') || 'No Adviser';
+                            const chair = btn?.getAttribute('data-chair') || 'No Chairperson';
+                            const members = btn?.getAttribute('data-members') || 'No Members';
+                            
+                            cell.innerHTML = `<button class="btn btn-set-schedule" data-bs-toggle="modal" data-bs-target="#scheduleModal" 
+                                data-group="${group}" data-cluster="" data-set="${set}" 
+                                data-adviser="${adviser}" data-chair="${chair}" data-members="${members}">
+                                <i class="bi bi-calendar-plus"></i> Set Schedule
+                            </button>`;
+                            updateGroupStatus(groupId, currentDefenseType, false, null);
+                        });
+                        showAlert('success', 'Schedules Reset', 'All schedules have been deleted successfully.');
+                    } else {
+                        showAlert('error', 'Reset Failed', data.error || 'Failed to reset schedules.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting schedules:', error);
+                    showAlert('error', 'Reset Failed', 'Failed to reset schedules.');
+                });
+            });
+        }
+
+        document.getElementById('aiScheduleBtn').addEventListener('click', async function() {
+            const adviser = document.getElementById('modal-adviser').textContent;
+            const chair = document.getElementById('modal-chairperson').textContent;
+            const members = document.getElementById('modal-members').textContent;
+            const today = new Date();
+            const dates = [];
+            let date = new Date(today);
+            let count = 0;
+            while (count < 5) {
+                date.setDate(date.getDate() + 1);
+                if (date.getDay() !== 0 && date.getDay() !== 6) {
+                    dates.push(date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }));
+                    count++;
+                }
+            }
+            const avail = {};
+            const panelNames = [adviser, chair, ...members.split(',').map(n => n.trim())].filter(n => n && n !== 'No Adviser' && n !== 'No Chairperson' && n !== 'No Members');
+            panelNames.forEach(name => { avail[name] = dates; });
+            
+            const processingModal = showAlert('info', 'Processing', 'AI analyzing schedule...');
+            const res = await getAISchedule({adviser, chair, members}, avail);
+            bootstrap.Modal.getInstance(document.getElementById('alertModal')).hide();
+            
+            if (res && res.schedule) {
+                const html = `<div class="mb-3"><h6 class="fw-bold">Recommended Schedule:</h6><p><strong>Date:</strong> ${res.schedule.date}</p><p><strong>Time:</strong> ${res.schedule.start_time} - ${res.schedule.end_time}</p><p><strong>Duration:</strong> ${res.schedule.duration_minutes} minutes</p></div><div class="mb-3"><h6 class="fw-bold">Panel Members:</h6>${res.panel_members ? res.panel_members.map(p => `<p><i class="bi bi-check-circle text-success"></i> ${p.name} (${p.role})</p>`).join('') : ''}</div>${res.smart_features?.alternative_slots?.length ? `<div class="alert alert-info"><strong>Alternative:</strong> ${res.smart_features.alternative_slots[0].date} at ${res.smart_features.alternative_slots[0].time}</div>` : ''}`;
+                document.getElementById('aiResultBody').innerHTML = html;
+                document.getElementById('applyAiSchedule').onclick = function() {
+                    const [year, month, day] = res.schedule.date.split('-');
+                    document.getElementById('date-actual-input').value = res.schedule.date;
+                    document.getElementById('date-display-input').value = `${month}/${day}/${year}`;
+                    document.getElementById('start-time-input').value = res.schedule.start_time;
+                    document.getElementById('end-time-input').value = res.schedule.end_time;
+                    bootstrap.Modal.getInstance(document.getElementById('aiResultModal')).hide();
+                    showAlert('success', 'Applied', 'AI schedule applied to form!');
+                };
+                new bootstrap.Modal(document.getElementById('aiResultModal')).show();
+            } else {
+                showAlert('error', 'Failed', 'AI scheduling failed. Please try again or set schedule manually.');
+            }
+        });
+
         const typeSelectionView = document.getElementById('type-selection-view');
-        const filterBar = document.getElementById('filter-bar');
+        const filterPage = document.getElementById('filter-page');
         const enterButton = document.getElementById('enterButton');
         const scheduleView = document.getElementById('schedule-view');
         const scheduleButton = document.getElementById('schedule-button');
@@ -1421,6 +2112,43 @@
         const clusterSelect = document.getElementById('cluster-select');
         const dateDisplayInput = document.getElementById('date-display-input');
         const dateActualInput = document.getElementById('date-actual-input');
+        
+        document.getElementById('showAvailabilityBtn').addEventListener('click', function() {
+            const scheduleModalEl = document.getElementById('scheduleModal');
+            const cluster = clusterSelect.value;
+            const dept = deptSelect.value;
+            const groupTarget = scheduleButton.getAttribute('data-group-target');
+            
+            // Fetch panels assigned to this specific group
+            fetch(`/api/assignments?department=${dept}&section=${cluster}`)
+                .then(r => r.json())
+                .then(assignments => {
+                    const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+                    
+                    let panelNames = [];
+                    if (assignment) {
+                        const adviser = assignment.adviser || 'No Adviser';
+                        const panels = assignment.panels || [];
+                        const chairperson = panels.find(p => p.role === 'Chairperson');
+                        const members = panels.filter(p => p.role === 'Member');
+                        
+                        if (adviser && adviser !== 'No Adviser') panelNames.push(adviser);
+                        if (chairperson && chairperson.name) panelNames.push(chairperson.name);
+                        members.forEach(m => { if (m.name) panelNames.push(m.name); });
+                    }
+                    
+                    setupAvailabilityModal(cluster, groupTarget, panelNames, dept);
+                    
+                    bootstrap.Modal.getInstance(scheduleModalEl).hide();
+                    setTimeout(() => {
+                        new bootstrap.Modal(document.getElementById('infoModal')).show();
+                    }, 300);
+                })
+                .catch(error => {
+                    console.error('Error fetching assignment panels:', error);
+                    showAlert('error', 'Error', 'Failed to load panel information.');
+                });
+        });
         
         // Check for URL parameters from panel-adviser or redefense redirect
         const urlParams = new URLSearchParams(window.location.search);
@@ -1433,9 +2161,7 @@
         if (department && cluster) {
             // Auto-select defense type based on URL parameter or default to PRE-ORAL
             currentDefenseType = defenseType || 'PRE-ORAL';
-            typeSelectionView.style.display = 'none';
-            filterBar.style.display = 'grid';
-            scheduleView.style.display = 'block';
+            showSchedulePage();
             
             document.getElementById('defense-type-display').textContent = `${currentDefenseType} SCHEDULING`;
             
@@ -1456,6 +2182,47 @@
             
             // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            // Restore saved defense type if no URL parameters
+            const savedDefenseType = localStorage.getItem('selectedDefenseType');
+            const savedView = localStorage.getItem('currentView');
+            const savedDept = localStorage.getItem('selectedDept');
+            const savedCluster = localStorage.getItem('selectedCluster');
+            const savedRedefenseType = localStorage.getItem('selectedRedefenseType');
+            
+            console.log('📦 Restored from localStorage:', {savedDefenseType, savedView, savedDept, savedCluster});
+            
+            if (savedDefenseType) {
+                currentDefenseType = savedDefenseType;
+                document.getElementById('defense-type-display').textContent = `${currentDefenseType} SCHEDULING`;
+                
+                const redefenseTypeGroup = document.getElementById('redefense-type-group');
+                if (currentDefenseType === 'REDEFENSE') {
+                    redefenseTypeGroup.style.display = 'block';
+                    if (savedRedefenseType) {
+                        document.getElementById('redefense-type-select').value = savedRedefenseType;
+                    }
+                } else {
+                    redefenseTypeGroup.style.display = 'none';
+                }
+                
+                if (savedView === 'schedule' && savedDept && savedCluster) {
+                    console.log('✅ Restoring schedule view...');
+                    deptSelect.value = savedDept;
+                    clusterSelect.value = savedCluster;
+                    showSchedulePage();
+                    updateScheduleView();
+                    console.log('🔄 Calling loadScheduleData...');
+                    setTimeout(() => loadScheduleData(), 200);
+                    if (currentDefenseType === 'FINAL DEFENSE') {
+                        loadEvaluationStatuses(savedDept, savedCluster);
+                    }
+                } else {
+                    showFilterPage();
+                    if (savedDept) deptSelect.value = savedDept;
+                    if (savedCluster) clusterSelect.value = savedCluster;
+                }
+            }
         }
 
         function updateScheduleView() {
@@ -1519,7 +2286,12 @@
             // For PRE-ORAL, fetch assignments but always show table even if none found
             if (currentDefenseType === 'PRE-ORAL') {
                 fetch('/api/assignments')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(assignments => {
                         const filteredAssignments = assignments.filter(assignment => 
                             assignment.department === dept && assignment.section === cluster
@@ -1539,25 +2311,28 @@
             
             // Regular assignment fetching for FINAL DEFENSE
             fetch('/api/assignments')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(assignments => {
                     const filteredAssignments = assignments.filter(assignment => 
                         assignment.department === dept && assignment.section === cluster
                     );
                     
-                    if (filteredAssignments.length > 0) {
-                        document.getElementById('schedule-content').style.display = 'block';
-                        document.getElementById('empty-state').style.display = 'none';
-                        updateTableWithAssignments(filteredAssignments);
-                    } else {
-                        document.getElementById('schedule-content').style.display = 'none';
-                        document.getElementById('empty-state').style.display = 'block';
-                    }
+                    // Always show the table for consistency
+                    document.getElementById('schedule-content').style.display = 'block';
+                    document.getElementById('empty-state').style.display = 'none';
+                    updateTableWithAssignments(filteredAssignments);
                 })
                 .catch(error => {
                     console.error('Error fetching assignments:', error);
-                    document.getElementById('schedule-content').style.display = 'none';
-                    document.getElementById('empty-state').style.display = 'block';
+                    // Show table with empty assignments on error
+                    document.getElementById('schedule-content').style.display = 'block';
+                    document.getElementById('empty-state').style.display = 'none';
+                    updateTableWithAssignments([]);
                 });
         }
         
@@ -1603,20 +2378,15 @@
                         const groupId = groupData.group_id;
                         const set = groupId.charAt(0);
                         const group = groupId.substring(1);
+                        const groupOffset = getGroupOffset(cluster);
+                        const displayNumber = set === 'B' ? parseInt(group) + 5 + groupOffset : parseInt(group) + groupOffset;
                         
                         const row = `
                             <tr data-group-id="${groupId}" data-set="${set}">
                                 <td class="cluster-value">${cluster}</td>
                                 <td class="set-value">${set}</td>
-                                <td>${group}</td>
+                                <td class="group-number" data-group-id="${groupId}">${displayNumber}</td>
                                 <td><span class="status-badge status-incomplete">Redefense Required</span></td>
-                                <td class="panel-details-table">
-                                    <div>
-                                        <strong>Adviser:</strong> ${adviser} <br>
-                                        <strong>Chairperson:</strong> ${chairName} <br>
-                                        Members: ${memberNames}
-                                    </div>
-                                </td>
                                 <td class="status-column" id="status-${groupId}">
                                     <span class="status-badge status-redefense">Re-defense</span>
                                 </td>
@@ -1639,20 +2409,15 @@
                         const groupId = groupData.group_id;
                         const set = groupId.charAt(0);
                         const group = groupId.substring(1);
+                        const groupOffset = getGroupOffset(cluster);
+                        const displayNumber = set === 'B' ? parseInt(group) + 5 + groupOffset : parseInt(group) + groupOffset;
                         
                         const row = `
                             <tr data-group-id="${groupId}" data-set="${set}">
                                 <td class="cluster-value">${cluster}</td>
                                 <td class="set-value">${set}</td>
-                                <td>${group}</td>
+                                <td class="group-number" data-group-id="${groupId}">${displayNumber}</td>
                                 <td><span class="status-badge status-incomplete">Redefense Required</span></td>
-                                <td class="panel-details-table">
-                                    <div>
-                                        <strong>Adviser:</strong> No Adviser <br>
-                                        <strong>Chairperson:</strong> No Chairperson <br>
-                                        Members: No Members
-                                    </div>
-                                </td>
                                 <td class="status-column" id="status-${groupId}">
                                     <span class="status-badge status-redefense">Re-defense</span>
                                 </td>
@@ -1674,54 +2439,58 @@
             const tbody = document.getElementById('schedule-table-body');
             tbody.innerHTML = '';
             
-            // Use first assignment for consistent data across all groups
-            const firstAssignment = assignments && assignments.length > 0 ? assignments[0] : null;
-            let adviser = 'No Adviser';
-            let chairName = 'No Chairperson';
-            let memberNames = 'No Members';
+            // Fetch fresh assignment data from API with error handling
+            const dept = deptSelect.value;
+            const cluster = clusterSelect.value;
             
-            if (firstAssignment) {
-                const panels = firstAssignment.panels || [];
-                const chairperson = panels.find(p => p.role === 'Chairperson');
-                const members = panels.filter(p => p.role === 'Member' || (p.role && p.role !== 'Chairperson'));
-                adviser = firstAssignment.adviser || 'No Adviser';
-                chairName = chairperson ? chairperson.name : 'No Chairperson';
-                memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
-            }
+            fetch('/api/assignments')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(apiAssignments => {
+                    const assignment = apiAssignments.find(a => a.department === dept && a.section === cluster);
+                    
+                    let adviser = 'No Adviser';
+                    let chairName = 'No Chairperson';
+                    let memberNames = 'No Members';
+                    
+                    if (assignment) {
+                        adviser = assignment.adviser || 'No Adviser';
+                        const panels = assignment.panels || [];
+                        const chairperson = panels.find(p => p.role === 'Chairperson');
+                        const members = panels.filter(p => p.role === 'Member');
+                        chairName = chairperson ? chairperson.name : 'No Chairperson';
+                        memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
+                    }
+                    
+                    generateTableRows(adviser, chairName, memberNames);
+                })
+                .catch(error => {
+                    console.error('Error fetching assignments:', error);
+                    // Generate table with default values on error
+                    generateTableRows('No Adviser', 'No Chairperson', 'No Members');
+                });
+        }
+        
+        function generateTableRows(adviser, chairName, memberNames) {
+            const tbody = document.getElementById('schedule-table-body');
             
             // Generate Set A: Groups 1-5
             for (let groupNumber = 1; groupNumber <= 5; groupNumber++) {
                 const groupId = 'A' + groupNumber;
                 const clusterCell = groupNumber === 1 ? `<td class="merged-cell cluster-value" rowspan="5">${clusterSelect.value}</td>` : '';
-                const panelCell = groupNumber === 1 ? `
-                    <td class="panel-details-table" rowspan="5"
-                        data-adviser="${adviser}" 
-                        data-chair="${chairName}" 
-                        data-members="${memberNames}" 
-                        data-panel-set="A">
-                        <div class="d-flex justify-content-center align-items-center position-relative">
-                            <div>
-                                <strong>Adviser:</strong> ${adviser} <br>
-                                <strong>Chairperson:</strong> ${chairName} <br>
-                                Members: ${memberNames}
-                            </div>
-                            <i class="bi bi-pencil-square panel-edit-icon position-absolute" 
-                                style="top: 5px; right: 5px;"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#panelEditModal" 
-                                data-panel-set="A">
-                            </i>
-                        </div>
-                    </td>` : '';
+                const groupOffset = getGroupOffset(clusterSelect.value);
+                const displayNumber = groupNumber + groupOffset;
                 
                 const dividerClass = groupNumber === 5 ? 'class="set-divider"' : '';
                 const row = `
                     <tr data-group-id="${groupId}" data-set="A" ${dividerClass}>
                         ${clusterCell}
-                        <td class="set-value">A</td>
-                        <td>${groupNumber}</td>
+                        <td class="group-number" data-group-id="${groupId}">${displayNumber}</td>
                         <td><span class="status-badge status-completed">Completed</span></td>
-                        ${panelCell}
                         <td class="status-column" id="status-${groupId}">
                             <span class="status-badge status-pending">Pending</span>
                         </td>
@@ -1740,44 +2509,24 @@
             // Add divider row
             const dividerRow = `
                 <tr class="divider-row">
-                    <td colspan="7" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
+                    <td colspan="5" style="height: 1px; padding: 0; border-bottom: 1px solid #666; background-color: transparent;"></td>
                 </tr>
             `;
             tbody.innerHTML += dividerRow;
             
-            // Generate Set B: Groups 1-5
+            // Generate Set B: Groups 6-10
             for (let groupNumber = 1; groupNumber <= 5; groupNumber++) {
                 const groupId = 'B' + groupNumber;
                 const borderStyle = groupNumber === 1 ? 'style="border-top: 3px solid #333;"' : '';
                 const clusterCell = groupNumber === 1 ? `<td class="merged-cell cluster-value" rowspan="5">${clusterSelect.value}</td>` : '';
-                const panelCell = groupNumber === 1 ? `
-                    <td class="panel-details-table" rowspan="5"
-                        data-adviser="${adviser}" 
-                        data-chair="${chairName}" 
-                        data-members="${memberNames}" 
-                        data-panel-set="B">
-                        <div class="d-flex justify-content-center align-items-center position-relative">
-                            <div>
-                                <strong>Adviser:</strong> ${adviser} <br>
-                                <strong>Chairperson:</strong> ${chairName} <br>
-                                Members: ${memberNames}
-                            </div>
-                            <i class="bi bi-pencil-square panel-edit-icon position-absolute" 
-                                style="top: 5px; right: 5px;"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#panelEditModal" 
-                                data-panel-set="B">
-                            </i>
-                        </div>
-                    </td>` : '';
+                const groupOffset = getGroupOffset(clusterSelect.value);
+                const displayNumber = groupNumber + 5 + groupOffset;
                 
                 const row = `
                     <tr data-group-id="${groupId}" data-set="B" ${borderStyle}>
                         ${clusterCell}
-                        <td class="set-value">B</td>
-                        <td>${groupNumber}</td>
+                        <td class="group-number" data-group-id="${groupId}">${displayNumber}</td>
                         <td><span class="status-badge status-completed">Completed</span></td>
-                        ${panelCell}
                         <td class="status-column" id="status-${groupId}">
                             <span class="status-badge status-pending">Pending</span>
                         </td>
@@ -1792,50 +2541,139 @@
                 `;
                 tbody.innerHTML += row;
             }
+            
+            // Load existing schedules after table is generated
+            setTimeout(() => loadScheduleData(), 100);
+        }
+
+        // Navigation functions
+        function showTypeSelection() {
+            typeSelectionView.classList.remove('hidden');
+            filterPage.classList.add('hidden');
+            scheduleView.style.display = 'none';
+        }
+        
+        function showFilterPage() {
+            typeSelectionView.classList.add('hidden');
+            filterPage.classList.remove('hidden');
+            scheduleView.style.display = 'none';
+        }
+        
+        function showSchedulePage() {
+            typeSelectionView.classList.add('hidden');
+            filterPage.classList.add('hidden');
+            scheduleView.style.display = 'block';
         }
 
         document.querySelectorAll('.defense-type-button').forEach(button => {
             button.addEventListener('click', function() {
                 currentDefenseType = this.getAttribute('data-defense-type');
-                
-                typeSelectionView.style.display = 'none';
-                filterBar.style.display = 'grid';
-                scheduleView.style.display = 'block';
-
-                document.getElementById('defense-type-display').textContent = `${currentDefenseType} SCHEDULING`;
-                
-                // Show/hide defense type dropdown for Re-defense
+                localStorage.setItem('selectedDefenseType', currentDefenseType);
+                localStorage.setItem('currentView', 'filter');
+                showFilterPage();
+                document.getElementById('defense-type-display').textContent = currentDefenseType + ' SCHEDULING';
                 const redefenseTypeGroup = document.getElementById('redefense-type-group');
                 if (currentDefenseType === 'REDEFENSE') {
                     redefenseTypeGroup.style.display = 'block';
                 } else {
                     redefenseTypeGroup.style.display = 'none';
                 }
-                
                 deptSelect.value = '';
                 clusterSelect.value = '';
                 document.getElementById('redefense-type-select').value = '';
-                updateScheduleView();
             });
+        });
+        
+        // Update cluster/section options based on department
+        deptSelect.addEventListener('change', function() {
+            const clusterSelect = document.getElementById('cluster-select');
+            const clusterLabel = document.getElementById('cluster-label');
+            const clusterHeader = document.getElementById('cluster-header');
+            
+            clusterSelect.innerHTML = '';
+            
+            if (this.value === 'BSIT') {
+                clusterLabel.textContent = 'Cluster';
+                if (clusterHeader) clusterHeader.textContent = 'Cluster';
+                clusterSelect.innerHTML = `
+                    <option selected disabled value="">Select Cluster</option>
+                    <option value="4101">4101</option>
+                    <option value="4102">4102</option>
+                    <option value="4103">4103</option>
+                    <option value="4104">4104</option>
+                    <option value="4105">4105</option>
+                    <option value="4106">4106</option>
+                    <option value="4107">4107</option>
+                    <option value="4108">4108</option>
+                    <option value="4109">4109</option>
+                    <option value="4110">4110</option>
+                `;
+            } else {
+                clusterLabel.textContent = 'Section';
+                if (clusterHeader) clusterHeader.textContent = 'Section';
+                clusterSelect.innerHTML = `
+                    <option selected disabled value="">Select Section</option>
+                    <option value="Section 1">Section 1</option>
+                    <option value="Section 2">Section 2</option>
+                    <option value="Section 3">Section 3</option>
+                    <option value="Section 4">Section 4</option>
+                    <option value="Section 5">Section 5</option>
+                `;
+            }
+        });
+        
+        document.getElementById('backToFilterButton').addEventListener('click', function() {
+            localStorage.removeItem('selectedDefenseType');
+            localStorage.removeItem('currentView');
+            localStorage.removeItem('selectedDept');
+            localStorage.removeItem('selectedCluster');
+            localStorage.removeItem('selectedRedefenseType');
+            showTypeSelection();
+        });
+        
+        document.getElementById('backToFilterFromSchedule').addEventListener('click', function() {
+            showFilterPage();
         });
 
         enterButton.addEventListener('click', () => {
+            const dept = deptSelect.value;
+            const cluster = clusterSelect.value;
+            const redefenseType = document.getElementById('redefense-type-select').value;
+            
+            localStorage.setItem('currentView', 'schedule');
+            localStorage.setItem('selectedDept', dept);
+            localStorage.setItem('selectedCluster', cluster);
+            if (currentDefenseType === 'REDEFENSE') {
+                localStorage.setItem('selectedRedefenseType', redefenseType);
+            }
+            
+            showSchedulePage();
             updateScheduleView();
-            setTimeout(() => {
-                loadScheduleData();
-                // For Final Defense, also update statuses based on Pre-Oral results
-                if (currentDefenseType === 'FINAL DEFENSE') {
-                    const dept = deptSelect.value;
-                    const cluster = clusterSelect.value;
-                    if (dept && cluster) {
-                        loadEvaluationStatuses(dept, cluster);
-                    }
+            loadScheduleData();
+            if (currentDefenseType === 'FINAL DEFENSE') {
+                const dept = deptSelect.value;
+                const cluster = clusterSelect.value;
+                if (dept && cluster) {
+                    loadEvaluationStatuses(dept, cluster);
                 }
-            }, 500);
+            }
         });
         document.getElementById('redefense-type-select').addEventListener('change', () => {
             updateScheduleView();
-            setTimeout(loadScheduleData, 500);
+            loadScheduleData();
+        });
+        
+        // Load schedules when department or cluster changes
+        deptSelect.addEventListener('change', () => {
+            if (document.getElementById('schedule-view').style.display === 'block') {
+                setTimeout(() => loadScheduleData(), 100);
+            }
+        });
+        
+        clusterSelect.addEventListener('change', () => {
+            if (document.getElementById('schedule-view').style.display === 'block') {
+                setTimeout(() => loadScheduleData(), 100);
+            }
         });
         
         document.getElementById('calendar-icon').addEventListener('click', () => {
@@ -1881,9 +2719,9 @@
             
             const panelCell = document.querySelector(`.panel-details-table[data-panel-set="${set}"]`);
 
-            const adviser = panelCell.getAttribute('data-adviser');
-            const chair = panelCell.getAttribute('data-chair');
-            const members = panelCell.getAttribute('data-members');
+            const adviser = button.getAttribute('data-adviser') || 'No Adviser';
+            const chair = button.getAttribute('data-chair') || 'No Chairperson';
+            const members = button.getAttribute('data-members') || 'No Members';
 
             document.getElementById('modal-title-display').textContent = `Schedule Defense: C${cluster} Set ${set} (Group ${group})`;
             document.getElementById('modal-adviser').textContent = adviser;
@@ -1906,9 +2744,6 @@
             }
             
             document.getElementById('set-input').value = set;
-            
-            let panelNames = [adviser, chair].concat(members.split(',').map(m => m.trim())).filter(name => name);
-            setupAvailabilityModal(cluster, set, panelNames);
         });
 
         panelEditModal.addEventListener('show.bs.modal', function(event) {
@@ -1979,7 +2814,15 @@
                         }
                     }
                     
-                    saveScheduleToDatabase(targetId);
+                    // Check if this is Group 1 and auto-schedule other groups
+                    const groupNumber = parseInt(targetId.substring(1));
+                    const setLetter = targetId.charAt(0);
+                    
+                    if (groupNumber === 1) {
+                        autoScheduleGroups(setLetter, dateActual, startTime, endTime, adviser, chair, members);
+                    } else {
+                        saveScheduleToDatabase(targetId);
+                    }
                 })
                 .catch(error => {
                     console.error('Error checking availability:', error);
@@ -2002,12 +2845,98 @@
             }, 100); 
         });
         
-        if (!currentDefenseType) {
-             scheduleView.style.display = 'none';
+
+        
+        // Initialize page visibility based on saved state
+        const initialView = localStorage.getItem('currentView');
+        if (!initialView || (!urlParams.get('department') && !localStorage.getItem('selectedDefenseType'))) {
+            typeSelectionView.classList.remove('hidden');
+            filterPage.classList.add('hidden');
+            scheduleView.style.display = 'none';
         }
         
         enableStatusChecks();
         
+        // Group info modal - click handler
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('group-number')) {
+                const groupId = e.target.getAttribute('data-group-id');
+                const displayNumber = e.target.textContent;
+                const row = e.target.closest('tr');
+                const dept = deptSelect.value;
+                const cluster = clusterSelect.value || row.querySelector('.cluster-value')?.textContent || '-';
+                const status = row.querySelector('.status-badge')?.textContent || 'Pending';
+                
+                // Get panel data from the schedule button in the same row
+                const scheduleButton = row.querySelector('.btn-set-schedule, .scheduled-container');
+                
+                let adviser = 'Dr. Sample Adviser';
+                let chairName = 'Dr. Sample Chair';
+                let memberNames = 'Prof. Member 1, Prof. Member 2';
+                
+                if (scheduleButton) {
+                    adviser = scheduleButton.getAttribute('data-adviser') || 'Dr. Sample Adviser';
+                    chairName = scheduleButton.getAttribute('data-chair') || 'Dr. Sample Chair';
+                    memberNames = scheduleButton.getAttribute('data-members') || 'Prof. Member 1, Prof. Member 2';
+                }
+                
+                // Update modal content
+                document.getElementById('groupInfoTitle').textContent = `Group ${displayNumber}`;
+                document.getElementById('groupDept').textContent = dept || '-';
+                document.getElementById('groupCluster').textContent = cluster;
+                document.getElementById('groupStatus').textContent = status;
+                document.getElementById('groupAdviser').textContent = adviser;
+                document.getElementById('groupChair').textContent = chairName;
+                document.getElementById('groupPanelMembers').textContent = memberNames;
+                
+                // Fetch student data from groups table
+                fetchGroupStudents(displayNumber, dept)
+                    .then(students => {
+                        let membersHtml = '<ul class="list-unstyled mb-0">';
+                        students.forEach((student) => {
+                            const leaderBadge = student.is_leader ? ' <span class="badge bg-primary">Leader</span>' : '';
+                            membersHtml += `<li>${student.name} (${student.student_id})${leaderBadge}</li>`;
+                        });
+                        membersHtml += '</ul>';
+                        
+                        document.getElementById('groupMembers').innerHTML = membersHtml || '<p class="text-muted">No members found</p>';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching group students:', error);
+                        document.getElementById('groupMembers').innerHTML = '<p class="text-muted">Error loading student data</p>';
+                    });
+                
+                new bootstrap.Modal(document.getElementById('groupInfoModal')).show();
+            }
+        });
+
+        // Calendar view button
+        document.getElementById('calendar-view-btn').addEventListener('click', function() {
+            typeSelectionView.classList.add('hidden');
+            scheduleView.style.display = 'none';
+            filterPage.classList.add('hidden');
+            document.getElementById('calendar-view').style.display = 'block';
+            loadCalendarData();
+        });
+
+        // Back to selection button
+        document.getElementById('back-to-selection').addEventListener('click', function() {
+            document.getElementById('calendar-view').style.display = 'none';
+            typeSelectionView.classList.remove('hidden');
+            scheduleView.style.display = 'none';
+            filterPage.classList.add('hidden');
+        });
+
+        // Calendar navigation
+        document.getElementById('prev-month').addEventListener('click', function() {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('next-month').addEventListener('click', function() {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
 
     });
 </script>

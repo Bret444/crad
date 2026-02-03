@@ -26,7 +26,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['department', 'section', 'defense_type']);
-            $table->unique(['group_id', 'department', 'section', 'defense_type']);
+            $table->unique(['group_id', 'department', 'section', 'defense_type'], 'defense_schedules_unique');
         });
     }
 

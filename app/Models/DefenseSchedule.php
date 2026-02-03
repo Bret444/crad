@@ -27,9 +27,7 @@ class DefenseSchedule extends Model
 
     protected $casts = [
         'panel_data' => 'array',
-        'defense_date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i'
+        'defense_date' => 'date'
     ];
 
     public function assignment()

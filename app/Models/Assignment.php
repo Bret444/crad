@@ -9,7 +9,11 @@ class Assignment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['department', 'section', 'adviser_id'];
+    protected $fillable = ['department', 'section', 'group_number', 'adviser_id'];
+
+    protected $casts = [
+        'group_number' => 'array',
+    ];
 
     public function panels()
     {
@@ -18,7 +22,7 @@ class Assignment extends Model
 
     public function adviser()
     {
-        return $this->belongsTo(Adviser::class);
+        return $this->belongsTo(Adviser::class)->withTrashed();
     }
 
     public function assignmentPanels()

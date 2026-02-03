@@ -11,26 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('defense_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->string('department');
-            $table->string('section');
-            $table->string('group_id');
-            $table->string('defense_type');
-            $table->string('original_defense_type')->nullable();
-            $table->unsignedBigInteger('assignment_id')->nullable();
-            $table->date('defense_date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->string('set_letter');
-            $table->string('status')->default('scheduled');
-            $table->json('panel_data')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-            
-            $table->index(['department', 'section', 'defense_type']);
-            $table->index(['group_id', 'defense_type']);
-        });
+        // Table already created by 2024_01_01_000000_create_defense_schedules_table migration
+        // This migration is a duplicate and no longer needed
     }
 
     /**

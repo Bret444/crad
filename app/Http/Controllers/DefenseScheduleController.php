@@ -27,6 +27,14 @@ class DefenseScheduleController extends Controller
     public function store(Request $request)
     {
         try {
+            \Log::info('Defense Schedule Store Request', $request->all());
+            
+            // Check if table exists
+            if (!\Schema::hasTable('defense_schedules')) {
+                \Log::error('defense_schedules table does not exist');
+                return response()->json(['success' => false, 'error' => 'Database table does not exist. Please run migrations.'], 500);
+            }
+            
             $validated = $request->validate([
                 'department' => 'required|string',
                 'section' => 'required|string', 
@@ -42,6 +50,8 @@ class DefenseScheduleController extends Controller
                 'panel_data' => 'nullable|array'
             ]);
             
+            \Log::info('Validation passed', $validated);
+            
             if (!$validated['assignment_id']) {
                 $validated['assignment_id'] = 1;
             }
@@ -49,6 +59,8 @@ class DefenseScheduleController extends Controller
             if (!isset($validated['status'])) {
                 $validated['status'] = 'scheduled';
             }
+
+            \Log::info('Saving Defense Schedule', $validated);
 
             $schedule = DefenseSchedule::updateOrCreate(
                 [
@@ -60,9 +72,15 @@ class DefenseScheduleController extends Controller
                 $validated
             );
 
-            return response()->json(['success' => true]);
+            \Log::info('Schedule Saved Successfully', ['id' => $schedule->id, 'data' => $schedule->toArray()]);
+
+            return response()->json(['success' => true, 'schedule' => $schedule]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation Error', ['errors' => $e->errors()]);
+            return response()->json(['success' => false, 'error' => 'Validation failed', 'details' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
+            \Log::error('Schedule Save Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -76,6 +94,17 @@ class DefenseScheduleController extends Controller
 
         // Handle status changes
         if ($request->status === 'Passed' && $defenseSchedule->defense_type === 'PRE-ORAL') {
+            // Update cluster for BSIT groups after passing pre-oral
+            $group = \App\Models\Group::where('group_number', $defenseSchedule->group_id)
+                ->where('department', $defenseSchedule->department)
+                ->first();
+            
+            if ($group && $group->department === 'BSIT') {
+                $newCluster = $group->updateClusterAfterPreOral();
+                $defenseSchedule->section = $newCluster;
+                $defenseSchedule->save();
+            }
+            
             // Check if FINAL DEFENSE already exists for this group
             $existingFinalDefense = DefenseSchedule::where([
                 'department' => $defenseSchedule->department,
@@ -117,6 +146,8 @@ class DefenseScheduleController extends Controller
 
     public function getByType(Request $request)
     {
+        \Log::info('getByType called', $request->all());
+        
         $query = DefenseSchedule::with('assignment.adviser', 'assignment.assignmentPanels')
             ->where('defense_type', $request->defense_type);
 
@@ -133,6 +164,8 @@ class DefenseScheduleController extends Controller
         }
 
         $schedules = $query->get();
+        
+        \Log::info('getByType result', ['count' => $schedules->count(), 'schedules' => $schedules->toArray()]);
 
         return response()->json($schedules);
     }
@@ -269,10 +302,32 @@ class DefenseScheduleController extends Controller
         foreach ($validated['panel_names'] as $panelName) {
             $availability[$panelName] = [];
             
+            // Get panel availability from Panel model
+            $panel = Panel::where('name', $panelName)
+                ->where('department', $validated['department'])
+                ->whereNull('deleted_at')
+                ->first();
+            
+            $panelAvailability = [];
+            if ($panel && $panel->availability) {
+                $panelAvailability = is_string($panel->availability) ? json_decode($panel->availability, true) : $panel->availability;
+            }
+            
             foreach ($validated['dates'] as $date) {
                 $conflicts = [];
+                $isAvailable = false;
                 
-                // Check for existing schedules on this date
+                // Check panel's set availability
+                if (!empty($panelAvailability)) {
+                    foreach ($panelAvailability as $avail) {
+                        if (isset($avail['date']) && $avail['date'] === $date) {
+                            $isAvailable = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Check for existing defense schedules on this date
                 $existingSchedules = DefenseSchedule::where('defense_date', $date)
                     ->whereNotNull('start_time')
                     ->whereNotNull('end_time')
@@ -297,12 +352,13 @@ class DefenseScheduleController extends Controller
                         }
                         
                         if ($isInvolved) {
-                            $conflicts[] = $schedule->defense_type . ' (' . $role . ') ' . $schedule->start_time . '-' . $schedule->end_time . ' Group ' . $schedule->group_id;
+                            $conflicts[] = 'Scheduled: ' . $schedule->defense_type . ' (' . $role . ') ' . $schedule->start_time . '-' . $schedule->end_time . ' Group ' . $schedule->group_id;
                         }
                     }
                 }
                 
                 $availability[$panelName][$date] = [
+                    'available' => $isAvailable,
                     'conflicts' => $conflicts
                 ];
             }
@@ -311,5 +367,37 @@ class DefenseScheduleController extends Controller
         return response()->json([
             'availability' => $availability
         ]);
+    }
+
+    public function resetSchedules(Request $request)
+    {
+        $validated = $request->validate([
+            'department' => 'required|string',
+            'section' => 'required|string',
+            'defense_type' => 'required|string'
+        ]);
+
+        DefenseSchedule::where('department', $validated['department'])
+            ->where('section', $validated['section'])
+            ->where('defense_type', $validated['defense_type'])
+            ->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function getCalendarData()
+    {
+        \Log::info('getCalendarData called');
+        
+        $schedules = DefenseSchedule::whereNotNull('defense_date')
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->orderBy('defense_date')
+            ->orderBy('start_time')
+            ->get();
+
+        \Log::info('Calendar schedules found', ['count' => $schedules->count(), 'schedules' => $schedules->toArray()]);
+
+        return response()->json($schedules);
     }
 }

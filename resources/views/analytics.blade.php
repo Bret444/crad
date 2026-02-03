@@ -66,6 +66,46 @@
         </div>
     </div>
 
+    <!-- Defense Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #0d6efd;">
+                <div class="card-body">
+                    <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                    <h6>Total Defenses</h6>
+                    <p class="fs-4 fw-bold">{{ $totalDefenseSchedules ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #198754;">
+                <div class="card-body">
+                    <i class="fas fa-check-double fa-2x text-success mb-2"></i>
+                    <h6>Passed</h6>
+                    <p class="fs-4 fw-bold text-success">{{ $passedDefenses ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                    <i class="fas fa-times fa-2x text-danger mb-2"></i>
+                    <h6>Failed</h6>
+                    <p class="fs-4 fw-bold text-danger">{{ $failedDefenses ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #ffc107;">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x text-warning mb-2"></i>
+                    <h6>Scheduled</h6>
+                    <p class="fs-4 fw-bold text-warning">{{ $scheduledDefenses ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Completion Rate -->
     <div class="row mb-4">
         <div class="col-md-12">
@@ -85,7 +125,7 @@
 
     <!-- Charts -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <i class="fas fa-chart-bar"></i> Submissions by Status
@@ -95,7 +135,17 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-chart-pie"></i> Defense Results
+                </div>
+                <div class="card-body">
+                    <canvas id="defenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white">
                     <i class="fas fa-chart-pie"></i> Department Distribution
@@ -106,6 +156,55 @@
             </div>
         </div>
     </div>
+
+    <!-- Defense Type Statistics -->
+    @if(isset($defenseTypeStats) && $defenseTypeStats->count() > 0)
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <i class="fas fa-graduation-cap"></i> Defense Type Statistics
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Defense Type</th>
+                            <th>Total</th>
+                            <th>Passed</th>
+                            <th>Failed</th>
+                            <th>Scheduled</th>
+                            <th>Pending</th>
+                            <th>Success Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($defenseTypeStats as $stat)
+                            <tr>
+                                <td><strong>{{ $stat->defense_type }}</strong></td>
+                                <td>{{ $stat->total }}</td>
+                                <td><span class="badge bg-success">{{ $stat->passed }}</span></td>
+                                <td><span class="badge bg-danger">{{ $stat->failed }}</span></td>
+                                <td><span class="badge bg-info">{{ $stat->scheduled }}</span></td>
+                                <td><span class="badge bg-warning">{{ $stat->pending }}</span></td>
+                                <td>
+                                    @php
+                                        $evaluated = $stat->passed + $stat->failed;
+                                        $rate = $evaluated > 0 ? round(($stat->passed / $evaluated) * 100, 1) : 0;
+                                    @endphp
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: {{ $rate }}%">
+                                            {{ $rate }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Department Statistics Table -->
     <div class="card shadow-sm mb-4">
@@ -198,6 +297,64 @@
         </div>
     </div>
 
+    <!-- Recent Defense Schedules -->
+    @if(isset($recentDefenseSchedules) && $recentDefenseSchedules->count() > 0)
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-calendar-alt"></i> Recent Defense Schedules
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Group</th>
+                            <th>Defense Type</th>
+                            <th>Department</th>
+                            <th>Section</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentDefenseSchedules as $schedule)
+                            <tr>
+                                <td><strong>{{ $schedule->group_id }}</strong></td>
+                                <td>{{ $schedule->defense_type }}</td>
+                                <td>{{ $schedule->department }}</td>
+                                <td>{{ $schedule->section }}</td>
+                                <td>
+                                    @if($schedule->defense_date && $schedule->defense_date != '1970-01-01')
+                                        {{ \Carbon\Carbon::parse($schedule->defense_date)->format('M d, Y') }}
+                                    @else
+                                        <span class="text-muted">Not set</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($schedule->start_time && $schedule->end_time)
+                                        {{ $schedule->start_time }} - {{ $schedule->end_time }}
+                                    @else
+                                        <span class="text-muted">Not set</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {{ $schedule->status == 'Passed' ? 'bg-success' : 
+                                           ($schedule->status == 'Failed' ? 'bg-danger' : 
+                                           ($schedule->status == 'Scheduled' ? 'bg-info' : 'bg-warning')) }}">
+                                        {{ $schedule->status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Export -->
     <div class="text-end no-print">
         <button class="btn btn-outline-primary" onclick="window.print()">
@@ -227,6 +384,26 @@
             plugins: {
                 legend: {
                     display: false
+                }
+            }
+        }
+    });
+
+    // Defense Chart
+    new Chart(document.getElementById("defenseChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["Passed", "Failed", "Scheduled", "Pending"],
+            datasets: [{
+                data: [{{ $passedDefenses ?? 0 }}, {{ $failedDefenses ?? 0 }}, {{ $scheduledDefenses ?? 0 }}, {{ $pendingDefenses ?? 0 }}],
+                backgroundColor: ["#198754", "#dc3545", "#0d6efd", "#ffc107"]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
                 }
             }
         }

@@ -144,6 +144,9 @@
         font-size: 1.2rem;
       }
     }
+
+    
+
   </style>
 </head>
 
@@ -153,6 +156,8 @@
     <!-- Login Form Column -->
     <div class="login-form-container">
       <div class="login-form-wrapper">
+        
+
         <div class="text-center mb-4">
           <img src="{{ asset('img/sms.png') }}" alt="Logo" style="width: 90px;">
           <h2 class="mt-3 fw-bold">Sign in</h2>
@@ -170,8 +175,8 @@
           @endif
           @csrf
           <div class="mb-3">
-            <label for="email" class="form-label">Username <span class="text-danger">*</span></label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus>
+            <label for="email" class="form-label">ID/Username<span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus>
           </div>
 
           <div class="mb-4">
@@ -194,6 +199,27 @@
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel">Login Successful!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+          <p class="mt-3">You have successfully logged in to your account.</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-primary" id="continueBtn">Continue to Dashboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
@@ -215,16 +241,25 @@
       const email = emailInput.value.trim();
       if (!email) return;
       
-      fetch('/check-lockout?email=' + encodeURIComponent(email))
-        .then(response => response.json())
-        .then(data => {
-          if (data.locked && data.seconds > 0) {
-            startLockoutTimer(data.seconds);
-          } else {
-            clearLockout();
-          }
+      fetch('/check-lockout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+        },
+        body: JSON.stringify({
+          email: email
         })
-        .catch(() => clearLockout());
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.locked && data.seconds > 0) {
+          startLockoutTimer(data.seconds);
+        } else {
+          clearLockout();
+        }
+      })
+      .catch(() => clearLockout());
     }
 
     // Start lockout timer
@@ -244,12 +279,12 @@
       
       // Update timer
       function updateTimer() {
-        if (seconds <= 0) {
-          clearLockout();
-          return;
-        }
         lockoutDiv.innerHTML = `🔒 Too many attempts. Try again in <strong>${seconds}</strong> seconds.`;
         seconds--;
+        if (seconds < 0) {
+          clearLockout();
+          location.reload();
+        }
       }
       
       updateTimer();
@@ -300,6 +335,34 @@
       startLockoutTimer({{ session('lockout_seconds') }});
     @endif
 
+    // Show success modal if login was successful
+    @if(session('login_success'))
+      document.addEventListener('DOMContentLoaded', function() {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+        
+        document.getElementById('continueBtn').addEventListener('click', function() {
+          window.location.href = '{{ session('redirect_url') }}';
+        });
+      });
+    @endif
+
+    // Handle URL parameters for success modal
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('login_success') === '1') {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+        
+        document.getElementById('continueBtn').addEventListener('click', function() {
+          window.location.href = decodeURIComponent(urlParams.get('redirect') || '/std-dashboard');
+        });
+      }
+    });
+
   </script>
+
+  
+
 </body>
 </html>

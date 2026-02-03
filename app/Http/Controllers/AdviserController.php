@@ -51,27 +51,55 @@ class AdviserController extends Controller
         return view('panel-adviser', compact('advisers', 'panels', 'submissions'));
     }
         public function store(Request $request) {
-        Adviser::create($request->all());
+        $data = $request->all();
+        if ($request->filled('others_expertise')) {
+            $data['expertise'] = $request->others_expertise;
+        }
+        
+        // Handle group_number array - store as sections for backward compatibility
+        if ($request->has('group_number')) {
+            $data['sections'] = $request->group_number;
+        } else {
+            $data['sections'] = [];
+        }
+        
+        Adviser::create($data);
         return back()->with('success', 'Adviser added successfully.');
     }
 
     public function update(Request $request, $id)
-{
-    $adviser = Adviser::findOrFail($id);
-    
-    $adviser->department = $request->department;
-    $adviser->name = $request->name;
-    $adviser->expertise = $request->expertise;
-    $adviser->sections = $request->sections ?? [];
-    $adviser->save();
-    
-    return redirect('/panel-adviser')->with('success', 'Adviser updated successfully.');
-}
+    {
+        $adviser = Adviser::findOrFail($id);
+        
+        $adviser->name = $request->name;
+        $adviser->expertise = $request->filled('others_expertise') ? $request->others_expertise : $request->expertise;
+        $adviser->save();
+        
+        return back()->with('success', 'Adviser updated successfully.');
+    }
+
+    public function manageAdvisory(Request $request, $id)
+    {
+        $adviser = Adviser::findOrFail($id);
+        
+        $newGroups = $request->has('group_number') ? array_map('intval', $request->group_number) : [];
+        
+        $adviser->sections = $newGroups;
+        $adviser->save();
+        
+        return response()->json(['success' => true, 'message' => 'Advisory groups updated successfully']);
+    }
 
 
     public function getAdvisersByDepartment($department)
     {
         $advisers = Adviser::where('department', $department)->get();
+        return response()->json($advisers);
+    }
+
+    public function apiAdvisers()
+    {
+        $advisers = Adviser::whereNull('deleted_at')->get();
         return response()->json($advisers);
     }
 
