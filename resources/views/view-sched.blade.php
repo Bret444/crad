@@ -176,7 +176,6 @@
     @else
         <div class="alert alert-info text-center shadow-sm">
             <i class="fas fa-info-circle"></i> No defense schedules available yet.
-            <br><small class="text-muted">Mapped to Group ID: A1 | Looking for schedules in BSIT, Cluster 4101</small>
         </div>
     @endif
 </div>

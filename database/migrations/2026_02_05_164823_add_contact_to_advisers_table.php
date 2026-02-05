@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('defense_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('advisers', function (Blueprint $table) {
+            $table->string('contact')->nullable()->after('name');
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('defense_schedules');
+        Schema::table('advisers', function (Blueprint $table) {
+            $table->dropColumn('contact');
+        });
     }
 };

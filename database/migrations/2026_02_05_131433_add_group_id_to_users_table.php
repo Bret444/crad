@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('groups', function (Blueprint $table) {
-            $table->string('group_number')->after('group_id');
-            $table->integer('leader_member')->default(1)->after('department');
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('group_id')->nullable();
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('groups', function (Blueprint $table) {
-            $table->dropColumn(['group_number', 'leader_member']);
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('group_id');
         });
     }
 };

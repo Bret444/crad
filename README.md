@@ -1,61 +1,49 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# School Management System 3: CRAD with Smart Event Scheduling 🚀
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+<div align="center">
 
-## About Laravel
+### 🖥️ CRAD SYSTEM TERMINAL
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&duration=2000&pause=1000&color=00D26A&center=true&vCenter=true&width=600&height=120&lines=%5B%E2%9E%A4%5D+Initializing+CRAD+Database...;%5B%E2%9C%93%5D+Database+COMPLETE;%5B%E2%9E%A4%5D+Loading+Cluster+7+Modules...;%5B%E2%9C%93%5D+Modules+LOADED;%5B%E2%9E%A4%5D+Conflict+Detection+Engine%3A+ONLINE;%5B%F0%9F%9F%A2%5D+System+Status%3A+READY" alt="Terminal Animation" />
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+![Status](https://img.shields.io/badge/Status-READY-success?style=for-the-badge)
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
+![Laravel](https://img.shields.io/badge/Laravel-10.x-red?style=for-the-badge&logo=laravel)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=667EEA&center=true&vCenter=true&width=600&lines=Smart+Event+Scheduling+System;Conflict+Detection+Engine;Real-time+Research+Management;Bestlink+College+of+the+Philippines" alt="Typing SVG" />
 
-## Learning Laravel
+</div>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 📝 Executive Summary
+The **Center for Research and Development (CRAD)** system at Bestlink College of the Philippines automates the research lifecycle. It replaces manual spreadsheets with a smart platform that manages proposal tracking and event scheduling, specifically solving the problem of overlapping defense schedules through an intelligent conflict-detection algorithm.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-## Laravel Sponsors
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠 Tech Stack
+* **Backend:** Laravel (PHP) 🐘
+* **Frontend:** HTML, CSS, JavaScript 🌐
+* **Database:** MySQL 🗄️
+* **Architecture:** Microservices & DevOps 🏗️
 
-### Premium Partners
+## ✨ Key Features
+* **Smart Scheduling:** Automatically cross-references room availability with panelist and student schedules.
+* **Centralized Repository:** A single source of truth for all research manuscripts.
+* **Real-time Monitoring:** Dashboards for CRAD staff to track progress and reduce clerical errors.
+* **Automated Alerts:** Notifications for deadlines and defense schedules.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🚀 Future Roadmap
+* **AI Buffer Timing:** Machine Learning to predict defense durations.
+* **Mobile Integration:** Android/iOS app for instant push alerts.
+* **Digital Signatures:** Paperless approval workflow for panelists.
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 👥 Development Team (Cluster 7)
+| Role | Name |
+| :--- | :--- |
+| **Project Manager** | Jairo Luis L. Indoso |
+| **Lead Programmer** | Bret Baa |
+| **System Analyst** | Kim Kenneth V. Elacion |
+| **Business Analyst** | Michael Angelo A. Amata |
+| **Document Specialist** | Ana Juego |

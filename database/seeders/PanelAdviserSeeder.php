@@ -10,7 +10,6 @@ class PanelAdviserSeeder extends Seeder
 {
     public function run()
     {
-        // Clear existing data
         Panel::truncate();
         Adviser::truncate();
 

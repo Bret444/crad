@@ -11,6 +11,9 @@ class AssignmentSeeder extends Seeder
 {
     public function run()
     {
+        AssignmentPanel::truncate();
+        Assignment::truncate();
+        
         // Create advisers first
         $advisers = [
             ['name' => 'Dr. Smith', 'email' => 'dr.smith@example.com'],

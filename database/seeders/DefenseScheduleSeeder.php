@@ -10,6 +10,8 @@ class DefenseScheduleSeeder extends Seeder
 {
     public function run()
     {
+        DefenseSchedule::truncate();
+        
         $assignments = Assignment::all();
         
         foreach ($assignments as $assignment) {

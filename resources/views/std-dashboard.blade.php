@@ -97,7 +97,8 @@
                         </div>
                         <div>
                             <h5 class="mb-0">Group {{ $group->group_no ?? 'N/A' }}</h5>
-                            <small class="text-muted">{{ $group->department ?? 'N/A' }}</small>
+                            <small class="text-muted d-block">{{ $group->department ?? 'N/A' }}</small>
+                            <small class="text-muted d-block">{{ $group->cluster ?? 'N/A' }}</small>
                         </div>
                     </div>
                 </div>

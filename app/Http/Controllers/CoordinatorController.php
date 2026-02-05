@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Adviser;
 use App\Models\Assignment;
+use App\Models\Cluster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,7 @@ class CoordinatorController extends Controller
         // Count statistics
         $totalAdvisers = Adviser::where('department', $department)->whereNull('deleted_at')->count();
         $totalPanels = \App\Models\Panel::where('department', $department)->whereNull('deleted_at')->count();
-        $totalGroups = \App\Models\Group::where('department', $department)->whereNull('deleted_at')->count();
+        $totalGroups = \App\Models\Group::where('department', $department)->count();
         $totalSubmissions = \App\Models\Submission::where('department', $department)->count();
         
         // Pending submissions
@@ -144,7 +145,6 @@ class CoordinatorController extends Controller
     {
         $coordinator = Auth::user();
         $groups = \App\Models\Group::where('department', $coordinator->department)
-            ->whereNull('deleted_at')
             ->orderBy('group_number')
             ->get();
         return view('coordinator-title-proposal', compact('groups'));
@@ -191,5 +191,44 @@ class CoordinatorController extends Controller
         }
         
         return response()->download($filePath, basename($submission->file_path));
+    }
+
+    public function storeCluster(Request $request)
+    {
+        try {
+            $request->validate([
+                'cluster_number' => 'required|string'
+            ]);
+
+            $coordinator = Auth::user();
+            
+            // Check if cluster already exists for this department
+            $existingCluster = Cluster::where('cluster_number', $request->cluster_number)
+                ->where('department', $coordinator->department)
+                ->first();
+                
+            if ($existingCluster) {
+                return response()->json(['success' => false, 'message' => 'Cluster already exists for this department']);
+            }
+            
+            Cluster::create([
+                'cluster_number' => $request->cluster_number,
+                'department' => $coordinator->department
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Cluster added successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function getClusters()
+    {
+        $coordinator = Auth::user();
+        $clusters = Cluster::where('department', $coordinator->department)
+            ->orderBy('cluster_number')
+            ->pluck('cluster_number');
+        
+        return response()->json(['clusters' => $clusters]);
     }
 }

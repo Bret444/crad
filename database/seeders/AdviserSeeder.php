@@ -9,6 +9,8 @@ class AdviserSeeder extends Seeder
 {
     public function run(): void
     {
+        Adviser::truncate();
+        
         Adviser::insert([
             [
                 'department' => 'BSIT',

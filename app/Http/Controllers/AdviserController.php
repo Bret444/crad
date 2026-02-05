@@ -51,20 +51,24 @@ class AdviserController extends Controller
         return view('panel-adviser', compact('advisers', 'panels', 'submissions'));
     }
         public function store(Request $request) {
-        $data = $request->all();
-        if ($request->filled('others_expertise')) {
-            $data['expertise'] = $request->others_expertise;
+        try {
+            $data = $request->all();
+            if ($request->filled('others_expertise')) {
+                $data['expertise'] = $request->others_expertise;
+            }
+            
+            // Handle group_number array - store as JSON encoded sections
+            if ($request->has('group_number')) {
+                $data['sections'] = json_encode($request->group_number);
+            } else {
+                $data['sections'] = json_encode([]);
+            }
+            
+            Adviser::create($data);
+            return back()->with('success', 'Adviser added successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error adding adviser: ' . $e->getMessage());
         }
-        
-        // Handle group_number array - store as sections for backward compatibility
-        if ($request->has('group_number')) {
-            $data['sections'] = $request->group_number;
-        } else {
-            $data['sections'] = [];
-        }
-        
-        Adviser::create($data);
-        return back()->with('success', 'Adviser added successfully.');
     }
 
     public function update(Request $request, $id)
@@ -72,6 +76,7 @@ class AdviserController extends Controller
         $adviser = Adviser::findOrFail($id);
         
         $adviser->name = $request->name;
+        $adviser->contact = $request->contact;
         $adviser->expertise = $request->filled('others_expertise') ? $request->others_expertise : $request->expertise;
         $adviser->save();
         
@@ -80,14 +85,18 @@ class AdviserController extends Controller
 
     public function manageAdvisory(Request $request, $id)
     {
-        $adviser = Adviser::findOrFail($id);
-        
-        $newGroups = $request->has('group_number') ? array_map('intval', $request->group_number) : [];
-        
-        $adviser->sections = $newGroups;
-        $adviser->save();
-        
-        return response()->json(['success' => true, 'message' => 'Advisory groups updated successfully']);
+        try {
+            $adviser = Adviser::findOrFail($id);
+            
+            $newGroups = $request->has('group_number') ? array_map('intval', $request->group_number) : [];
+            
+            $adviser->sections = json_encode($newGroups);
+            $adviser->save();
+            
+            return response()->json(['success' => true, 'message' => 'Advisory groups updated successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
 

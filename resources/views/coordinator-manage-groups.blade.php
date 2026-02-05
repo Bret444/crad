@@ -41,6 +41,29 @@
     <div class="card">
         <div class="card-body">
             @if($groups->count() > 0)
+                <div class="mb-3">
+                    <label class="form-label">Filter by Cluster/Section:</label>
+                    <select id="clusterFilter" class="form-select" style="width: 200px; display: inline-block;">
+                        <option value="">All Clusters</option>
+                        @php
+                            $clusters = [];
+                            foreach($groups as $group) {
+                                if($coordinatorDepartment === 'BSIT') {
+                                    $cluster = 4100 + ceil($group->group_number / 10);
+                                } else {
+                                    $cluster = 'Section ' . ceil($group->group_number / 10);
+                                }
+                                if(!in_array($cluster, $clusters)) {
+                                    $clusters[] = $cluster;
+                                }
+                            }
+                            sort($clusters);
+                        @endphp
+                        @foreach($clusters as $cluster)
+                            <option value="{{ $cluster }}">{{ $cluster }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -55,12 +78,19 @@
                         </thead>
                         <tbody id="groupTableBody">
                             @foreach($groups as $group)
-                                <tr>
+                                @php
+                                    if($coordinatorDepartment === 'BSIT') {
+                                        $groupCluster = 4100 + ceil($group->group_number / 10);
+                                    } else {
+                                        $groupCluster = 'Section ' . ceil($group->group_number / 10);
+                                    }
+                                @endphp
+                                <tr data-cluster="{{ $groupCluster }}">
                                     <td><strong>{{ $group->group_id }}</strong></td>
                                     <td><span class="badge bg-primary">{{ $group->group_number }}</span></td>
                                     <td>
                                         @if($coordinatorDepartment === 'BSIT')
-                                            <span class="badge bg-info">{{ 4101 + floor(($group->group_number - 1) / 10) }}</span>
+                                            <span class="badge bg-info">{{ 4100 + ceil($group->group_number / 10) }}</span>
                                         @else
                                             <span class="badge bg-secondary">Section {{ ceil($group->group_number / 10) }}</span>
                                         @endif
@@ -429,5 +459,19 @@
     }
 
     document.getElementById('archiveGroupModal').addEventListener('show.bs.modal', loadArchivedGroups);
+
+    // Cluster filter functionality
+    document.getElementById('clusterFilter').addEventListener('change', function() {
+        const selectedCluster = this.value;
+        const rows = document.querySelectorAll('#groupTableBody tr');
+        
+        rows.forEach(row => {
+            if (selectedCluster === '' || row.dataset.cluster === selectedCluster) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
 </script>
 @endsection

@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->string('group_number')->nullable()->after('section');
+            $table->string('group_number')->nullable();
         });
     }
 

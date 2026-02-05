@@ -29,6 +29,9 @@
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAdviserModal">
                 <i class="bi bi-person-plus-fill me-1"></i> Add Adviser
             </button>
+            <button class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#manageClustersModal">
+                <i class="bi bi-gear me-1"></i> Manage Clusters
+            </button>
             <button class="btn btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#archiveAdviserModal">
                 <i class="bi bi-archive me-1"></i> Inactive
             </button>
@@ -50,6 +53,7 @@
                         <tr>
                             <th>Department</th>
                             <th>Name</th>
+                            <th>Contact</th>
                             <th>Expertise</th>
                             <th>Sections</th>
                             <th>Action</th>
@@ -60,6 +64,7 @@
                             <tr data-department="{{ $adviser->department }}">
                                 <td>{{ $adviser->department }}</td>
                                 <td>{{ $adviser->name }}</td>
+                                <td>{{ $adviser->contact ?? 'N/A' }}</td>
                                 <td>{{ $adviser->expertise }}</td>
                                 <td>
                                     @php
@@ -157,6 +162,37 @@
     </div>
 </div>
 
+<!-- Manage Clusters Modal -->
+<div class="modal fade" id="manageClustersModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Manage Clusters</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Add New Cluster Number</label>
+                    <div class="input-group">
+                        <input type="number" id="newClusterNumber" class="form-control" placeholder="e.g., 4103" min="4101">
+                        <button class="btn btn-info" onclick="addCluster()">Add</button>
+                    </div>
+                    <small class="text-muted">Enter a cluster number (e.g., 4101, 4102, 4103)</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Current Clusters</label>
+                    <div id="currentClusters" class="d-flex flex-wrap gap-2">
+                        <!-- Clusters will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Add Adviser Modal -->
 <div class="modal fade" id="addAdviserModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -173,27 +209,12 @@
                         <input type="text" name="department" class="form-control" value="{{ Auth::user()->department }}" readonly required>
                     </div>
                     <div class="mb-3">
-                        <label for="cluster_select" class="form-label">Cluster *</label>
-                        <div class="d-flex gap-2">
-                            <select id="cluster_select" class="form-select" required>
-                                <option value="">Select Cluster</option>
-                                @foreach(['4101', '4102', '4103', '4104', '4105', '4106', '4107', '4108', '4109', '4110'] as $cluster)
-                                    <option value="{{ $cluster }}">{{ $cluster }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-outline-primary" id="addMoreClustersBtn" style="white-space: nowrap;">
-                                <i class="bi bi-plus-circle"></i> Add More
-                            </button>
-                        </div>
-                    </div>
-                    <div id="additional_clusters_container"></div>
-                    <div class="mb-3" id="groups_container" style="display:none;">
-                        <label class="form-label">Select Group *</label>
-                        <div class="row" id="groups_list"></div>
-                    </div>
-                    <div class="mb-3">
                         <label for="name" class="form-label">Name *</label>
                         <input type="text" name="name" class="form-control" placeholder="E.g., Prof. Maria Santos" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="contact" class="form-label">Contact Number *</label>
+                        <input type="text" name="contact" class="form-control" placeholder="E.g., 09123456789" required />
                     </div>
                     <div class="mb-3">
                         <label for="expertise" class="form-label">Expertise *</label>
@@ -244,6 +265,10 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Name *</label>
                                 <input type="text" name="name" class="form-control" value="{{ $adviser->name }}" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Contact Number *</label>
+                                <input type="text" name="contact" class="form-control" value="{{ $adviser->contact }}" required />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Expertise *</label>
@@ -560,141 +585,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    const clusterSelect = document.getElementById('cluster_select');
-    const groupsContainer = document.getElementById('groups_container');
-    const groupsList = document.getElementById('groups_list');
-    let additionalClusterCount = 0;
-    
-    document.getElementById('addMoreClustersBtn').addEventListener('click', function() {
-        additionalClusterCount++;
-        const container = document.getElementById('additional_clusters_container');
-        const newClusterHtml = `
-            <div class="mb-3 additional-cluster" id="additional_cluster_${additionalClusterCount}">
-                <label class="form-label">Additional Cluster</label>
-                <div class="d-flex gap-2">
-                    <select class="form-select additional-cluster-select" data-cluster-id="${additionalClusterCount}">
-                        <option value="">Select Cluster</option>
-                        @foreach(['4101', '4102', '4103', '4104', '4105', '4106', '4107', '4108', '4109', '4110'] as $cluster)
-                            <option value="{{ $cluster }}">{{ $cluster }}</option>
-                        @endforeach
-                    </select>
-                    <button type="button" class="btn btn-outline-danger" onclick="removeAdditionalCluster(${additionalClusterCount})">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-                <div class="additional-groups-container" id="additional_groups_container_${additionalClusterCount}" style="display:none;">
-                    <div class="row mt-2" id="additional_groups_list_${additionalClusterCount}"></div>
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', newClusterHtml);
-        
-        // Add event listener to new cluster select
-        const newSelect = document.querySelector(`[data-cluster-id="${additionalClusterCount}"]`);
-        newSelect.addEventListener('change', function() {
-            showAdditionalGroups(additionalClusterCount, this.value);
-        });
-    });
-    
-    window.removeAdditionalCluster = function(id) {
-        document.getElementById(`additional_cluster_${id}`).remove();
-    };
-    
-    window.showAdditionalGroups = function(clusterId, cluster) {
-        const container = document.getElementById(`additional_groups_container_${clusterId}`);
-        const groupsList = document.getElementById(`additional_groups_list_${clusterId}`);
-        
-        if (!cluster) {
-            container.style.display = 'none';
-            return;
-        }
-        
-        const clusterNum = parseInt(cluster);
-        const offset = (clusterNum - 4101) * 10;
-        const dept = document.querySelector('input[name="department"]').value;
-        const advisersData = @json($advisers);
-        const takenGroups = [];
-        
-        advisersData.forEach(adviser => {
-            if (adviser.department === dept && adviser.sections) {
-                const sections = Array.isArray(adviser.sections) ? adviser.sections : [adviser.sections];
-                takenGroups.push(...sections.map(s => parseInt(s)));
-            }
-        });
-        
-        groupsList.innerHTML = '';
-        for (let i = 1; i <= 10; i++) {
-            const groupNum = offset + i;
-            const isTaken = takenGroups.includes(groupNum);
-            groupsList.innerHTML += `
-                <div class="col-md-4 col-sm-6 mb-2">
-                    <div class="form-check ${isTaken ? 'section-occupied p-2' : ''}">
-                        <input class="form-check-input" type="checkbox" name="group_number[]" value="${groupNum}" id="additionalGroup${clusterId}_${groupNum}" ${isTaken ? 'disabled' : ''}>
-                        <label class="form-check-label ${isTaken ? 'text-muted text-decoration-line-through' : ''}" for="additionalGroup${clusterId}_${groupNum}">
-                            Group ${groupNum} ${isTaken ? '<span class="badge bg-danger ms-1">Taken</span>' : ''}
-                        </label>
-                    </div>
-                </div>
-            `;
-        }
-        container.style.display = 'block';
-    };
-    
-    clusterSelect.addEventListener('change', function() {
-        const cluster = this.value;
-        if (!cluster) {
-            groupsContainer.style.display = 'none';
-            return;
-        }
-        
-        const clusterNum = parseInt(cluster);
-        const offset = (clusterNum - 4101) * 10;
-        const dept = document.querySelector('input[name="department"]').value;
-        const advisersData = @json($advisers);
-        const takenGroups = [];
-        
-        // Find groups already assigned to advisers in this department
-        advisersData.forEach(adviser => {
-            if (adviser.department === dept && adviser.sections) {
-                const sections = Array.isArray(adviser.sections) ? adviser.sections : [adviser.sections];
-                takenGroups.push(...sections.map(s => parseInt(s)));
-            }
-        });
-        
-        groupsList.innerHTML = '';
-        
-        for (let i = 1; i <= 10; i++) {
-            const groupNum = offset + i;
-            const isTaken = takenGroups.includes(groupNum);
-            groupsList.innerHTML += `
-                <div class="col-md-4 col-sm-6 mb-2">
-                    <div class="form-check ${isTaken ? 'section-occupied p-2' : ''}">
-                        <input class="form-check-input" type="checkbox" name="group_number[]" value="${groupNum}" id="group${groupNum}" ${isTaken ? 'disabled' : ''}>
-                        <label class="form-check-label ${isTaken ? 'text-muted text-decoration-line-through' : ''}" for="group${groupNum}">
-                            Group ${groupNum} ${isTaken ? '<span class="badge bg-danger ms-1">Taken</span>' : ''}
-                        </label>
-                    </div>
-                </div>
-            `;
-        }
-        groupsContainer.style.display = 'block';
-    });
-    
     const adviserModal = document.getElementById('archiveAdviserModal');
     if (adviserModal) {
         adviserModal.addEventListener('show.bs.modal', function() {
             loadArchivedAdvisers();
         });
     }
-
-    document.getElementById('addAdviserModal').addEventListener('show.bs.modal', () => {
-        const modal = document.getElementById('addAdviserModal');
-        document.getElementById('cluster_select').value = '';
-        document.getElementById('groups_container').style.display = 'none';
-        document.getElementById('groups_list').innerHTML = '';
-        document.getElementById('additional_clusters_container').innerHTML = '';
-        additionalClusterCount = 0;
-    });
 
     @if(isset($advisers))
         @foreach($advisers as $adviser)
@@ -824,9 +720,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     fetch(this.action, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             const modal = bootstrap.Modal.getInstance(modalElement);
@@ -845,12 +749,90 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred while updating advisory.');
+                        alert('An error occurred while updating advisory: ' + error.message);
                     });
                 });
             }
         @endforeach
     @endif
 });
+
+// Cluster management functions
+function addCluster() {
+    const clusterNumber = document.getElementById('newClusterNumber').value;
+    if (!clusterNumber || clusterNumber < 4101) {
+        alert('Please enter a valid cluster number (4101 or higher)');
+        return;
+    }
+    
+    // Save to database
+    fetch('/clusters', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            cluster_number: clusterNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add to current clusters display
+            const currentClusters = document.getElementById('currentClusters');
+            const clusterBadge = document.createElement('span');
+            clusterBadge.className = 'badge bg-info me-1';
+            clusterBadge.textContent = clusterNumber;
+            currentClusters.appendChild(clusterBadge);
+            
+            // Clear input
+            document.getElementById('newClusterNumber').value = '';
+            
+            // Update cluster selects in add adviser modal
+            updateClusterSelects(clusterNumber);
+            
+            alert(`Cluster ${clusterNumber} added successfully!`);
+        } else {
+            alert('Error: ' + (data.message || 'Failed to add cluster'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the cluster.');
+    });
+}
+
+function updateClusterSelects(newCluster) {
+    // Cluster select removed from add adviser modal
+}
+
+function loadCurrentClusters() {
+    fetch('/clusters')
+        .then(response => response.json())
+        .then(data => {
+            const currentClusters = document.getElementById('currentClusters');
+            currentClusters.innerHTML = '';
+            
+            if (data.clusters && data.clusters.length > 0) {
+                data.clusters.forEach(cluster => {
+                    const clusterBadge = document.createElement('span');
+                    clusterBadge.className = 'badge bg-info me-1';
+                    clusterBadge.textContent = cluster;
+                    currentClusters.appendChild(clusterBadge);
+                });
+            } else {
+                currentClusters.innerHTML = '<span class="text-muted">No clusters found</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading clusters:', error);
+            const currentClusters = document.getElementById('currentClusters');
+            currentClusters.innerHTML = '<span class="text-danger">Error loading clusters</span>';
+        });
+}
+
+// Load clusters when modal opens
+document.getElementById('manageClustersModal').addEventListener('show.bs.modal', loadCurrentClusters);
 </script>
 @endsection

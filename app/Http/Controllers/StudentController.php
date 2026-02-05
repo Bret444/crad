@@ -56,7 +56,48 @@ public function dashboard()
     $userId = Auth::id();
     $user = Auth::user();
 
-    // Upcoming submissions for the student
+    // Get group information
+    $groupData = Group::where('department', $user->department)
+        ->where('cluster', $user->cluster)
+        ->where('group_number', $user->group_no)
+        ->first();
+
+    // Get adviser assigned to this group
+    $adviser = \App\Models\Adviser::where('department', $user->department)
+        ->whereJsonContains('sections', (int)$user->group_no)
+        ->first();
+
+    // Get panel assignment
+    $assignment = Assignment::with('assignmentPanels')
+        ->where('department', $user->department)
+        ->where('section', $user->cluster)
+        ->first();
+
+    $panelsList = $assignment ? $assignment->assignmentPanels : collect();
+
+    // Get defense schedules
+    $defenseSchedules = \App\Models\DefenseSchedule::where('department', $user->department)
+        ->where('section', $user->cluster)
+        ->where('group_id', $groupData ? $groupData->id : null)
+        ->get();
+
+    // Create group object with all data
+    $group = (object) [
+        'group_no' => $user->group_no ?? 'N/A',
+        'department' => $user->department ?? 'N/A',
+        'cluster' => $user->cluster ?? 'N/A',
+        'adviser' => $adviser,
+        'panels' => $panelsList,
+        'members' => $groupData ? collect([
+            ['name' => $groupData->member1_name, 'student_id' => $groupData->member1_student_id, 'is_leader' => $groupData->leader_member == 1],
+            ['name' => $groupData->member2_name, 'student_id' => $groupData->member2_student_id, 'is_leader' => $groupData->leader_member == 2],
+            ['name' => $groupData->member3_name, 'student_id' => $groupData->member3_student_id, 'is_leader' => $groupData->leader_member == 3],
+            ['name' => $groupData->member4_name, 'student_id' => $groupData->member4_student_id, 'is_leader' => $groupData->leader_member == 4],
+            ['name' => $groupData->member5_name, 'student_id' => $groupData->member5_student_id, 'is_leader' => $groupData->leader_member == 5],
+        ])->filter(fn($m) => $m['name']) : collect()
+    ];
+
+    // Upcoming submissions
     $upcomingSubmissions = Submission::where('user_id', $userId)
         ->where('due_date', '>=', now())
         ->orderBy('due_date')
@@ -79,7 +120,6 @@ public function dashboard()
         'Final Defense' => Submission::where('user_id', $userId)->where('chapter', 'final')->first(),
     ];
 
-    // Assign color based on status
     foreach ($chapters as $key => $chapter) {
         if ($chapter) {
             $chapter->color = match($chapter->status) {
@@ -105,36 +145,8 @@ public function dashboard()
     ];
     
     $progress = collect($progressSteps)->filter()->count();
-    
-    // Get group information with adviser and panel assignments
-    $group = (object) [
-        'group_no' => $user->group_no ?? 'N/A', 
-        'department' => $user->department ?? 'N/A',
-        'adviser' => null,
-        'panels' => collect()
-    ];
-    
-    // Find assignment for this student's group
-    if ($user->group_no && $user->section_cluster) {
-        $assignment = Assignment::with(['adviser', 'assignmentPanels.panel'])
-            ->where('department', $user->department)
-            ->where('section', $user->section_cluster)
-            ->whereJsonContains('group_number', (int)$user->group_no)
-            ->first();
-            
-        if ($assignment) {
-            $group->adviser = $assignment->adviser;
-            $group->panels = $assignment->assignmentPanels->map(function($assignmentPanel) {
-                return (object) [
-                    'name' => $assignmentPanel->name,
-                    'role' => $assignmentPanel->role,
-                    'expertise' => $assignmentPanel->expertise
-                ];
-            });
-        }
-    }
 
-    return view('std-dashboard', compact('upcomingSubmissions', 'chapters', 'submissionStatus', 'progress', 'progressSteps', 'group'));
+    return view('std-dashboard', compact('upcomingSubmissions', 'chapters', 'submissionStatus', 'progress', 'progressSteps', 'group', 'defenseSchedules'));
 }
 
     public function submission()

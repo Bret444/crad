@@ -60,12 +60,35 @@ class LoginController extends Controller
             ])->with('lockout_seconds', $seconds);
         }
 
-        $credentials = [
-            'email' => $request->input('email'),
-            'password' => $request->input('password')
-        ];
+        // Try login with group_id first (remove 's' prefix if present)
+        $emailInput = $request->input('email');
+        $groupId = $emailInput;
+        
+        // Remove 's' prefix if present
+        if (strtolower(substr($emailInput, 0, 1)) === 's') {
+            $groupId = substr($emailInput, 1);
+        }
+        
+        $user = \App\Models\User::where('group_id', $groupId)->first();
+        if ($user) {
+            // Check password against groups table
+            $group = \App\Models\Group::where('group_id', $groupId)->first();
+            if ($group && Hash::check($request->input('password'), $group->password)) {
+                Auth::login($user, $request->boolean('remember'));
+                $loginSuccess = true;
+            } else {
+                $loginSuccess = false;
+            }
+        } else {
+            // If group_id login fails, try with email
+            $credentials = [
+                'email' => $request->input('email'),
+                'password' => $request->input('password')
+            ];
+            $loginSuccess = Auth::attempt($credentials, $request->boolean('remember'));
+        }
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if ($loginSuccess) {
             RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
             

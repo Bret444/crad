@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('defense_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('assignments', function (Blueprint $table) {
+            $table->string('department')->nullable();
+            $table->string('section')->nullable();
         });
     }
 
@@ -22,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('defense_schedules');
+        Schema::table('assignments', function (Blueprint $table) {
+            $table->dropColumn(['department', 'section']);
+        });
     }
 };

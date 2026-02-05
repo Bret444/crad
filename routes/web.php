@@ -131,13 +131,13 @@ Route::put('/student/files/{id}/resubmit', [StudentSubmissionController::class, 
      
 
     //Adviser & Panel
-Route::post('/advisers', [AdviserController::class, 'store'])->middleware('auth', 'admin')->name('advisers.store');
-Route::put('/advisers/{adviser}', [AdviserController::class, 'update'])->middleware('auth', 'admin')->name('advisers.update');
-Route::post('/advisers/{adviser}/manage-advisory', [AdviserController::class, 'manageAdvisory'])->middleware('auth', 'admin')->name('advisers.manageAdvisory');
-Route::delete('/advisers/{adviser}', [AdviserController::class, 'destroy'])->middleware('auth', 'admin')->name('advisers.destroy');
-Route::get('/advisers/archived', [AdviserController::class, 'archived'])->middleware('auth', 'admin')->name('advisers.archived');
-Route::post('/advisers/{id}/restore', [AdviserController::class, 'restore'])->middleware('auth', 'admin')->name('advisers.restore');
-Route::delete('/advisers/{id}/force-delete', [AdviserController::class, 'forceDelete'])->middleware('auth', 'admin')->name('advisers.force-delete');
+Route::post('/advisers', [AdviserController::class, 'store'])->middleware('auth')->name('advisers.store');
+Route::put('/advisers/{adviser}', [AdviserController::class, 'update'])->middleware('auth')->name('advisers.update');
+Route::post('/advisers/{adviser}/manage-advisory', [AdviserController::class, 'manageAdvisory'])->middleware('auth')->name('advisers.manageAdvisory');
+Route::delete('/advisers/{adviser}', [AdviserController::class, 'destroy'])->middleware('auth')->name('advisers.destroy');
+Route::get('/advisers/archived', [AdviserController::class, 'archived'])->middleware('auth')->name('advisers.archived');
+Route::post('/advisers/{id}/restore', [AdviserController::class, 'restore'])->middleware('auth')->name('advisers.restore');
+Route::delete('/advisers/{id}/force-delete', [AdviserController::class, 'forceDelete'])->middleware('auth')->name('advisers.force-delete');
 
 Route::post('/panels', [PanelController::class, 'store'])->middleware('auth', 'admin')->name('panels.store');
 Route::put('/panels/{panel}', [PanelController::class, 'update'])->middleware('auth', 'admin')->name('panels.update');
@@ -266,3 +266,8 @@ Route::delete('/groups/{id}', [\App\Http\Controllers\GroupController::class, 'de
 Route::get('/groups/archived', [\App\Http\Controllers\GroupController::class, 'archived'])->middleware('auth', 'coordinator')->name('groups.archived');
 Route::post('/groups/{id}/restore', [\App\Http\Controllers\GroupController::class, 'restore'])->middleware('auth', 'coordinator')->name('groups.restore');
 Route::get('/api/groups/by-number/{groupNumber}', [\App\Http\Controllers\GroupController::class, 'getByGroupNumber'])->middleware('auth')->name('groups.getByNumber');
+Route::get('/api/groups', [\App\Http\Controllers\GroupController::class, 'getGroups'])->middleware('auth')->name('groups.get');
+
+// Cluster Management Routes
+Route::post('/clusters', [CoordinatorController::class, 'storeCluster'])->middleware('auth', 'coordinator')->name('clusters.store');
+Route::get('/clusters', [CoordinatorController::class, 'getClusters'])->middleware('auth', 'coordinator')->name('clusters.get');

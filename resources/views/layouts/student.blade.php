@@ -147,7 +147,7 @@
                 <p><strong>Group No:</strong> {{ Auth::user()->group_no ?? 'N/A' }}</p>
                 <p><strong>Email:</strong> {{ Auth::user()->email ?? 'N/A' }}</p>
                 <p><strong>Department:</strong> {{ Auth::user()->department ?? 'N/A' }}</p>
-                <p><strong>Section/Cluster:</strong> {{ Auth::user()->section_cluster ?? 'N/A' }}</p>
+                <p><strong>Section/Cluster:</strong> {{ Auth::user()->cluster ?? 'N/A' }}</p>
                 <hr>
                 <p class="fw-bold mb-2">Group Members:</p>
                 @php

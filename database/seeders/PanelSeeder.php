@@ -9,6 +9,8 @@ class PanelSeeder extends Seeder
 {
     public function run(): void
     {
+        Panel::truncate();
+        
         Panel::insert([
             [
                 'department' => 'BSIT',
