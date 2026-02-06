@@ -35,6 +35,9 @@
             <button class="btn btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#archiveAdviserModal">
                 <i class="bi bi-archive me-1"></i> Inactive
             </button>
+            <button class="btn btn-primary ms-2" onclick="syncAdviserFromAPI()">
+                <i class="bi bi-cloud-download me-1"></i> Sync API
+            </button>
         </div>
     </div>
 
@@ -771,6 +774,66 @@ document.addEventListener('DOMContentLoaded', function() {
         @endforeach
     @endif
 });
+
+// API Integration for Subject Load Tracker
+function fetchSubjectLoadData() {
+    return fetch('/api/subject-load-proxy')
+        .then(response => {
+            if (response.status === 401) {
+                throw new Error('API requires authentication. Please contact administrator.');
+            }
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            if (!Array.isArray(data)) {
+                console.warn('API response is not an array:', data);
+                return [];
+            }
+            return data.map(item => ({
+                name: item.instructor_name || item.name || 'N/A',
+                department: item.department || 'N/A',
+                contact: item.contact_number || item.contact || 'N/A',
+                sections: item.sections || [],
+                subject: item.subject_code || item.subject || 'N/A'
+            }));
+        })
+        .catch(error => {
+            console.error('API Error:', error);
+            throw error;
+        });
+}
+
+function syncAdviserFromAPI() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Syncing...';
+    
+    fetchSubjectLoadData()
+        .then(apiData => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-download me-1"></i> Sync API';
+            
+            if (apiData.length > 0) {
+                document.getElementById('successMessage').textContent = `Successfully synced ${apiData.length} records from API!`;
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+                console.log('API Data:', apiData);
+            } else {
+                alert('No data received from API. The API may be empty or require authentication.');
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-download me-1"></i> Sync API';
+            alert('API Sync Failed: ' + error.message);
+        });
+}
 
 // Cluster management functions
 function addCluster() {

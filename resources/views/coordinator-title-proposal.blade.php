@@ -286,20 +286,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function updateRequirementsContainer(submissions) {
-        let preOral = '', finalDef = '';
+        console.log('All submissions:', submissions);
+        let preOral = '', finalDef = '', redefense = '';
         submissions.forEach(s => {
+            console.log('Processing submission:', s.documents, 'Defense Type:', s.defense_type);
             const status = s.status === 'Approved' ? 'bg-success' : s.status === 'Rejected' ? 'bg-danger' : 'bg-warning';
             const border = s.status === 'Approved' ? 'border-left-success' : s.status === 'Rejected' ? 'border-left-danger' : 'border-left-warning';
             
-            // Check if document is clearance
+            // Check if document is clearance or research forum
             const isClearance = s.documents.toLowerCase().includes('clearance');
+            const isResearchForum = s.documents.toLowerCase().includes('research forum');
+            const isAdminOnly = isClearance || isResearchForum;
             
             // Check if document is Manuscript or has a link
             const isLink = s.file_path && (s.file_path.startsWith('http://') || s.file_path.startsWith('https://'));
             const viewBtnAttr = isLink ? `data-link="${s.file_path}" data-docname="${s.documents}"` : `data-sid="${btoa(s.id)}"`;
             
-            // Action buttons - disabled for clearance
-            const actionButtons = isClearance ? 
+            // Action buttons - disabled for clearance and research forum
+            const actionButtons = isAdminOnly ? 
                 '<div class="alert alert-info py-1 px-2 mb-0 mt-2"><small><i class="bi bi-info-circle"></i> View only - Managed by Admin</small></div>' :
                 `<button class="btn btn-sm btn-outline-success approve-btn" data-sid="${btoa(s.id)}"><i class="fas fa-check"></i></button>
                 <button class="btn btn-sm btn-outline-danger reject-btn" data-sid="${btoa(s.id)}"><i class="fas fa-times"></i></button>`;
@@ -322,8 +326,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            if (s.defense_type === 'Pre-Oral') preOral += card;
-            else if (s.defense_type === 'Final Defense') finalDef += card;
+            
+            // Categorize by defense type - check for variations
+            const defenseType = (s.defense_type || '').toLowerCase();
+            if (defenseType.includes('pre-oral') || defenseType === 'pre-oral') {
+                preOral += card;
+            } else if (defenseType.includes('final') || defenseType === 'final defense') {
+                finalDef += card;
+            } else {
+                // Everything else goes to redefense (including clearance, re-defense, etc.)
+                redefense += card;
+            }
         });
         requirementsContainer.innerHTML = `
             <div class="card mb-4 shadow-sm">
@@ -334,6 +347,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-header bg-success text-white"><h5 class="mb-0">Final Defense</h5></div>
                 <div class="card-body"><div class="row g-4">${finalDef || '<div class="col-12 text-center text-muted">No submissions.</div>'}</div></div>
             </div>
+            ${redefense ? `<div class="card mb-4 shadow-sm">
+                <div class="card-header bg-warning text-dark"><h5 class="mb-0">Re-Defense / Other</h5></div>
+                <div class="card-body"><div class="row g-4">${redefense}</div></div>
+            </div>` : ''}
         `;
     }
     
@@ -373,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
             body: JSON.stringify({status: 'Approved', feedback: feedback})
         }).then(r => r.json()).then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
             new bootstrap.Modal(document.getElementById('successModal')).show();
             groupSelect.dispatchEvent(new Event('change'));
         });
@@ -387,6 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
             body: JSON.stringify({status: 'Rejected', feedback: reason})
         }).then(r => r.json()).then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
             new bootstrap.Modal(document.getElementById('successModal')).show();
             groupSelect.dispatchEvent(new Event('change'));
         });

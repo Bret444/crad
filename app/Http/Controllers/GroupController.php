@@ -177,4 +177,48 @@ class GroupController extends Controller
     {
         // Implementation for restoring groups
     }
+    
+    public function getDocumentStatus(Request $request)
+    {
+        $groupId = $request->get('group_id');
+        $defenseType = $request->get('defense_type');
+        
+        if (!$groupId || !$defenseType) {
+            return response()->json(['status' => 'Incomplete']);
+        }
+        
+        // Get all submissions for this group and defense type
+        $submissions = \App\Models\Submission::where('group_no', $groupId)
+            ->where('defense_type', $defenseType)
+            ->get();
+        
+        if ($submissions->isEmpty()) {
+            return response()->json(['status' => 'Incomplete']);
+        }
+        
+        // Check if all submissions are approved by both coordinator and admin
+        $allApproved = true;
+        $hasPending = false;
+        
+        foreach ($submissions as $submission) {
+            // Check if document needs admin approval (clearance, research forum)
+            $needsAdmin = stripos($submission->documents, 'clearance') !== false || 
+                         stripos($submission->documents, 'research forum') !== false;
+            
+            if ($submission->status === 'Pending') {
+                $hasPending = true;
+                $allApproved = false;
+            } elseif ($submission->status !== 'Approved') {
+                $allApproved = false;
+            }
+        }
+        
+        if ($allApproved) {
+            return response()->json(['status' => 'Complete']);
+        } elseif ($hasPending) {
+            return response()->json(['status' => 'Pending']);
+        } else {
+            return response()->json(['status' => 'Incomplete']);
+        }
+    }
 }

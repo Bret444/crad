@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-box { padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">🧪 API Integration Test</h2>
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5>Subject Load Tracker API Test</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>API Endpoint:</strong> <code>http://fms3.jampzdev.com/api/subject-load-tracker/list</code></p>
+                
+                <button class="btn btn-primary" onclick="testAPI()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <button class="btn btn-secondary ms-2" onclick="clearResults()">Clear</button>
+                
+                <div id="results" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="status-box info">⏳ Testing API connection...</div>';
+            
+            const startTime = Date.now();
+            
+            fetch('http://fms3.jampzdev.com/api/subject-load-tracker/list')
+                .then(response => {
+                    const responseTime = Date.now() - startTime;
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    resultsDiv.innerHTML += `<div class="status-box success">✅ API Response: ${response.status} OK (${responseTime}ms)</div>`;
+                    return response.json();
+                })
+                .then(data => {
+                    // Test data structure
+                    resultsDiv.innerHTML += `<div class="status-box success">✅ Data received: ${Array.isArray(data) ? data.length : 'N/A'} records</div>`;
+                    
+                    // Map data
+                    const mappedData = data.map(item => ({
+                        name: item.instructor_name || item.name,
+                        department: item.department,
+                        contact: item.contact_number || item.contact,
+                        sections: item.sections || [],
+                        subject: item.subject_code || item.subject
+                    }));
+                    
+                    resultsDiv.innerHTML += `<div class="status-box success">✅ Data mapping successful</div>`;
+                    
+                    // Display sample data
+                    resultsDiv.innerHTML += `
+                        <div class="mt-3">
+                            <h6>📊 Sample Data (First 3 records):</h6>
+                            <pre>${JSON.stringify(mappedData.slice(0, 3), null, 2)}</pre>
+                        </div>
+                        <div class="mt-3">
+                            <h6>📋 Full API Response:</h6>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    
+                    // Summary
+                    const summary = {
+                        totalRecords: data.length,
+                        mappedRecords: mappedData.length,
+                        uniqueDepartments: [...new Set(mappedData.map(d => d.department))].length,
+                        uniqueInstructors: [...new Set(mappedData.map(d => d.name))].length
+                    };
+                    
+                    resultsDiv.innerHTML += `
+                        <div class="status-box info mt-3">
+                            <h6>📈 Summary:</h6>
+                            <ul>
+                                <li>Total Records: ${summary.totalRecords}</li>
+                                <li>Mapped Records: ${summary.mappedRecords}</li>
+                                <li>Unique Departments: ${summary.uniqueDepartments}</li>
+                                <li>Unique Instructors: ${summary.uniqueInstructors}</li>
+                            </ul>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML += `
+                        <div class="status-box error">
+                            ❌ <strong>Error:</strong> ${error.message}
+                            <br><br>
+                            <strong>Possible causes:</strong>
+                            <ul>
+                                <li>CORS policy blocking the request</li>
+                                <li>API endpoint is down or unreachable</li>
+                                <li>Network connectivity issues</li>
+                                <li>Invalid API URL</li>
+                            </ul>
+                            <strong>Console error:</strong>
+                            <pre>${error.stack || error}</pre>
+                        </div>
+                    `;
+                    console.error('API Test Error:', error);
+                });
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

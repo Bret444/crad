@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test - 100% Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-result { padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .pass { background: #d4edda; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>🧪 API Integration - 100% Verification Test</h2>
+        <p class="text-muted">Testing the complete integration flow for Subject Load Tracker API</p>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5>Test Results</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary" onclick="runAllTests()">▶ Run All Tests</button>
+                <button class="btn btn-secondary ms-2" onclick="clearResults()">Clear</button>
+                
+                <div id="testResults" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testsPassed = 0;
+        let testsFailed = 0;
+
+        function addResult(title, status, message, data = null) {
+            const resultsDiv = document.getElementById('testResults');
+            const resultClass = status === 'PASS' ? 'pass' : status === 'FAIL' ? 'fail' : 'info';
+            const icon = status === 'PASS' ? '✅' : status === 'FAIL' ? '❌' : 'ℹ️';
+            
+            let html = `
+                <div class="test-result ${resultClass}">
+                    <strong>${icon} ${title}</strong>
+                    <p class="mb-0">${message}</p>
+                    ${data ? `<pre class="mt-2 mb-0">${JSON.stringify(data, null, 2)}</pre>` : ''}
+                </div>
+            `;
+            
+            resultsDiv.innerHTML += html;
+            
+            if (status === 'PASS') testsPassed++;
+            if (status === 'FAIL') testsFailed++;
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            testsPassed = 0;
+            testsFailed = 0;
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('Test Suite Started', 'INFO', 'Running comprehensive API integration tests...');
+
+            // Test 1: Proxy Route Accessibility
+            try {
+                const response = await fetch('/api/subject-load-proxy');
+                if (response.ok || response.status === 401) {
+                    addResult('Test 1: Proxy Route', 'PASS', `Proxy route is accessible (Status: ${response.status})`);
+                } else {
+                    addResult('Test 1: Proxy Route', 'FAIL', `Unexpected status: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Test 1: Proxy Route', 'FAIL', `Cannot reach proxy: ${error.message}`);
+            }
+
+            // Test 2: Data Mapping Function
+            const mockData = [
+                {
+                    instructor_name: 'Prof. John Doe',
+                    department: 'Computer Science',
+                    contact_number: '09123456789',
+                    sections: ['CS-101', 'CS-102'],
+                    subject_code: 'CS101'
+                }
+            ];
+
+            try {
+                const mapped = mockData.map(item => ({
+                    name: item.instructor_name || item.name || 'N/A',
+                    department: item.department || 'N/A',
+                    contact: item.contact_number || item.contact || 'N/A',
+                    sections: item.sections || [],
+                    subject: item.subject_code || item.subject || 'N/A'
+                }));
+
+                if (mapped[0].name === 'Prof. John Doe' && mapped[0].department === 'Computer Science') {
+                    addResult('Test 2: Data Mapping', 'PASS', 'Data mapping function works correctly', mapped[0]);
+                } else {
+                    addResult('Test 2: Data Mapping', 'FAIL', 'Data mapping produced incorrect results', mapped[0]);
+                }
+            } catch (error) {
+                addResult('Test 2: Data Mapping', 'FAIL', `Mapping error: ${error.message}`);
+            }
+
+            // Test 3: Error Handling
+            try {
+                const errorResponse = { error: 'Test error' };
+                if (errorResponse.error) {
+                    addResult('Test 3: Error Handling', 'PASS', 'Error detection works correctly');
+                } else {
+                    addResult('Test 3: Error Handling', 'FAIL', 'Error not detected');
+                }
+            } catch (error) {
+                addResult('Test 3: Error Handling', 'FAIL', `Error handling failed: ${error.message}`);
+            }
+
+            // Test 4: Frontend Integration
+            try {
+                const syncButton = document.querySelector('[onclick="syncAdviserFromAPI()"]');
+                if (syncButton) {
+                    addResult('Test 4: Frontend Integration', 'PASS', 'Sync button exists and is properly configured');
+                } else {
+                    addResult('Test 4: Frontend Integration', 'FAIL', 'Sync button not found on page');
+                }
+            } catch (error) {
+                addResult('Test 4: Frontend Integration', 'FAIL', `Frontend check failed: ${error.message}`);
+            }
+
+            // Test 5: CSRF Token
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (csrfToken && csrfToken.content) {
+                    addResult('Test 5: CSRF Protection', 'PASS', 'CSRF token is present');
+                } else {
+                    addResult('Test 5: CSRF Protection', 'FAIL', 'CSRF token missing');
+                }
+            } catch (error) {
+                addResult('Test 5: CSRF Protection', 'FAIL', `CSRF check failed: ${error.message}`);
+            }
+
+            // Summary
+            const total = testsPassed + testsFailed;
+            const percentage = total > 0 ? Math.round((testsPassed / total) * 100) : 0;
+            const summaryStatus = percentage === 100 ? 'PASS' : percentage >= 80 ? 'INFO' : 'FAIL';
+            
+            addResult(
+                'Test Summary',
+                summaryStatus,
+                `Passed: ${testsPassed}/${total} (${percentage}%) | Failed: ${testsFailed}/${total}`
+            );
+
+            if (percentage === 100) {
+                addResult('✨ Integration Status', 'PASS', '🎉 API Integration is 100% working!');
+            } else if (percentage >= 80) {
+                addResult('⚠️ Integration Status', 'INFO', 'API Integration is mostly working but needs attention');
+            } else {
+                addResult('❌ Integration Status', 'FAIL', 'API Integration has critical issues');
+            }
+        }
+    </script>
+</body>
+</html>

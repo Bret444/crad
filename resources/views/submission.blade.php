@@ -304,7 +304,7 @@
                         <div id="{{ $formTargetID }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $docUniqueID }}" data-bs-parent="#preOralAccordion">
                             <div class="accordion-body upload-form-content">
                                 @if($docTitle === 'Manuscript Chapter 1-3')
-                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" data-document="{{ $docTitle }}" data-type="link">
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}" data-type="link">
                                         @csrf
                                         <input type="hidden" name="documents" value="{{ $docTitle }}">
                                         <input type="hidden" name="defense_type" value="Pre-Oral">
@@ -313,7 +313,11 @@
                                         <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
                                         <label class="form-label mb-2">Google Drive Link</label>
                                         <div class="input-group mb-3">
-                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/..." required>
+                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/...">
+                                        </div>
+                                        <label class="form-label mb-2">Or Upload File</label>
+                                        <div class="input-group mb-3">
+                                            <input type="file" name="file" class="form-control">
                                         </div>
                                         <div class="form-check mb-3">
                                             <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
@@ -321,7 +325,7 @@
                                                 I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
                                             </label>
                                         </div>
-                                        <button class="btn btn-primary" type="submit">Submit Link</button>
+                                        <button class="btn btn-primary" type="submit">Submit</button>
                                     </form>
                                 @else
                                     <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
@@ -348,51 +352,6 @@
                         </div>
                     </div>
                 @endforeach
-            </div>
-        </div>
-        
-        <h5 class="section-header fw-bold mb-3 mt-4 text-primary">Re-Defense</h5>
-        <div class="defense-section p-3 p-md-4">
-            <div class="accordion accordion-flush" id="preOralReDefenseAccordion">
-                @php
-                    $docTitle = 'Clearance';
-                    $docUniqueID = 'pre-oral-re-defense-clearance';
-                    $formTargetID = 'form-collapse-submission-' . $docUniqueID;
-                @endphp
-                <div class="accordion-item document-item">
-                    <h2 class="accordion-header" id="heading-{{ $docUniqueID }}">
-                        <button class="accordion-button document-title-link collapsed" type="button" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#{{ $formTargetID }}" 
-                            aria-expanded="false" 
-                            aria-controls="{{ $formTargetID }}">
-                            <span>{{ $docTitle }}</span>
-                        </button>
-                    </h2>
-                    <div id="{{ $formTargetID }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $docUniqueID }}" data-bs-parent="#preOralReDefenseAccordion">
-                        <div class="accordion-body upload-form-content">
-                            <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
-                                @csrf
-                                <input type="hidden" name="documents" value="{{ $docTitle }}">
-                                <input type="hidden" name="defense_type" value="Pre-Oral Re-Defense">
-                                <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
-                                <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
-                                <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
-                                <label class="form-label mb-2 form-label-hidden">Upload a File</label>
-                                <div class="input-group mb-3">
-                                    <input type="file" name="file" class="form-control" required>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
-                                    <label class="form-check-label" for="terms-{{ $docUniqueID }}">
-                                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
-                                    </label>
-                                </div>
-                                <button class="btn btn-primary" type="submit">Upload</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -422,7 +381,7 @@
                         <div id="{{ $formTargetID }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $docUniqueID }}" data-bs-parent="#finalDefenseAccordion">
                             <div class="accordion-body upload-form-content">
                                 @if($docTitle === 'Manuscript Chapter 1-5')
-                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" data-document="{{ $docTitle }}" data-type="link">
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}" data-type="link">
                                         @csrf
                                         <input type="hidden" name="documents" value="{{ $docTitle }}">
                                         <input type="hidden" name="defense_type" value="Final Defense">
@@ -431,7 +390,11 @@
                                         <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
                                         <label class="form-label mb-2">Google Drive Link</label>
                                         <div class="input-group mb-3">
-                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/..." required>
+                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/...">
+                                        </div>
+                                        <label class="form-label mb-2">Or Upload File</label>
+                                        <div class="input-group mb-3">
+                                            <input type="file" name="file" class="form-control">
                                         </div>
                                         <div class="form-check mb-3">
                                             <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
@@ -439,7 +402,7 @@
                                                 I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
                                             </label>
                                         </div>
-                                        <button class="btn btn-primary" type="submit">Submit Link</button>
+                                        <button class="btn btn-primary" type="submit">Submit</button>
                                     </form>
                                 @else
                                     <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
@@ -688,11 +651,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let inputValue = '';
         if (isLinkForm) {
             const linkInput = e.target.querySelector('input[name="drive_link"]');
-            inputValue = linkInput.value;
-            if (!inputValue) {
-                alert('Please enter a Google Drive link.');
+            const fileInput = e.target.querySelector('input[type="file"]');
+            const linkValue = linkInput.value;
+            const file = fileInput.files[0];
+            
+            if (!linkValue && !file) {
+                alert('Please enter a Google Drive link or upload a file.');
                 return false;
             }
+            inputValue = linkValue || file.name;
         } else {
             const fileInput = e.target.querySelector('input[type="file"]');
             const file = fileInput.files[0];

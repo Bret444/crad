@@ -345,10 +345,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateRequirementsContainer(submissions) {
         let preOralHtml = '';
         let finalDefenseHtml = '';
+        let redefenseHtml = '';
         
         console.log('Updating requirements container with submissions:', submissions);
         
         submissions.forEach(submission => {
+            console.log('Processing submission:', submission.documents, 'Defense Type:', submission.defense_type);
             const statusClass = submission.status === 'Approved' ? 'bg-success' : 
                                submission.status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark';
             const borderClass = submission.status === 'Approved' ? 'border-left-success' : 
@@ -358,13 +360,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const department = submission.department || 'N/A';
             const cluster = submission.cluster || 'N/A';
             
-            // Check if document is clearance or has a link
+            // Check if document is clearance, research forum, or has a link
             const isClearance = submission.documents && submission.documents.toLowerCase().includes('clearance');
+            const isResearchForum = submission.documents && submission.documents.toLowerCase().includes('research forum');
+            const isAdminManaged = isClearance || isResearchForum;
             const isLink = submission.file_path && (submission.file_path.startsWith('http://') || submission.file_path.startsWith('https://'));
             const viewBtnAttr = isLink ? `data-link="${submission.file_path}" data-docname="${submission.documents}"` : `data-sid="${btoa(submission.id)}"`;
             
-            // Admin can only approve/reject clearance documents
-            const actionButtons = isClearance ? `
+            // Admin can only approve/reject clearance and research forum documents
+            const actionButtons = isAdminManaged ? `
                 <button class="btn btn-sm btn-outline-success approve-btn" title="Approve" data-sid="${btoa(submission.id)}"><i class="fas fa-check"></i></button>
                 <button class="btn btn-sm btn-outline-danger reject-btn" title="Reject" data-sid="${btoa(submission.id)}"><i class="fas fa-times"></i></button>
             ` : '<div class="alert alert-info py-1 px-2 mb-0 mt-2"><small><i class="bi bi-info-circle"></i> View only - Managed by Coordinator</small></div>';
@@ -388,10 +392,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            if (submission.defense_type === 'Pre-Oral') {
+            // Categorize by defense type - check for variations
+            const defenseType = (submission.defense_type || '').toLowerCase();
+            if (defenseType.includes('pre-oral') || defenseType === 'pre-oral') {
                 preOralHtml += cardHtml;
-            } else if (submission.defense_type === 'Final Defense') {
+            } else if (defenseType.includes('final') || defenseType === 'final defense') {
                 finalDefenseHtml += cardHtml;
+            } else {
+                // Everything else goes to redefense (including clearance, re-defense, etc.)
+                redefenseHtml += cardHtml;
             }
         });
         
@@ -416,6 +425,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
+            ${redefenseHtml ? `<div class="card mb-4 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-redo"></i> Re-Defense / Other Requirements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        ${redefenseHtml}
+                    </div>
+                </div>
+            </div>` : ''}
         `;
     }
     

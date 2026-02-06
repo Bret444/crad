@@ -288,4 +288,33 @@ class CoordinatorController extends Controller
             'unread_count' => \App\Models\Notification::where('user_id', auth()->id())->where('read', false)->count()
         ]);
     }
+
+    public function subjectLoadProxy()
+    {
+        try {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'http://fms3.jampzdev.com/api/subject-load-tracker/list');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode === 401) {
+                return response()->json(['error' => 'API requires authentication', 'status' => 401], 401);
+            }
+            
+            if ($httpCode !== 200) {
+                return response()->json(['error' => 'API returned status ' . $httpCode, 'status' => $httpCode], 500);
+            }
+            
+            $data = json_decode($response, true);
+            return response()->json($data ?: []);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

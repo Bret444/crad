@@ -274,7 +274,11 @@ Route::get('/groups/archived', [\App\Http\Controllers\GroupController::class, 'a
 Route::post('/groups/{id}/restore', [\App\Http\Controllers\GroupController::class, 'restore'])->middleware('auth', 'coordinator')->name('groups.restore');
 Route::get('/api/groups/by-number/{groupNumber}', [\App\Http\Controllers\GroupController::class, 'getByGroupNumber'])->middleware('auth')->name('groups.getByNumber');
 Route::get('/api/groups', [\App\Http\Controllers\GroupController::class, 'getGroups'])->middleware('auth')->name('groups.get');
+Route::get('/api/group-document-status', [\App\Http\Controllers\GroupController::class, 'getDocumentStatus'])->middleware('auth')->name('groups.documentStatus');
 
 // Cluster Management Routes
 Route::post('/clusters', [CoordinatorController::class, 'storeCluster'])->middleware('auth', 'coordinator')->name('clusters.store');
 Route::get('/clusters', [CoordinatorController::class, 'getClusters'])->middleware('auth', 'coordinator')->name('clusters.get');
+
+// API Proxy for Subject Load Tracker
+Route::get('/api/subject-load-proxy', [CoordinatorController::class, 'subjectLoadProxy'])->middleware('auth', 'coordinator')->name('api.subject-load-proxy');

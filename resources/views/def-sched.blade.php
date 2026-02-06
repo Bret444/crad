@@ -939,11 +939,30 @@
                     const groupId = group.group_id || group.id;
                     const displayNumber = index + 1 + groupOffset;
                     const setLetter = index < Math.ceil(groups.length / 2) ? 'A' : 'B';
+                    
+                    // Fetch document status for this group
+                    fetch(`/api/group-document-status?group_id=${groupId}&defense_type=${currentDefenseType}`)
+                        .then(r => r.json())
+                        .then(statusData => {
+                            const docStatus = statusData.status || 'Incomplete';
+                            const docStatusClass = docStatus === 'Complete' ? 'status-completed' : 
+                                                   docStatus === 'Pending' ? 'status-pending' : 'status-incomplete';
+                            
+                            const row = document.querySelector(`tr[data-group-id="${groupId}"]`);
+                            if (row) {
+                                const docCell = row.querySelector('td:nth-child(3)');
+                                if (docCell) {
+                                    docCell.innerHTML = `<span class="status-badge ${docStatusClass}">${docStatus}</span>`;
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                    
                     tbody.innerHTML += `
                         <tr data-group-id="${groupId}" data-set="${setLetter}">
                             ${index === 0 ? `<td class="merged-cell cluster-value" rowspan="${groups.length}">${cluster}</td>` : ''}
                             <td class="group-number" onclick="showGroupInfo('${displayNumber}', '${groupId}')">${displayNumber}</td>
-                            <td><span class="status-badge status-completed">Completed</span></td>
+                            <td><span class="status-badge status-incomplete">Loading...</span></td>
                             <td class="status-column" id="status-${groupId}"><span class="status-badge status-pending">Pending</span></td>
                             <td class="schedule-cell" data-schedule-target="${groupId}">
                                 <button class="btn btn-set-schedule" data-bs-toggle="modal" data-bs-target="#scheduleModal" 

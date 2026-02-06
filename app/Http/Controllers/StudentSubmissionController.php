@@ -142,53 +142,35 @@ class StudentSubmissionController extends Controller
         $user = auth()->user();
         $groupNumber = $user->group_no ?? null;
         $department = $user->department ?? null;
-        $cluster = $user->cluster ?? '4101';
+        $cluster = $user->cluster ?? $user->section_cluster ?? '4101';
         
         if (!$groupNumber || !$department) {
             return view('view-sched', ['schedules' => collect(), 'assignment' => null]);
         }
         
-        // Calculate offset like in def-sched.blade.php
-        $clusterNum = intval($cluster ?? '4101');
-        $groupOffset = ($clusterNum - 4101) * 10;
+        // Find the actual group record to get group_id
+        $group = \App\Models\Group::where('department', $department)
+            ->where('cluster', $cluster)
+            ->where('group_number', $groupNumber)
+            ->first();
         
-        // Remove offset to get base group number (1-10)
-        $baseGroupNumber = $groupNumber - $groupOffset;
-        
-        // Map to group_id format used in def-sched
-        if ($baseGroupNumber >= 1 && $baseGroupNumber <= 5) {
-            $groupId = 'A' . $baseGroupNumber;
-        } elseif ($baseGroupNumber >= 6 && $baseGroupNumber <= 10) {
-            $groupId = 'B' . ($baseGroupNumber - 5);
-        } else {
-            // Fallback for invalid group numbers
-            $groupId = 'A1';
+        if (!$group) {
+            return view('view-sched', ['schedules' => collect(), 'assignment' => null]);
         }
         
-        // Fetch schedules - try exact match first, then fallback to any group in department
+        $groupId = $group->group_id ?? $group->id;
+        
+        // Fetch schedules for this specific group
         $schedules = \App\Models\DefenseSchedule::where('department', $department)
             ->where('section', $cluster)
             ->where('group_id', $groupId)
             ->get();
-            
-        // If no schedules found, try without section filter
-        if ($schedules->isEmpty()) {
-            $schedules = \App\Models\DefenseSchedule::where('department', $department)
-                ->where('group_id', $groupId)
-                ->get();
-        }
         
-        // Fetch assignment data - try with section first, fallback to department only
+        // Fetch assignment data
         $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels.panel'])
             ->where('department', $department)
             ->where('section', $cluster)
             ->first();
-            
-        if (!$assignment) {
-            $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels.panel'])
-                ->where('department', $department)
-                ->first();
-        }
         
         return view('view-sched', compact('schedules', 'assignment'));
     }
