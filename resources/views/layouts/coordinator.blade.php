@@ -84,43 +84,13 @@
                 </div>
                 <div class="d-flex align-items-center">
                     <span id="current-time" class="me-3 d-none d-sm-inline"></span>
-                    <div class="dropdown me-3">
-                        <a href="#" class="text-dark position-relative" id="notificationDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="me-3">
+                        <a href="#" class="text-dark position-relative" data-bs-toggle="modal" data-bs-target="#notificationModal">
                             <i class="bi bi-bell fs-5"></i>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ $notifications->count() ?? 0 }}
+                                0
                             </span>
                         </a>
-
-                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationDropdown"
-                            style="width: 320px; max-height: 400px; overflow-y: auto;">
-                            <li class="dropdown-header fw-bold">Notifications</li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-
-                            @forelse($notifications ?? [] as $notification)
-                                <li>
-                                    <a href="{{ $notification['action'] ?? '#' }}" class="dropdown-item">
-                                        <i class="{{ $notification['icon'] ?? 'bi-info-circle' }} text-{{ $notification['type'] ?? 'secondary' }}"></i> 
-                                        {{ $notification['message'] }}
-                                        <br><small class="text-muted">{{ $notification['time'] ?? 'now' }}</small>
-                                    </a>
-                                </li>
-                            @empty
-                                <li class="dropdown-item text-center text-muted">
-                                    No notifications
-                                </li>
-                            @endforelse
-
-                            @if(($notifications ?? collect())->count() > 0)
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><a href="{{ route('coordinator-dashboard') }}" class="dropdown-item text-center">View all</a></li>
-                            @endif
-                        </ul>
                     </div>
 
 
@@ -212,6 +182,68 @@
             </footer>
         </div>
         <div class="sidebar-overlay"></div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="notificationModalLabel">
+                        <i class="bi bi-bell me-2"></i>Notifications
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="max-height: 500px; overflow-y: auto;" id="notificationList">
+                    <div class="text-center py-5">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">No notifications yet</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#markReadModal">
+                        <i class="bi bi-check-all me-1"></i>Mark All as Read
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as Read Confirmation Modal -->
+    <div class="modal fade" id="markReadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i>Mark All as Read</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-question-circle text-success" style="font-size: 3rem;"></i>
+                    <p class="mt-3 mb-0">Are you sure you want to mark all notifications as read?</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="confirmMarkAllAsRead()">Yes, Mark All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as Read Success Modal -->
+    <div class="modal fade" id="markReadSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Success!</h5>
+                    <p class="mb-0">All notifications marked as read!</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Profile Save Success Modal -->
@@ -386,6 +418,89 @@
             }
         });
     </script>
+    <script>
+        // Fetch and display notifications
+        function loadNotifications() {
+            fetch('/api/coordinator/notifications')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.querySelector('.badge.bg-danger');
+                    const list = document.getElementById('notificationList');
+                    
+                    if (badge) badge.textContent = data.unread_count || 0;
+                    
+                    if (data.notifications && data.notifications.length > 0) {
+                        list.innerHTML = data.notifications.map(n => {
+                            let submissionDetails = '';
+                            if (n.submission) {
+                                submissionDetails = `
+                                    <hr class="my-2">
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block fw-bold">Submission Details</small>
+                                        <small class="text-muted d-block"><strong>Document:</strong> ${n.submission.documents || 'N/A'}</small>
+                                        <small class="text-muted d-block"><strong>Status:</strong> <span class="badge bg-${n.submission.status === 'Approved' ? 'success' : n.submission.status === 'Rejected' ? 'danger' : 'warning'}">${n.submission.status}</span></small>
+                                        <small class="text-muted d-block"><strong>Department:</strong> ${n.submission.department || 'N/A'}</small>
+                                        <small class="text-muted d-block"><strong>Group:</strong> ${n.submission.group_no || 'N/A'}</small>
+                                        ${n.submission.feedback ? `<small class="text-muted d-block"><strong>Feedback:</strong> ${n.submission.feedback}</small>` : ''}
+                                    </div>
+                                `;
+                            }
+                            return `
+                            <div class="notification-item p-3 border-bottom ${n.read ? '' : 'bg-light'}" style="cursor: pointer; transition: background-color 0.2s;">
+                                <div class="d-flex align-items-start">
+                                    <div class="notification-icon me-3">
+                                        <div class="bg-${n.type === 'submission' || n.type === 'resubmission' ? 'info' : 'primary'} rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-${n.type === 'submission' || n.type === 'resubmission' ? 'file-earmark-arrow-up' : 'info-circle'} text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div class="notification-content flex-grow-1">
+                                        <div class="notification-message fw-semibold mb-1">${n.message}</div>
+                                        <div class="notification-meta d-flex justify-content-between align-items-center">
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(n.created_at).toLocaleString()}</small>
+                                            ${!n.read ? '<span class="badge bg-primary">New</span>' : ''}
+                                        </div>
+                                        ${submissionDetails}
+                                    </div>
+                                </div>
+                            </div>
+                        `}).join('');
+                    } else {
+                        list.innerHTML = '<div class="text-center py-5"><i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i><p class="text-muted mt-3">No notifications yet</p></div>';
+                    }
+                });
+        }
+        
+        function confirmMarkAllAsRead() {
+            // Close confirmation modal
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('markReadModal'));
+            confirmModal.hide();
+            
+            // Show success modal
+            setTimeout(() => {
+                const successModal = new bootstrap.Modal(document.getElementById('markReadSuccessModal'));
+                successModal.show();
+                
+                // Reload notifications
+                loadNotifications();
+            }, 300);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            setInterval(loadNotifications, 30000); // Refresh every 30 seconds
+        });
+    </script>
+    <style>
+        .notification-item:hover {
+            background-color: #f8f9fa !important;
+        }
+        .notification-item:last-child {
+            border-bottom: none !important;
+        }
+        .notification-icon {
+            flex-shrink: 0;
+        }
+    </style>
     <script>
         function previewCoordinatorImage(event) {
             const file = event.target.files[0];

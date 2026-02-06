@@ -234,21 +234,53 @@ public function updateStatus(Request $request, $submissionId)
     $submission->feedback = $request->feedback ?? $submission->feedback;
     $submission->save();
 
-    // Create notification
+    // Create notification for student
     $message = match($request->status) {
-        'Approved' => "Your proposal '{$submission->documents}' has been approved.",
-        'Rejected' => "Your proposal '{$submission->documents}' has been rejected. Please revise and resubmit.",
+        'Approved' => "Your submission '{$submission->documents}' has been approved by admin.",
+        'Rejected' => "Your submission '{$submission->documents}' has been rejected. Please revise and resubmit.",
         default => "Feedback received for '{$submission->documents}': {$submission->feedback}",
     };
 
     Notification::create([
         'user_id' => $submission->user_id,
-        'type' => $request->status,
+        'type' => strtolower($request->status),
         'message' => $message,
+        'submission_id' => $submissionId,
+        'read' => false
     ]);
+    
+    // Notify coordinator if clearance document
+    if (stripos($submission->documents, 'clearance') !== false) {
+        $coordinator = \App\Models\User::where('role', 'coordinator')
+            ->where('department', $submission->department)
+            ->first();
+        
+        if ($coordinator) {
+            Notification::create([
+                'user_id' => $coordinator->id,
+                'type' => 'clearance_update',
+                'message' => "Admin {$request->status} clearance for Group {$submission->group_no}: {$submission->documents}",
+                'submission_id' => $submissionId,
+                'read' => false
+            ]);
+        }
+    }
 
     return back()->with('success', 'Status updated and notification sent.');
 }
 
+public function getNotifications()
+{
+    $notifications = Notification::with('submission')
+        ->where('user_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
+    
+    return response()->json([
+        'notifications' => $notifications,
+        'unread_count' => Notification::where('user_id', auth()->id())->where('read', false)->count()
+    ]);
 }
 
+}

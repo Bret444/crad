@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -62,14 +63,18 @@ class StudentSubmissionController extends Controller
     {
         $request->validate([
             'documents' => 'required|string|max:255',
-            'file'  => 'required|mimes:pdf,doc,docx|max:2048',
+            'file'  => 'nullable|mimes:pdf,doc,docx|max:2048',
+            'drive_link' => 'nullable|url'
         ]);
         
-        $path = $request->file('file')->store('submissions', 'public');
         $user = auth()->user();
+        $path = null;
+        
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('submissions', 'public');
+        }
 
-        // Ensure data consistency - prioritize user model data over form data
-        Submission::create([
+        $submission = Submission::create([
             'user_id' => $user->id,
             'title' => $request->documents,
             'documents' => $request->documents,
@@ -77,10 +82,37 @@ class StudentSubmissionController extends Controller
             'department' => $user->department ?? 'N/A',
             'cluster' => $user->cluster ?? 4101,
             'group_no' => $user->group_no ?? 0,
-            'file_path' => $path,
+            'file_path' => $path ?? $request->drive_link,
             'status' => 'Pending',
             'submitted_by' => $user->id,
         ]);
+
+        // Notify coordinator
+        $coordinator = User::where('role', 'coordinator')
+            ->where('department', $user->department)
+            ->first();
+        
+        if ($coordinator) {
+            \App\Models\Notification::create([
+                'user_id' => $coordinator->id,
+                'type' => 'submission',
+                'message' => "New submission from Group {$user->group_no}: {$request->documents}",
+                'submission_id' => $submission->id,
+                'read' => false
+            ]);
+        }
+
+        // Notify admin
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'submission',
+                'message' => "New submission from Group {$user->group_no} ({$user->department}): {$request->documents}",
+                'submission_id' => $submission->id,
+                'read' => false
+            ]);
+        }
 
         return redirect()->route('submission')
             ->with('success', 'Proposal submitted successfully!');
@@ -164,21 +196,19 @@ class StudentSubmissionController extends Controller
 public function resubmit(Request $request, $id)
 {
     $submission = Submission::findOrFail($id);
+    $user = auth()->user();
 
-    // validate
     $request->validate([
         'documents' => 'required|string|max:255',
         'file'  => 'required|mimes:pdf,doc,docx|max:2048',
     ]);
 
-    // update title
     $submission->documents = $request->documents;
 
-    // upload new file
     if ($request->hasFile('file')) {
         $path = $request->file('file')->store('submissions', 'public');
 
-        if ($submission->file_path) {
+        if ($submission->file_path && !filter_var($submission->file_path, FILTER_VALIDATE_URL)) {
             Storage::disk('public')->delete($submission->file_path);
         }
 
@@ -187,6 +217,33 @@ public function resubmit(Request $request, $id)
 
     $submission->status = 'Resubmitted';
     $submission->save();
+
+    // Notify coordinator
+    $coordinator = User::where('role', 'coordinator')
+        ->where('department', $user->department)
+        ->first();
+    
+    if ($coordinator) {
+        \App\Models\Notification::create([
+            'user_id' => $coordinator->id,
+            'type' => 'resubmission',
+            'message' => "Group {$user->group_no} resubmitted: {$submission->documents}",
+            'submission_id' => $submission->id,
+            'read' => false
+        ]);
+    }
+
+    // Notify admin
+    $admin = User::where('role', 'admin')->first();
+    if ($admin) {
+        \App\Models\Notification::create([
+            'user_id' => $admin->id,
+            'type' => 'resubmission',
+            'message' => "Group {$user->group_no} ({$user->department}) resubmitted: {$submission->documents}",
+            'submission_id' => $submission->id,
+            'read' => false
+        ]);
+    }
 
     return redirect()->back()->with('success', 'Submission resubmitted successfully.');
 }

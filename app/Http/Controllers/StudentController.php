@@ -174,9 +174,9 @@ public function dashboard()
 
     $path = $request->file('file')->store('submissions', 'public');
 
-    Submission::create([
+    $submission = Submission::create([
         'user_id' => auth()->id(),
-        'submitted_by' => auth()->user()->name, // or whichever field you want
+        'submitted_by' => auth()->user()->name,
         'documents' => $request->documents,
         'department' => $request->department,
         'cluster' => $request->cluster,
@@ -185,6 +185,20 @@ public function dashboard()
         'status' => 'Pending',
     ]);
     
+    // Notify coordinator
+    $coordinator = \App\Models\User::where('role', 'coordinator')
+        ->where('department', $request->department)
+        ->first();
+    
+    if ($coordinator) {
+        Notification::create([
+            'user_id' => $coordinator->id,
+            'type' => 'submission',
+            'message' => "New submission from Group {$request->group_no}: {$request->documents}",
+            'submission_id' => $submission->id,
+            'read' => false
+        ]);
+    }
 
     return back()->with('success', 'Submission uploaded successfully!');
 }
@@ -216,6 +230,20 @@ public function notificationDetails($id)
     }
     
     return view('notification-details', compact('notification'));
+}
+
+public function getNotifications()
+{
+    $notifications = Notification::with('submission')
+        ->where('user_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
+    
+    return response()->json([
+        'notifications' => $notifications,
+        'unread_count' => Notification::where('user_id', auth()->id())->where('read', false)->count()
+    ]);
 }
 
 }

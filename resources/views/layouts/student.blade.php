@@ -238,6 +238,19 @@
                                             <span class="badge bg-primary">New</span>
                                         @endif
                                     </div>
+                                    @if($notification->submission)
+                                        <hr class="my-2">
+                                        <div class="mt-2">
+                                            <small class="text-muted d-block fw-bold">Submission Details</small>
+                                            <small class="text-muted d-block"><strong>Document:</strong> {{ $notification->submission->documents ?? 'N/A' }}</small>
+                                            <small class="text-muted d-block"><strong>Status:</strong> <span class="badge bg-{{ $notification->submission->status == 'Approved' ? 'success' : ($notification->submission->status == 'Rejected' ? 'danger' : 'warning') }}">{{ $notification->submission->status }}</span></small>
+                                            <small class="text-muted d-block"><strong>Department:</strong> {{ $notification->submission->department ?? 'N/A' }}</small>
+                                            <small class="text-muted d-block"><strong>Group:</strong> {{ $notification->submission->group_no ?? 'N/A' }}</small>
+                                            @if($notification->submission->feedback)
+                                                <small class="text-muted d-block"><strong>Feedback:</strong> {{ $notification->submission->feedback }}</small>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

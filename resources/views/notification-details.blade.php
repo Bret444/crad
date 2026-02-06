@@ -54,13 +54,13 @@
                             </div>
                         </div>
 
-                        @if($notification->data && isset($notification->data['feedback']))
+                        @if($notification->submission->feedback)
                             <hr>
                             <div class="mb-4">
                                 <h6 class="text-muted mb-2">Feedback</h6>
                                 <div class="alert alert-info">
                                     <i class="bi bi-chat-left-quote me-2"></i>
-                                    {{ $notification->data['feedback'] }}
+                                    {{ $notification->submission->feedback }}
                                 </div>
                             </div>
                         @endif

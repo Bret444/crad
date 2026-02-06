@@ -17,7 +17,7 @@
         min-height: 100vh !important;
     }
 
-    h1, h2, h3, h4, h5, h6, .fw-bold {
+    h1, h2, h3, h4, h5, h6, .fw-bold { 
         font-weight: 700 !important;
     }
     
@@ -303,25 +303,47 @@
                         </h2>
                         <div id="{{ $formTargetID }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $docUniqueID }}" data-bs-parent="#preOralAccordion">
                             <div class="accordion-body upload-form-content">
-                                <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
-                                    @csrf
-                                    <input type="hidden" name="documents" value="{{ $docTitle }}">
-                                    <input type="hidden" name="defense_type" value="Pre-Oral">
-                                    <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
-                                    <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
-                                    <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
-                                    <label class="form-label mb-2 form-label-hidden">Upload a File</label>
-                                    <div class="input-group mb-3">
-                                        <input type="file" name="file" class="form-control" required>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
-                                        <label class="form-check-label" for="terms-{{ $docUniqueID }}">
-                                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
-                                        </label>
-                                    </div>
-                                    <button class="btn btn-primary" type="submit">Upload</button>
-                                </form>
+                                @if($docTitle === 'Manuscript Chapter 1-3')
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" data-document="{{ $docTitle }}" data-type="link">
+                                        @csrf
+                                        <input type="hidden" name="documents" value="{{ $docTitle }}">
+                                        <input type="hidden" name="defense_type" value="Pre-Oral">
+                                        <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
+                                        <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
+                                        <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
+                                        <label class="form-label mb-2">Google Drive Link</label>
+                                        <div class="input-group mb-3">
+                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/..." required>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
+                                            <label class="form-check-label" for="terms-{{ $docUniqueID }}">
+                                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Submit Link</button>
+                                    </form>
+                                @else
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
+                                        @csrf
+                                        <input type="hidden" name="documents" value="{{ $docTitle }}">
+                                        <input type="hidden" name="defense_type" value="Pre-Oral">
+                                        <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
+                                        <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
+                                        <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
+                                        <label class="form-label mb-2 form-label-hidden">Upload a File</label>
+                                        <div class="input-group mb-3">
+                                            <input type="file" name="file" class="form-control" required>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
+                                            <label class="form-check-label" for="terms-{{ $docUniqueID }}">
+                                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Upload</button>
+                                    </form>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -399,25 +421,47 @@
                         </h2>
                         <div id="{{ $formTargetID }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $docUniqueID }}" data-bs-parent="#finalDefenseAccordion">
                             <div class="accordion-body upload-form-content">
-                                <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
-                                    @csrf
-                                    <input type="hidden" name="documents" value="{{ $docTitle }}">
-                                    <input type="hidden" name="defense_type" value="Final Defense">
-                                    <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
-                                    <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
-                                    <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
-                                    <label class="form-label mb-2 form-label-hidden">Upload a File</label>
-                                    <div class="input-group mb-3">
-                                        <input type="file" name="file" class="form-control" required>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
-                                        <label class="form-check-label" for="terms-{{ $docUniqueID }}">
-                                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
-                                        </label>
-                                    </div>
-                                    <button class="btn btn-primary" type="submit">Upload</button>
-                                </form>
+                                @if($docTitle === 'Manuscript Chapter 1-5')
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" data-document="{{ $docTitle }}" data-type="link">
+                                        @csrf
+                                        <input type="hidden" name="documents" value="{{ $docTitle }}">
+                                        <input type="hidden" name="defense_type" value="Final Defense">
+                                        <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
+                                        <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
+                                        <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
+                                        <label class="form-label mb-2">Google Drive Link</label>
+                                        <div class="input-group mb-3">
+                                            <input type="url" name="drive_link" class="form-control" placeholder="https://drive.google.com/..." required>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
+                                            <label class="form-check-label" for="terms-{{ $docUniqueID }}">
+                                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Submit Link</button>
+                                    </form>
+                                @else
+                                    <form class="upload-form" action="{{ route('student.submissions.store') }}" method="POST" enctype="multipart/form-data" data-document="{{ $docTitle }}">
+                                        @csrf
+                                        <input type="hidden" name="documents" value="{{ $docTitle }}">
+                                        <input type="hidden" name="defense_type" value="Final Defense">
+                                        <input type="hidden" name="department" value="{{ auth()->user()->department ?? 'N/A' }}">
+                                        <input type="hidden" name="cluster" value="{{ auth()->user()->section_cluster ?? 4101 }}">
+                                        <input type="hidden" name="group_no" value="{{ auth()->user()->group_no ?? 0 }}">
+                                        <label class="form-label mb-2 form-label-hidden">Upload a File</label>
+                                        <div class="input-group mb-3">
+                                            <input type="file" name="file" class="form-control" required>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="terms-{{ $docUniqueID }}" required>
+                                            <label class="form-check-label" for="terms-{{ $docUniqueID }}">
+                                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Upload</button>
+                                    </form>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -593,8 +637,38 @@
     </div>
 </div>
 
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="successModalLabel"><i class="bi bi-check-circle"></i> Upload Successful</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <p class="mt-3 fs-5">Your document has been submitted successfully!</p>
+                <p class="text-muted">The coordinator will review your submission.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    @if(session('success'))
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+        
+        // Reload page after modal is closed to show updated submissions
+        document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
+            window.location.reload();
+        });
+    @endif
+
     let currentForm = null;
 
     function attachFormEventListeners() {
@@ -608,13 +682,25 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         const documentTitle = e.target.getAttribute('data-document');
-        const fileInput = e.target.querySelector('input[type="file"]');
+        const isLinkForm = e.target.getAttribute('data-type') === 'link';
         const termsCheckbox = e.target.querySelector('input[type="checkbox"]');
-        const file = fileInput.files[0];
-
-        if (!file) {
-            alert('Please choose a file to upload.');
-            return false;
+        
+        let inputValue = '';
+        if (isLinkForm) {
+            const linkInput = e.target.querySelector('input[name="drive_link"]');
+            inputValue = linkInput.value;
+            if (!inputValue) {
+                alert('Please enter a Google Drive link.');
+                return false;
+            }
+        } else {
+            const fileInput = e.target.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please choose a file to upload.');
+                return false;
+            }
+            inputValue = file.name;
         }
 
         if (!termsCheckbox.checked) {
@@ -622,25 +708,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        // Store current form for later submission
         currentForm = e.target;
         
-        // Show confirmation modal
         document.getElementById('confirmDocumentName').textContent = documentTitle;
-        document.getElementById('confirmFileName').textContent = file.name;
+        document.getElementById('confirmFileName').textContent = inputValue;
         
         const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
         confirmModal.show();
     }
 
-    // Handle confirmation
     document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
         if (currentForm) {
-            // Hide modal
             const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
             confirmModal.hide();
             
-            // Submit the form
             currentForm.submit();
         }
     });

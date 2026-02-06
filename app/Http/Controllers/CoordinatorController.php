@@ -168,6 +168,15 @@ class CoordinatorController extends Controller
     public function updateSubmissionStatus(Request $request, $id)
     {
         $submission = \App\Models\Submission::findOrFail($id);
+        $coordinator = Auth::user();
+        
+        // Coordinator can only approve/reject non-clearance documents
+        if (stripos($submission->documents, 'clearance') !== false) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Only Admin can handle clearance documents'
+            ], 403);
+        }
         
         if ($request->has('status')) {
             $submission->status = $request->status;
@@ -178,6 +187,40 @@ class CoordinatorController extends Controller
         }
         
         $submission->save();
+        
+        // Notify student
+        $message = match($request->status) {
+            'Approved' => "Your submission '{$submission->documents}' has been approved by coordinator.",
+            'Rejected' => "Your submission '{$submission->documents}' has been rejected. Please revise and resubmit.",
+            default => "Feedback received for '{$submission->documents}'"
+        };
+        
+        \App\Models\Notification::create([
+            'user_id' => $submission->user_id,
+            'type' => strtolower($request->status ?? 'feedback'),
+            'message' => $message,
+            'submission_id' => $submission->id,
+            'read' => false
+        ]);
+        
+        // Notify admin
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            $adminMessage = match($request->status) {
+                'Approved' => "Coordinator approved '{$submission->documents}' from Group {$submission->group_no} ({$submission->department}).",
+                'Rejected' => "Coordinator rejected '{$submission->documents}' from Group {$submission->group_no} ({$submission->department}).",
+                default => "Coordinator added feedback to '{$submission->documents}' from Group {$submission->group_no} ({$submission->department})."
+            };
+            
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => strtolower($request->status ?? 'feedback'),
+                'message' => $adminMessage,
+                'submission_id' => $submission->id,
+                'read' => false
+            ]);
+        }
+        
         return response()->json(['success' => true]);
     }
 
@@ -230,5 +273,19 @@ class CoordinatorController extends Controller
             ->pluck('cluster_number');
         
         return response()->json(['clusters' => $clusters]);
+    }
+
+    public function getNotifications()
+    {
+        $notifications = \App\Models\Notification::with('submission')
+            ->where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        
+        return response()->json([
+            'notifications' => $notifications,
+            'unread_count' => \App\Models\Notification::where('user_id', auth()->id())->where('read', false)->count()
+        ]);
     }
 }

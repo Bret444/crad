@@ -60,12 +60,14 @@ Route::middleware(['auth', 'student'])->group(function () {
     Route::post('/submission', [StudentSubmissionController::class, 'store'])->name('student.submission.store');
     Route::post('/submissions', [StudentSubmissionController::class, 'store'])->name('student.submissions.store');
     Route::get('/notifications', [StudentController::class, 'notifications'])->name('student.notifications');
+    Route::get('/api/notifications', [StudentController::class, 'getNotifications'])->name('student.api.notifications');
 });
 
 // Admin routes
 Route::middleware(['auth' , 'admin'])->group(function () {
     Route::get('/admin-dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
+    Route::get('/api/admin/notifications', [AdminController::class, 'getNotifications'])->name('admin.api.notifications');
 
     Route::get('/track-proposal', [AdminSubmissionController::class, 'trackProposal'])->name('admin.track-proposal');
     Route::get('/admin/submissions', [AdminSubmissionController::class, 'trackProposal'])->name('admin.submissions.index');
@@ -256,6 +258,10 @@ Route::get('/coordinator/submissions/{id}/download', [CoordinatorController::cla
 Route::get('/coordinator-manage-adviser', [CoordinatorController::class, 'manageAdviser'])
     ->middleware('auth', 'coordinator')
     ->name('coordinator-manage-adviser');
+
+Route::get('/api/coordinator/notifications', [CoordinatorController::class, 'getNotifications'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator.api.notifications');
 
 Route::get('/coordinator-manage-groups', [\App\Http\Controllers\GroupController::class, 'index'])
     ->middleware('auth', 'coordinator')

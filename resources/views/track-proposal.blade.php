@@ -140,6 +140,29 @@
     </div>
 </div>
 
+<!-- Link Modal for Manuscripts -->
+<div class="modal fade" id="linkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-link-45deg"></i> View Manuscript</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-file-earmark-text text-primary" style="font-size: 3rem;"></i>
+                <p class="mt-3 mb-1 fw-semibold" id="linkDocumentName">Manuscript Chapter 1-3</p>
+                <p class="text-muted small">Click the button below to open the document</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="openLinkBtn" class="btn btn-primary" target="_blank">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Open Link
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Approve Modal -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -150,6 +173,10 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to approve <strong id="approveDocName"></strong>?</p>
+                <div class="mb-3">
+                    <label class="form-label">Feedback (Optional):</label>
+                    <textarea class="form-control" id="approveFeedback" rows="3" placeholder="Add feedback or comments..."></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -331,6 +358,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const department = submission.department || 'N/A';
             const cluster = submission.cluster || 'N/A';
             
+            // Check if document is clearance or has a link
+            const isClearance = submission.documents && submission.documents.toLowerCase().includes('clearance');
+            const isLink = submission.file_path && (submission.file_path.startsWith('http://') || submission.file_path.startsWith('https://'));
+            const viewBtnAttr = isLink ? `data-link="${submission.file_path}" data-docname="${submission.documents}"` : `data-sid="${btoa(submission.id)}"`;
+            
+            // Admin can only approve/reject clearance documents
+            const actionButtons = isClearance ? `
+                <button class="btn btn-sm btn-outline-success approve-btn" title="Approve" data-sid="${btoa(submission.id)}"><i class="fas fa-check"></i></button>
+                <button class="btn btn-sm btn-outline-danger reject-btn" title="Reject" data-sid="${btoa(submission.id)}"><i class="fas fa-times"></i></button>
+            ` : '<div class="alert alert-info py-1 px-2 mb-0 mt-2"><small><i class="bi bi-info-circle"></i> View only - Managed by Coordinator</small></div>';
+            
             const cardHtml = `
                 <div class="col-md-6">
                     <div class="card ${borderClass} h-100">
@@ -341,10 +379,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <small class="text-muted d-block mb-1"><strong>Department:</strong> ${department}</small>
                             <small class="text-muted d-block mb-3"><strong>Cluster:</strong> ${cluster}</small>
                             <div class="d-flex gap-2 mt-3">
-                                <button class="btn btn-sm btn-outline-info view-btn" title="View" data-sid="${btoa(submission.id)}"><i class="fas fa-eye"></i></button>
-                                <button class="btn btn-sm btn-outline-success approve-btn" title="Approve" data-sid="${btoa(submission.id)}"><i class="fas fa-check"></i></button>
-                                <button class="btn btn-sm btn-outline-danger reject-btn" title="Reject" data-sid="${btoa(submission.id)}"><i class="fas fa-times"></i></button>
-                                <button class="btn btn-sm btn-outline-secondary feedback-btn" title="Feedback" data-sid="${btoa(submission.id)}"><i class="fas fa-comment-dots"></i></button>
+                                <button class="btn btn-sm btn-outline-info view-btn" title="View" ${viewBtnAttr}><i class="fas fa-eye"></i></button>
+                                ${actionButtons}
                             </div>
                             <span class="badge ${statusClass} mt-2" id="status-${submission.id}">${submission.status}</span>
                         </div>
@@ -390,23 +426,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target.tagName === 'I') {
             target = target.parentElement;
         }
-        if (!target.hasAttribute('data-sid')) {
-            target = target.closest('button[data-sid]');
+        if (!target.hasAttribute('data-sid') && !target.hasAttribute('data-link')) {
+            target = target.closest('button[data-sid], button[data-link]');
         }
         if (!target) return;
         
-        const encodedId = target.getAttribute('data-sid');
-        if (!encodedId) return;
-        
-        const submissionId = atob(encodedId);
-        
         if (target.classList.contains('view-btn')) {
+            // Check if it's a manuscript link
+            if (target.hasAttribute('data-link')) {
+                const link = target.getAttribute('data-link');
+                const docName = target.getAttribute('data-docname');
+                document.getElementById('linkDocumentName').textContent = docName;
+                document.getElementById('openLinkBtn').href = link;
+                new bootstrap.Modal(document.getElementById('linkModal')).show();
+                return;
+            }
+            // Otherwise show download modal
+            const encodedId = target.getAttribute('data-sid');
+            if (!encodedId) return;
+            const submissionId = atob(encodedId);
             currentSubmissionId = submissionId;
             document.getElementById('viewModalTitle').textContent = 'View Document';
             document.getElementById('fileName').textContent = 'document.pdf';
             document.getElementById('downloadBtn').href = `/admin/submissions/${submissionId}/download`;
             new bootstrap.Modal(document.getElementById('viewModal')).show();
+            return;
         }
+        
+        const encodedId = target.getAttribute('data-sid');
+        if (!encodedId) return;
+        
+        const submissionId = atob(encodedId);
         
         if (target.classList.contains('approve-btn')) {
             currentSubmissionId = submissionId;
@@ -436,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        const feedback = document.getElementById('approveFeedback').value;
         console.log('Approving submission ID:', currentSubmissionId);
         
         fetch(`/admin/submissions/${currentSubmissionId}/update-status`, {
@@ -444,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({ status: 'Approved' })
+            body: JSON.stringify({ status: 'Approved', feedback: feedback })
         })
         .then(response => {
             console.log('Response status:', response.status);
