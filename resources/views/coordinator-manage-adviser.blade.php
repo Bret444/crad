@@ -646,69 +646,84 @@ document.addEventListener('DOMContentLoaded', function() {
             const manageAdvisoryForm{{ $adviser->id }} = document.getElementById('manageAdvisoryForm{{ $adviser->id }}');
             
             if (manageAdvisoryAllGroups{{ $adviser->id }}) {
-                const dept = '{{ $adviser->department }}';
-                const advisersData = @json($advisers);
-                const currentAdviserId = {{ $adviser->id }};
-                const currentAdviserSections = @json($adviser->sections ?? []);
-                const takenGroups = [];
-                
-                advisersData.forEach(adviser => {
-                    if (adviser.id !== currentAdviserId && adviser.department === dept && adviser.sections) {
-                        const sections = Array.isArray(adviser.sections) ? adviser.sections : [adviser.sections];
-                        takenGroups.push(...sections.map(s => parseInt(s)));
-                    }
-                });
-                
-                let html = '';
-                for (let clusterNum = 4101; clusterNum <= 4110; clusterNum++) {
-                    const offset = (clusterNum - 4101) * 10;
-                    html += `<div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Cluster ${clusterNum}</strong>
-                            <div>
-                                <button type="button" class="btn btn-sm btn-outline-success me-1 check-cluster" data-cluster="${clusterNum}">
-                                    <i class="bi bi-check-square"></i> Check All
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger uncheck-cluster" data-cluster="${clusterNum}">
-                                    <i class="bi bi-square"></i> Uncheck All
-                                </button>
-                            </div>
-                        </div>
-                        <div class="row g-2 mt-1">`;
+                // Fetch created clusters from database
+                fetch('/clusters')
+                .then(response => response.json())
+                .then(data => {
+                    const createdClusters = (data.clusters || []).map(c => parseInt(c)).sort((a, b) => a - b);
                     
-                    for (let i = 1; i <= 10; i++) {
-                        const groupNum = offset + i;
-                        const isTaken = takenGroups.includes(groupNum);
-                        const isCurrentlyAssigned = currentAdviserSections.includes(groupNum);
-                        html += `
-                            <div class="col-md-3 col-sm-4">
-                                <div class="form-check ${isTaken ? 'section-occupied p-2' : ''}">
-                                    <input class="form-check-input cluster-${clusterNum}-checkbox" type="checkbox" name="group_number[]" value="${groupNum}" id="manageAdvisoryGroup{{ $adviser->id }}_${groupNum}" ${isTaken ? 'disabled' : ''} ${isCurrentlyAssigned ? 'checked' : ''}>
-                                    <label class="form-check-label ${isTaken ? 'text-muted text-decoration-line-through' : ''}" for="manageAdvisoryGroup{{ $adviser->id }}_${groupNum}">
-                                        G${groupNum} ${isTaken ? '<span class="badge bg-danger ms-1">Taken</span>' : isCurrentlyAssigned ? '<span class="badge bg-success ms-1">Assigned</span>' : ''}
-                                    </label>
+                    const dept = '{{ $adviser->department }}';
+                    const advisersData = @json($advisers);
+                    const currentAdviserId = {{ $adviser->id }};
+                    const currentAdviserSections = @json($adviser->sections ?? []);
+                    const takenGroups = [];
+                    
+                    advisersData.forEach(adviser => {
+                        if (adviser.id !== currentAdviserId && adviser.department === dept && adviser.sections) {
+                            const sections = Array.isArray(adviser.sections) ? adviser.sections : [adviser.sections];
+                            takenGroups.push(...sections.map(s => parseInt(s)));
+                        }
+                    });
+                    
+                    let html = '';
+                    if (createdClusters.length === 0) {
+                        html = '<p class="text-muted text-center">No clusters created yet. Please create clusters first in Manage Clusters.</p>';
+                    } else {
+                        createdClusters.forEach(clusterNum => {
+                            const offset = (clusterNum - 4101) * 10;
+                            html += `<div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Cluster ${clusterNum}</strong>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-success me-1 check-cluster" data-cluster="${clusterNum}">
+                                            <i class="bi bi-check-square"></i> Check All
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger uncheck-cluster" data-cluster="${clusterNum}">
+                                            <i class="bi bi-square"></i> Uncheck All
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                                <div class="row g-2 mt-1">`;
+                            
+                            for (let i = 1; i <= 10; i++) {
+                                const groupNum = offset + i;
+                                const isTaken = takenGroups.includes(groupNum);
+                                const isCurrentlyAssigned = currentAdviserSections.includes(groupNum);
+                                html += `
+                                    <div class="col-md-3 col-sm-4">
+                                        <div class="form-check ${isTaken ? 'section-occupied p-2' : ''}">
+                                            <input class="form-check-input cluster-${clusterNum}-checkbox" type="checkbox" name="group_number[]" value="${groupNum}" id="manageAdvisoryGroup{{ $adviser->id }}_${groupNum}" ${isTaken ? 'disabled' : ''} ${isCurrentlyAssigned ? 'checked' : ''}>
+                                            <label class="form-check-label ${isTaken ? 'text-muted text-decoration-line-through' : ''}" for="manageAdvisoryGroup{{ $adviser->id }}_${groupNum}">
+                                                G${groupNum} ${isTaken ? '<span class="badge bg-danger ms-1">Taken</span>' : isCurrentlyAssigned ? '<span class="badge bg-success ms-1">Assigned</span>' : ''}
+                                            </label>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            html += '</div></div>';
+                        });
                     }
-                    html += '</div></div>';
-                }
-                manageAdvisoryAllGroups{{ $adviser->id }}.innerHTML = html;
-                
-                // Add event listeners for Check All buttons
-                document.querySelectorAll('#manage_advisory_all_groups_{{ $adviser->id }} .check-cluster').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const cluster = this.dataset.cluster;
-                        document.querySelectorAll(`.cluster-${cluster}-checkbox:not(:disabled)`).forEach(cb => cb.checked = true);
+                        manageAdvisoryAllGroups{{ $adviser->id }}.innerHTML = html;
+                    
+                    // Add event listeners for Check All buttons
+                    document.querySelectorAll('#manage_advisory_all_groups_{{ $adviser->id }} .check-cluster').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const cluster = this.dataset.cluster;
+                            document.querySelectorAll(`.cluster-${cluster}-checkbox:not(:disabled)`).forEach(cb => cb.checked = true);
+                        });
                     });
-                });
-                
-                // Add event listeners for Uncheck All buttons
-                document.querySelectorAll('#manage_advisory_all_groups_{{ $adviser->id }} .uncheck-cluster').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const cluster = this.dataset.cluster;
-                        document.querySelectorAll(`.cluster-${cluster}-checkbox:not(:disabled)`).forEach(cb => cb.checked = false);
+                    
+                    // Add event listeners for Uncheck All buttons
+                    document.querySelectorAll('#manage_advisory_all_groups_{{ $adviser->id }} .uncheck-cluster').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const cluster = this.dataset.cluster;
+                            document.querySelectorAll(`.cluster-${cluster}-checkbox:not(:disabled)`).forEach(cb => cb.checked = false);
+                        });
                     });
+                })
+                .catch(error => {
+                    console.error('Error loading clusters:', error);
+                    manageAdvisoryAllGroups{{ $adviser->id }}.innerHTML = '<p class="text-danger text-center">Error loading clusters. Please try again.</p>';
                 });
             }
             

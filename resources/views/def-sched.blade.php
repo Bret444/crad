@@ -516,9 +516,6 @@
             <button class="btn btn-outline-secondary" id="backToFilterFromSchedule">
                 <i class="bi bi-arrow-left"></i> Back
             </button>
-            <button class="btn btn-danger" id="resetAllSchedulesBtn">
-                <i class="bi bi-trash"></i> Reset All Schedules
-            </button>
         </div>
         <h2 class="text-center mb-4" id="dept-header"></h2>
 
@@ -659,7 +656,10 @@
 
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-schedule-fixed text-white flex-fill" id="schedule-button" data-group-target="">Set Schedule</button>
+                <button type="button" class="btn btn-warning" id="edit-schedule-button" style="display:none;">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button type="button" class="btn btn-schedule-fixed text-white flex-fill" id="schedule-button" data-group-target="">Set Schedule</button>
             </div>
         </div>
     </div>
@@ -754,6 +754,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="generateScheduleBtn">
+                    <i class="bi bi-magic"></i> Generate Schedule
+                </button>
                 <button type="button" class="btn btn-primary btn-custom-merged" id="backToScheduleBtn">
                     <i class="bi bi-arrow-left"></i> Back to Scheduling
                 </button>
@@ -1069,85 +1072,89 @@
         const end = new Date(`2000-01-01T${baseEndTime}`);
         const durationMinutes = (end - start) / 60000;
         
-        const schedules = [];
-        let currentStart = baseStartTime;
-        
-        // Generate schedules for all 5 groups
-        for (let i = 1; i <= 5; i++) {
-            const groupId = setLetter + i;
-            const currentEnd = addMinutes(currentStart, durationMinutes);
-            
-            schedules.push({
-                department: dept,
-                section: cluster,
-                group_id: groupId,
-                defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType,
-                assignment_id: 1,
-                defense_date: baseDate,
-                start_time: currentStart,
-                end_time: currentEnd,
-                panel_data: {
-                    adviser: adviser,
-                    chairperson: chair,
-                    members: members
-                }
-            });
-            
-            // Next group starts when current group ends
-            currentStart = currentEnd;
-        }
-        
-        // Save all schedules to database
-        Promise.all(schedules.map(schedule => 
-            fetch('/defense-schedules', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(schedule)
-            })
+        // Fetch all groups to schedule
+        fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
             .then(response => response.json())
-            .catch(error => {
-                console.error('Error saving schedule:', error);
-                return { success: false, error: error.message };
-            })
-        ))
-        .then(results => {
-            console.log('All schedule results:', results);
-            
-            // Check if any failed
-            const failures = results.filter(r => !r.success);
-            if (failures.length > 0) {
-                console.error('Some schedules failed:', failures);
-                showAlert('error', 'Partial Failure', `${failures.length} out of 5 schedules failed to save.`);
-            } else {
-                // Update UI for all groups
-                schedules.forEach(schedule => {
-                    updateScheduleUI(schedule);
+            .then(data => {
+                const groups = data.groups || [];
+                const schedules = [];
+                let currentStart = baseStartTime;
+                
+                // Generate schedules for all groups
+                groups.forEach((group, index) => {
+                    const groupId = group.group_id || group.id;
+                    const currentEnd = addMinutes(currentStart, durationMinutes);
+                    
+                    schedules.push({
+                        department: dept,
+                        section: cluster,
+                        group_id: groupId,
+                        defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType,
+                        assignment_id: 1,
+                        defense_date: baseDate,
+                        start_time: currentStart,
+                        end_time: currentEnd,
+                        panel_data: {
+                            adviser: adviser,
+                            chairperson: chair,
+                            members: members
+                        }
+                    });
+                    
+                    // Next group starts when current group ends
+                    currentStart = currentEnd;
                 });
                 
-                showAlert('success', 'All Groups Scheduled!', `All 5 groups in Set ${setLetter} have been automatically scheduled with ${durationMinutes} minute intervals.`);
-            }
-            
-            const scheduleModal = document.getElementById('scheduleModal');
-            const modalInstance = bootstrap.Modal.getInstance(scheduleModal);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
-            
-            // Save state
-            localStorage.setItem('currentView', 'schedule');
-            localStorage.setItem('selectedDept', document.getElementById('dept-select').value);
-            localStorage.setItem('selectedCluster', document.getElementById('cluster-select').value);
-            if (currentDefenseType === 'REDEFENSE') {
-                localStorage.setItem('selectedRedefenseType', document.getElementById('redefense-type-select').value);
-            }
-        })
-        .catch(error => {
-            console.error('Error auto-scheduling groups:', error);
-            showAlert('error', 'Scheduling Failed', `Failed to auto-schedule groups: ${error.message}`);
-        });
+                // Save all schedules to database
+                Promise.all(schedules.map(schedule => 
+                    fetch('/defense-schedules', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(schedule)
+                    })
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Error saving schedule:', error);
+                        return { success: false, error: error.message };
+                    })
+                ))
+                .then(results => {
+                    const failures = results.filter(r => !r.success);
+                    if (failures.length > 0) {
+                        showAlert('error', 'Partial Failure', `${failures.length} out of ${schedules.length} schedules failed to save.`);
+                    } else {
+                        schedules.forEach(schedule => {
+                            updateScheduleUI(schedule);
+                        });
+                        
+                        showAlert('success', 'All Groups Scheduled!', `All ${schedules.length} groups have been automatically scheduled with ${durationMinutes} minute intervals.`);
+                    }
+                    
+                    const scheduleModal = document.getElementById('scheduleModal');
+                    const modalInstance = bootstrap.Modal.getInstance(scheduleModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    
+                    localStorage.setItem('currentView', 'schedule');
+                    localStorage.setItem('selectedDept', dept);
+                    localStorage.setItem('selectedCluster', cluster);
+                    if (currentDefenseType === 'REDEFENSE') {
+                        localStorage.setItem('selectedRedefenseType', document.getElementById('redefense-type-select').value);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error auto-scheduling groups:', error);
+                    showAlert('error', 'Scheduling Failed', `Failed to auto-schedule groups: ${error.message}`);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching groups:', error);
+                showAlert('error', 'Scheduling Failed', 'Failed to fetch groups for auto-scheduling.');
+            });
     }
     
     function addMinutes(time, minutes) {
@@ -1186,11 +1193,13 @@
         `;
         
         targetCell.innerHTML = scheduledTagHtml;
-        
         updateGroupStatus(schedule.group_id, currentDefenseType, true, null);
         
-        parentRow.classList.add('row-flash');
-        setTimeout(() => parentRow.classList.remove('row-flash'), 2000);
+        const parentRow = targetCell.closest('tr');
+        if (parentRow) {
+            parentRow.classList.add('row-flash');
+            setTimeout(() => parentRow.classList.remove('row-flash'), 2000);
+        }
     }
 
     // Initialize group status tracking
@@ -1276,6 +1285,8 @@
     function checkPanelAvailability(panelNames, selectedDate, startTime, endTime) {
         const dept = document.getElementById('dept-select').value;
         const cluster = document.getElementById('cluster-select').value;
+        const groupId = currentGroupTarget || scheduleButton.getAttribute('data-group-target');
+        const defenseType = currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType;
         
         return fetch('/api/panel-availability', {
             method: 'POST',
@@ -1289,7 +1300,9 @@
                 start_time: startTime,
                 end_time: endTime,
                 department: dept,
-                section: cluster
+                section: cluster,
+                group_id: groupId,
+                defense_type: defenseType
             })
         })
         .then(response => response.json())
@@ -1881,6 +1894,8 @@
             console.log('Response data:', data);
             if (data.success) {
                 simulateScheduleSuccess(targetId);
+                // Reload schedule data to reflect changes
+                setTimeout(() => loadScheduleData(), 500);
             } else {
                 showAlert('error', 'Save Failed', data.error || 'Failed to save schedule to database.');
             }
@@ -2068,62 +2083,13 @@
     
     document.addEventListener('DOMContentLoaded', function () {
 
-        const resetBtn = document.getElementById('resetAllSchedulesBtn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', async function() {
-                const dept = document.getElementById('dept-select').value;
-                const cluster = document.getElementById('cluster-select').value;
-                const defenseType = currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType;
-                
-                const confirmed = await showConfirm('Reset All Schedules?', `This will delete all schedules for ${defenseType} in ${dept} (${cluster}). This action cannot be undone.`, 'Reset All', 'Cancel');
-                if (!confirmed) return;
-                
-                fetch(`/defense-schedules/reset?department=${dept}&section=${cluster}&defense_type=${defenseType}`, {
-                    method: 'DELETE',
-                    headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')}
-                })
-                .then(response => {
-                    console.log('Reset response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Reset response:', data);
-                    if (data.success) {
-                        document.querySelectorAll('.schedule-cell').forEach(cell => {
-                            const groupId = cell.getAttribute('data-schedule-target');
-                            const set = groupId.charAt(0);
-                            const group = groupId.substring(1);
-                            const row = cell.closest('tr');
-                            const btn = row.querySelector('.btn-set-schedule, .scheduled-container');
-                            const adviser = btn?.getAttribute('data-adviser') || 'No Adviser';
-                            const chair = btn?.getAttribute('data-chair') || 'No Chairperson';
-                            const members = btn?.getAttribute('data-members') || 'No Members';
-                            
-                            cell.innerHTML = `<button class="btn btn-set-schedule" data-bs-toggle="modal" data-bs-target="#scheduleModal" 
-                                data-group="${group}" data-cluster="" data-set="${set}" 
-                                data-adviser="${adviser}" data-chair="${chair}" data-members="${members}">
-                                <i class="bi bi-calendar-plus"></i> Set Schedule
-                            </button>`;
-                            updateGroupStatus(groupId, currentDefenseType, false, null);
-                        });
-                        showAlert('success', 'Schedules Reset', 'All schedules have been deleted successfully.');
-                    } else {
-                        showAlert('error', 'Reset Failed', data.error || 'Failed to reset schedules.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error resetting schedules:', error);
-                    showAlert('error', 'Reset Failed', 'Failed to reset schedules.');
-                });
-            });
-        }
-
         const typeSelectionView = document.getElementById('type-selection-view');
         const filterPage = document.getElementById('filter-page');
         const enterButton = document.getElementById('enterButton');
         const scheduleView = document.getElementById('schedule-view');
         const scheduleButton = document.getElementById('schedule-button');
         const scheduleModal = document.getElementById('scheduleModal');
+        let currentGroupTarget = null;
         const panelEditModal = document.getElementById('panelEditModal');
         const savePanelDetailsBtn = document.getElementById('savePanelDetailsBtn');
         const deptSelect = document.getElementById('dept-select');
@@ -2236,7 +2202,7 @@
                 document.getElementById('empty-state').style.display = 'none';
                 
                 // Fetch assignment data and update button attributes
-                fetch('/api/assignments')
+                fetch(`/api/assignments?department=${dept}&section=${cluster}`)
                     .then(response => response.json())
                     .then(assignments => {
                         const assignment = assignments.find(a => a.department === dept && a.section === cluster);
@@ -2252,6 +2218,9 @@
                             chairName = chairperson ? chairperson.name : 'No Chairperson';
                             memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
                         }
+                        
+                        // Generate table rows with panel data
+                        generateTableRows(adviser, chairName, memberNames);
                         
                         // Update all schedule buttons with panel data
                         document.querySelectorAll('.btn-set-schedule').forEach(btn => {
@@ -2432,6 +2401,14 @@
             const group = button.getAttribute('data-group');
             const realGroupId = button.getAttribute('data-real-group-id') || (set + group);
             
+            // Show/hide edit button based on whether schedule exists
+            const editBtn = document.getElementById('edit-schedule-button');
+            if (isEditing) {
+                editBtn.style.display = 'block';
+            } else {
+                editBtn.style.display = 'none';
+            }
+            
             // Validate scheduling attempt and prevent modal from opening if not eligible
             if (!isEditing && currentDefenseType === 'FINAL DEFENSE') {
                 event.preventDefault();
@@ -2457,7 +2434,8 @@
             document.getElementById('modal-chairperson').textContent = chair;
             document.getElementById('modal-members').textContent = members;
 
-            scheduleButton.setAttribute('data-group-target', realGroupId); 
+            scheduleButton.setAttribute('data-group-target', realGroupId);
+            currentGroupTarget = realGroupId;
             scheduleButton.textContent = isEditing ? 'Update Schedule' : 'Set Schedule';
 
             document.getElementById('start-time-input').value = isEditing ? button.getAttribute('data-sch-start') : ''; 
@@ -2502,8 +2480,17 @@
             const endTime = document.getElementById('end-time-input').value;
             const dateActual = document.getElementById('date-actual-input').value;
             
+            console.log('Schedule button clicked - isEditMode:', isEditMode, 'targetId:', targetId);
+            
             if (!startTime || !endTime || !dateActual) {
                 showAlert('warning', 'Missing Information', 'Please select a Start Time, End Time, and Date before scheduling.');
+                return;
+            }
+            
+            // If in edit mode, skip availability check and auto-schedule logic
+            if (isEditMode) {
+                console.log('Edit mode detected - saving directly');
+                saveScheduleToDatabase(targetId);
                 return;
             }
             
@@ -2541,15 +2528,48 @@
                         }
                     }
                     
-                    // Check if this is Group 1 and auto-schedule other groups
-                    const groupNumber = parseInt(targetId.substring(1));
-                    const setLetter = targetId.charAt(0);
+                    // Check if this is the first unscheduled group in the cluster
+                    const dept = document.getElementById('dept-select').value;
+                    const cluster = document.getElementById('cluster-select').value;
                     
-                    if (groupNumber === 1) {
-                        autoScheduleGroups(setLetter, dateActual, startTime, endTime, adviser, chair, members);
-                    } else {
-                        saveScheduleToDatabase(targetId);
-                    }
+                    // Get all groups in this cluster
+                    fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const groups = data.groups || [];
+                            
+                            // Check how many are already scheduled
+                            let scheduledCount = 0;
+                            groups.forEach(g => {
+                                const gId = g.group_id || g.id;
+                                const cell = document.querySelector(`[data-schedule-target="${gId}"]`);
+                                if (cell && cell.querySelector('.scheduled-container')) {
+                                    scheduledCount++;
+                                }
+                            });
+                            
+                            // If this is the first schedule, auto-schedule all others
+                            if (scheduledCount === 0 && groups.length > 1) {
+                                showConfirm(
+                                    'Auto-Schedule All Groups?',
+                                    `This is the first group being scheduled. Would you like to automatically schedule all ${groups.length} groups with the same time duration?`,
+                                    'Yes, Auto-Schedule',
+                                    'No, Just This Group'
+                                ).then(confirmed => {
+                                    if (confirmed) {
+                                        autoScheduleGroups('A', dateActual, startTime, endTime, adviser, chair, members);
+                                    } else {
+                                        saveScheduleToDatabase(targetId);
+                                    }
+                                });
+                            } else {
+                                saveScheduleToDatabase(targetId);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking scheduled groups:', error);
+                            saveScheduleToDatabase(targetId);
+                        });
                 })
                 .catch(error => {
                     console.error('Error checking availability:', error);
@@ -2557,6 +2577,44 @@
                 });
         });
 
+        document.getElementById('edit-schedule-button').addEventListener('click', function() {
+            console.log('Edit button clicked - enabling form fields');
+            
+            // Enable all form fields
+            document.getElementById('start-time-input').removeAttribute('readonly');
+            document.getElementById('end-time-input').removeAttribute('readonly');
+            document.getElementById('date-actual-input').removeAttribute('readonly');
+            document.getElementById('date-display-input').removeAttribute('readonly');
+            
+            // Change schedule button text to Update
+            scheduleButton.textContent = 'Update Schedule';
+            
+            // Hide edit button after clicking
+            this.style.display = 'none';
+            
+            showAlert('info', 'Edit Mode', 'You can now modify the schedule. Click "Update Schedule" to save changes.');
+        });
+        
+        function resetGroupUI(groupId) {
+            const cell = document.querySelector(`[data-schedule-target="${groupId}"]`);
+            if (!cell) return;
+            
+            const row = cell.closest('tr');
+            const btn = row.querySelector('.btn-set-schedule, .scheduled-container');
+            const adviser = btn?.getAttribute('data-adviser') || 'No Adviser';
+            const chair = btn?.getAttribute('data-chair') || 'No Chairperson';
+            const members = btn?.getAttribute('data-members') || 'No Members';
+            const set = row.getAttribute('data-set') || 'A';
+            const group = groupId.replace(/[^0-9]/g, '');
+            
+            cell.innerHTML = `<button class="btn btn-set-schedule" data-bs-toggle="modal" data-bs-target="#scheduleModal" 
+                data-group="${group}" data-cluster="" data-set="${set}" data-real-group-id="${groupId}"
+                data-adviser="${adviser}" data-chair="${chair}" data-members="${members}">
+                <i class="bi bi-calendar-plus"></i> Set Schedule
+            </button>`;
+            updateGroupStatus(groupId, currentDefenseType, false, null);
+        }
+        
         document.getElementById('backToScheduleBtn').addEventListener('click', function() {
             const infoModalElement = document.getElementById('infoModal');
             const scheduleModalElement = document.getElementById('scheduleModal');
@@ -2570,6 +2628,113 @@
                 const scheduleModalInstance = bootstrap.Modal.getOrCreateInstance(scheduleModalElement);
                 scheduleModalInstance.show(); 
             }, 100); 
+        });
+        
+        document.getElementById('backToScheduleBtn').addEventListener('click', function() {
+            const infoModalElement = document.getElementById('infoModal');
+            const scheduleModalElement = document.getElementById('scheduleModal');
+
+            const infoModalInstance = bootstrap.Modal.getInstance(infoModalElement);
+            if (infoModalInstance) { 
+                infoModalInstance.hide(); 
+            }
+            
+            setTimeout(() => { 
+                const scheduleModalInstance = bootstrap.Modal.getOrCreateInstance(scheduleModalElement);
+                scheduleModalInstance.show(); 
+            }, 100); 
+        });
+        
+        document.getElementById('generateScheduleBtn').addEventListener('click', function() {
+            const tbody = document.getElementById('availability-table-body');
+            const tableHeadRow = document.querySelector('#infoModal thead tr');
+            const rows = tbody.querySelectorAll('tr');
+            
+            if (rows.length === 0) {
+                showAlert('warning', 'No Data', 'No panel availability data to analyze.');
+                return;
+            }
+            
+            // Get all dates from table headers
+            const dates = [];
+            for (let i = 1; i < tableHeadRow.children.length; i++) {
+                dates.push(tableHeadRow.children[i].textContent);
+            }
+            
+            // Find common available slots
+            const commonSlots = [];
+            dates.forEach((dateHeader, dateIdx) => {
+                let allAvailable = true;
+                let timeSlot = null;
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    const cell = cells[dateIdx + 1];
+                    
+                    if (!cell || cell.classList.contains('availability-unavailable') || cell.textContent === 'N/A' || cell.textContent === 'Conflict') {
+                        allAvailable = false;
+                    } else if (cell.classList.contains('availability-available')) {
+                        timeSlot = cell.textContent;
+                    }
+                });
+                
+                if (allAvailable && timeSlot) {
+                    commonSlots.push({ date: dateHeader, time: timeSlot });
+                }
+            });
+            
+            if (commonSlots.length === 0) {
+                showAlert('warning', 'No Common Availability', 'No dates found where all panel members are available without conflicts.');
+                return;
+            }
+            
+            // Show results and auto-fill first available slot
+            const firstSlot = commonSlots[0];
+            let message = `Found ${commonSlots.length} available slot(s):\n\n`;
+            commonSlots.slice(0, 5).forEach(slot => {
+                message += `• ${slot.date} at ${slot.time}\n`;
+            });
+            message += `\nThe first available slot will be auto-filled.`;
+            
+            showAlert('success', 'Schedule Generated', message, () => {
+                // Parse date and time
+                const dateParts = firstSlot.date.match(/(\d{2})\/(\d{2})/);
+                const timeParts = firstSlot.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+                
+                if (dateParts && timeParts) {
+                    const month = dateParts[1];
+                    const day = dateParts[2];
+                    const year = new Date().getFullYear();
+                    
+                    // Set date
+                    document.getElementById('date-actual-input').value = `${year}-${month}-${day}`;
+                    document.getElementById('date-display-input').value = `${month}/${day}/${year}`;
+                    
+                    // Set time (parse and convert to 24h format if needed)
+                    let hours = parseInt(timeParts[1]);
+                    const minutes = timeParts[2];
+                    const period = timeParts[3];
+                    
+                    if (period && period.toUpperCase() === 'PM' && hours !== 12) {
+                        hours += 12;
+                    } else if (period && period.toUpperCase() === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+                    
+                    const startTime = `${String(hours).padStart(2, '0')}:${minutes}`;
+                    document.getElementById('start-time-input').value = startTime;
+                    
+                    // Set end time (1 hour later)
+                    const endHours = (hours + 1) % 24;
+                    document.getElementById('end-time-input').value = `${String(endHours).padStart(2, '0')}:${minutes}`;
+                }
+                
+                // Close availability modal and show schedule modal
+                bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
+                setTimeout(() => {
+                    new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+                }, 300);
+            });
         });
         
 

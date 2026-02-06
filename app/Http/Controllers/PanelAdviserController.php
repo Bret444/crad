@@ -26,16 +26,26 @@ class PanelAdviserController extends Controller
         $panels = Panel::all();
         $assignments = Assignment::with(['adviser', 'assignmentPanels'])->orderBy('created_at', 'desc')->get();
         $notifications = collect();
+        $clusters = \App\Models\Cluster::orderBy('cluster_number')->get();
         
-        return view('panel-adviser', compact('advisers', 'panels', 'assignments', 'type', 'notifications'));
+        return view('panel-adviser', compact('advisers', 'panels', 'assignments', 'type', 'notifications', 'clusters'));
     }
 
     public function apiAssignments(Request $request)
     {
-        $assignments = Assignment::with(['adviser', 'assignmentPanels'])->orderBy('created_at', 'desc')->get();
+        $query = Assignment::with(['adviser', 'assignmentPanels']);
+        
+        if ($request->has('department')) {
+            $query->where('department', $request->department);
+        }
+        
+        if ($request->has('section')) {
+            $query->where('section', $request->section);
+        }
+        
+        $assignments = $query->orderBy('created_at', 'desc')->get();
 
         $payload = $assignments->map(function ($a) {
-            // Get panels from assignmentPanels relationship
             $panels = $a->assignmentPanels->map(function ($ap) {
                 return [
                     'id' => $ap->id,

@@ -25,6 +25,9 @@
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
                 <i class="bi bi-plus-circle me-1"></i> Add Group
             </button>
+            <button class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#studentListModal">
+                <i class="bi bi-people me-1"></i> Student List
+            </button>
             <button class="btn btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#archiveGroupModal">
                 <i class="bi bi-archive me-1"></i> Archived Groups
             </button>
@@ -286,6 +289,24 @@
         </div>
     </div>
 @endforeach
+
+<!-- Student List Modal -->
+<div class="modal fade" id="studentListModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Student List</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be added here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Archive Modal -->
 <div class="modal fade" id="archiveGroupModal" tabindex="-1">

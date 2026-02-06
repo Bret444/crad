@@ -207,6 +207,7 @@ Route::get('/defense-schedules/calendar', [DefenseScheduleController::class, 'ge
 Route::put('/defense-schedules/{id}/status', [DefenseScheduleController::class, 'updateStatus'])->middleware('auth');
 Route::get('/defense-schedules/check-eligibility', [DefenseScheduleController::class, 'checkEligibility'])->middleware('auth');
 Route::delete('/defense-schedules/reset', [DefenseScheduleController::class, 'resetSchedules'])->middleware('auth');
+Route::delete('/defense-schedules/reset-group', [DefenseScheduleController::class, 'resetGroup'])->middleware('auth');
 
 // Defense Evaluation Routes  
 Route::get('/def-eval', function () {

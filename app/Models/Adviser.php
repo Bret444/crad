@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Adviser extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['department', 'name', 'expertise', 'sections', 'availability']; 
+    protected $fillable = ['department', 'name', 'contact', 'expertise', 'sections', 'availability']; 
     
     protected $casts = [
         'sections' => 'array',     // CRITICAL: This enables PHP to read '[4101,4102]' correctly.

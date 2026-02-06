@@ -28,6 +28,12 @@ class DefenseScheduleController extends Controller
     {
         try {
             \Log::info('Defense Schedule Store Request', $request->all());
+            \Log::info('Attempting updateOrCreate with keys', [
+                'department' => $request->input('department'),
+                'section' => $request->input('section'),
+                'group_id' => $request->input('group_id'),
+                'defense_type' => $request->input('defense_type')
+            ]);
             
             // Check if table exists
             if (!\Schema::hasTable('defense_schedules')) {
@@ -224,30 +230,47 @@ class DefenseScheduleController extends Controller
             'start_time' => 'required',
             'end_time' => 'required',
             'department' => 'required|string',
-            'section' => 'required|string'
+            'section' => 'required|string',
+            'group_id' => 'nullable|string',
+            'defense_type' => 'nullable|string'
         ]);
+        
+        \Log::info('Checking availability', $validated);
         
         $conflicts = [];
         
         foreach ($validated['panel_names'] as $panelName) {
-            // Check for existing schedules that conflict
-            $existingSchedules = DefenseSchedule::where('defense_date', $validated['date'])
-                ->where(function($query) use ($validated) {
-                    $query->where(function($q) use ($validated) {
-                        // Start time is between existing schedule times
-                        $q->where('start_time', '<=', $validated['start_time'])
-                          ->where('end_time', '>', $validated['start_time']);
-                    })->orWhere(function($q) use ($validated) {
-                        // End time is between existing schedule times
-                        $q->where('start_time', '<', $validated['end_time'])
-                          ->where('end_time', '>=', $validated['end_time']);
-                    })->orWhere(function($q) use ($validated) {
+            // Check for existing schedules that have TIME conflicts on the same date
+            $query = DefenseSchedule::where('defense_date', $validated['date'])
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->where(function($q) use ($validated) {
+                    $q->where(function($sub) use ($validated) {
+                        // New schedule starts during existing schedule
+                        $sub->where('start_time', '<=', $validated['start_time'])
+                            ->where('end_time', '>', $validated['start_time']);
+                    })->orWhere(function($sub) use ($validated) {
+                        // New schedule ends during existing schedule
+                        $sub->where('start_time', '<', $validated['end_time'])
+                            ->where('end_time', '>=', $validated['end_time']);
+                    })->orWhere(function($sub) use ($validated) {
                         // New schedule completely contains existing schedule
-                        $q->where('start_time', '>=', $validated['start_time'])
-                          ->where('end_time', '<=', $validated['end_time']);
+                        $sub->where('start_time', '>=', $validated['start_time'])
+                            ->where('end_time', '<=', $validated['end_time']);
                     });
-                })
-                ->get();
+                });
+            
+            // Exclude current group being edited
+            if (isset($validated['group_id']) && isset($validated['defense_type'])) {
+                $query->where(function($q) use ($validated) {
+                    $q->where('group_id', '!=', $validated['group_id'])
+                      ->orWhere('defense_type', '!=', $validated['defense_type']);
+                });
+            }
+            
+            $existingSchedules = $query->get();
+            
+            \Log::info('Found schedules for ' . $panelName, ['count' => $existingSchedules->count()]);
                 
             foreach ($existingSchedules as $schedule) {
                 if ($schedule->panel_data) {
@@ -282,6 +305,8 @@ class DefenseScheduleController extends Controller
                 }
             }
         }
+        
+        \Log::info('Total conflicts found', ['count' => count($conflicts)]);
         
         return response()->json([
             'available' => empty($conflicts),
@@ -383,6 +408,31 @@ class DefenseScheduleController extends Controller
             ->delete();
 
         return response()->json(['success' => true]);
+    }
+    
+    public function resetGroup(Request $request)
+    {
+        $department = $request->query('department') ?? $request->input('department');
+        $section = $request->query('section') ?? $request->input('section');
+        $groupId = $request->query('group_id') ?? $request->input('group_id');
+        $defenseType = $request->query('defense_type') ?? $request->input('defense_type');
+
+        \Log::info('Reset Group Request', [
+            'department' => $department,
+            'section' => $section,
+            'group_id' => $groupId,
+            'defense_type' => $defenseType
+        ]);
+
+        $deleted = DefenseSchedule::where('department', $department)
+            ->where('section', $section)
+            ->where('group_id', $groupId)
+            ->where('defense_type', $defenseType)
+            ->delete();
+
+        \Log::info('Deleted rows: ' . $deleted);
+
+        return response()->json(['success' => true, 'deleted' => $deleted]);
     }
 
     public function getCalendarData()

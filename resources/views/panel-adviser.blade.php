@@ -215,6 +215,7 @@
                                     <tr>
                                         <th>Department</th>
                                         <th>Name</th>
+                                        <th>Contact</th>
                                         <th>Expertise</th>
                                         <th>Sections</th>
                                     </tr>
@@ -224,10 +225,14 @@
                                         <tr data-department="{{ $adviser->department }}">
                                             <td>{{ $adviser->department }}</td>
                                             <td>{{ $adviser->name }}</td>
+                                            <td>{{ $adviser->contact ?? 'N/A' }}</td>
                                             <td>{{ $adviser->expertise }}</td>
                                             <td>
                                                 @php
-                                                    $adviserSections = is_array($adviser->sections) ? $adviser->sections : [$adviser->sections];
+                                                    $adviserSections = is_array($adviser->sections) ? $adviser->sections : (is_string($adviser->sections) ? json_decode($adviser->sections, true) : [$adviser->sections]);
+                                                    if (!is_array($adviserSections)) {
+                                                        $adviserSections = [];
+                                                    }
                                                     // Group sections by cluster
                                                     $groupedByCluster = [];
                                                     foreach($adviserSections as $group) {
@@ -239,19 +244,24 @@
                                                             $groupedByCluster[$cluster][] = $group;
                                                         }
                                                     }
+                                                    ksort($groupedByCluster);
                                                 @endphp
-                                                @foreach($groupedByCluster as $cluster => $groups)
-                                                    <div>
-                                                        <span class="badge bg-primary me-1 section-badge" style="cursor:pointer;" data-adviser-id="{{ $adviser->id }}" data-cluster="{{ $cluster }}">
-                                                            {{ $cluster }} <i class="bi bi-chevron-down" id="icon_{{ $adviser->id }}_{{ $cluster }}"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div id="groups_{{ $adviser->id }}_{{ $cluster }}" style="display:none;" class="ms-4">
-                                                        @foreach($groups as $group)
-                                                            <div><span class="badge bg-secondary me-1">G{{ $group }}</span></div>
-                                                        @endforeach
-                                                    </div>
-                                                @endforeach
+                                                @if(count($groupedByCluster) > 0)
+                                                    @foreach($groupedByCluster as $cluster => $groups)
+                                                        <div>
+                                                            <span class="badge bg-primary me-1 section-badge" style="cursor:pointer;" data-adviser-id="{{ $adviser->id }}" data-cluster="{{ $cluster }}">
+                                                                {{ $cluster }} ({{ count($groups) }}) <i class="bi bi-chevron-down" id="icon_{{ $adviser->id }}_{{ $cluster }}"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div id="groups_{{ $adviser->id }}_{{ $cluster }}" style="display:none;" class="ms-4">
+                                                            @foreach($groups as $group)
+                                                                <div><span class="badge bg-secondary me-1">G{{ $group }}</span></div>
+                                                            @endforeach
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">No sections assigned</span>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
@@ -591,6 +601,10 @@
                             <label for="name" class="form-label">Name *</label>
                             <input type="text" name="name" class="form-control" placeholder="E.g., Prof. Maria Santos"
                                 required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="contact" class="form-label">Contact Number *</label>
+                            <input type="text" name="contact" class="form-control" placeholder="E.g., 09123456789" required />
                         </div>
                         <div class="mb-3">
                             <label for="expertise" class="form-label">Expertise *</label>
@@ -1007,11 +1021,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Section/Cluster *</label>
-                                <select name="section" class="form-select" required onchange="filterModalMembers()">
+                                <select name="section" class="form-select" required onchange="filterModalMembers()" id="sectionClusterSelect">
                                     <option value="">Select Section</option>
-                                    @foreach(['4101', '4102', '4103', '4104', '4105', '4106', '4107', '4108', '4109', '4110'] as $section)
-                                        <option value="{{ $section }}">{{ $section }}</option>
-                                    @endforeach
+                                    @if(isset($clusters) && $clusters->count() > 0)
+                                        @foreach($clusters as $cluster)
+                                            <option value="{{ $cluster->cluster_number }}">{{ $cluster->cluster_number }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -1096,9 +1112,11 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Section/Cluster *</label>
                                     <select name="section" class="form-select" required>
-                                        @foreach(['4101', '4102', '4103', '4104', '4105', '4106', '4107', '4108', '4109', '4110'] as $section)
-                                            <option value="{{ $section }}" {{ $assignment->section == $section ? 'selected' : '' }}>{{ $section }}</option>
-                                        @endforeach
+                                        @if(isset($clusters) && $clusters->count() > 0)
+                                            @foreach($clusters as $cluster)
+                                                <option value="{{ $cluster->cluster_number }}" {{ $assignment->section == $cluster->cluster_number ? 'selected' : '' }}>{{ $cluster->cluster_number }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                 </div>
                             </div>
