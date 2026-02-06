@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost: 3306
--- Generation Time: Feb 06, 2026 at 03:38 AM
+-- Generation Time: Feb 06, 2026 at 11:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,7 +44,7 @@ CREATE TABLE `advisers` (
 --
 
 INSERT INTO `advisers` (`id`, `name`, `contact`, `department`, `expertise`, `sections`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Andrew Adovas', '09123659852', 'BSIT', 'Assistant Professor', '\"[1,2,3,4,5,6,7,8,9,10]\"', '2026-02-05 08:42:34', '2026-02-05 09:39:58', NULL);
+(1, 'Alejandro Adovas', '09123659852', 'BSIT', 'Assistant Professor', '\"[1,2,3,4,5,6,7,8,9,10]\"', '2026-02-05 08:42:34', '2026-02-05 22:11:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -126,16 +126,6 @@ CREATE TABLE `cache` (
   `value` mediumtext NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `cache`
---
-
-INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('it001|127.0.0.1', 'i:1;', 1770300657),
-('it001|127.0.0.1:timer', 'i:1770300657;', 1770300657),
-('sit001|127.0.0.1', 'i:1;', 1770345010),
-('sit001|127.0.0.1:timer', 'i:1770345010;', 1770345010);
 
 -- --------------------------------------------------------
 
@@ -472,7 +462,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (55, '2026_02_05_123333_add_department_section_to_assignments_table', 2),
 (56, '2026_02_05_130828_add_group_id_password_to_groups_table', 3),
 (57, '2026_02_05_131433_add_group_id_to_users_table', 4),
-(58, '2026_02_05_164823_add_contact_to_advisers_table', 5);
+(58, '2026_02_05_164823_add_contact_to_advisers_table', 5),
+(59, '2026_02_06_030606_add_submission_id_to_notifications_table', 6);
 
 -- --------------------------------------------------------
 
@@ -485,10 +476,41 @@ CREATE TABLE `notifications` (
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `type` varchar(255) NOT NULL,
   `message` text NOT NULL,
+  `submission_id` bigint(20) UNSIGNED DEFAULT NULL,
   `read` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `type`, `message`, `submission_id`, `read`, `created_at`, `updated_at`) VALUES
+(1, 2, 'submission', 'New submission from Group 2: Manuscript Chapter 1-3', 4, 0, '2026-02-05 19:11:13', '2026-02-05 19:11:13'),
+(2, 2, 'submission', 'New submission from Group 2: Clearance', 5, 0, '2026-02-05 19:25:50', '2026-02-05 19:25:50'),
+(3, 7, 'approved', 'Your submission \'Manuscript Chapter 1-3\' has been approved by coordinator.', 4, 1, '2026-02-05 19:37:59', '2026-02-05 19:38:11'),
+(4, 7, 'rejected', 'Your submission \'Manuscript Chapter 1-3\' has been rejected. Please revise and resubmit.', 2, 0, '2026-02-05 19:41:24', '2026-02-05 19:41:24'),
+(5, 1, 'rejected', 'Coordinator rejected \'Manuscript Chapter 1-3\' from Group 2 (BSIT).', 2, 0, '2026-02-05 19:41:24', '2026-02-05 19:41:24'),
+(6, 7, 'approved', 'Your submission \'Manuscript Chapter 1-3\' has been approved by coordinator.', 3, 1, '2026-02-05 19:42:35', '2026-02-05 19:48:17'),
+(7, 1, 'approved', 'Coordinator approved \'Manuscript Chapter 1-3\' from Group 2 (BSIT).', 3, 0, '2026-02-05 19:42:35', '2026-02-05 19:42:35'),
+(8, 7, 'status', 'Your proposal \'Clearance\' has been approved.', NULL, 1, '2026-02-05 19:45:26', '2026-02-05 19:51:02'),
+(9, 7, 'status', 'Your proposal \'Clearance\' has been approved.', NULL, 1, '2026-02-05 19:47:55', '2026-02-05 19:48:11'),
+(10, 7, 'feedback', 'New feedback received for \'Clearance\': Good', NULL, 1, '2026-02-05 19:47:55', '2026-02-05 19:53:35'),
+(11, 7, 'approved', 'Your submission \'Manuscript Chapter 1-3\' has been approved by coordinator.', 1, 1, '2026-02-05 19:51:32', '2026-02-05 19:53:28'),
+(12, 1, 'approved', 'Coordinator approved \'Manuscript Chapter 1-3\' from Group 2 (BSIT).', 1, 0, '2026-02-05 19:51:33', '2026-02-05 19:51:33'),
+(13, 2, 'submission', 'New submission from Group 2: Research Forum', 6, 0, '2026-02-05 21:28:32', '2026-02-05 21:28:32'),
+(14, 1, 'submission', 'New submission from Group 2 (BSIT): Research Forum', 6, 0, '2026-02-05 21:28:32', '2026-02-05 21:28:32'),
+(15, 2, 'submission', 'New submission from Group 2: Research Title Proposal', 7, 0, '2026-02-05 21:35:58', '2026-02-05 21:35:58'),
+(16, 1, 'submission', 'New submission from Group 2 (BSIT): Research Title Proposal', 7, 0, '2026-02-05 21:35:58', '2026-02-05 21:35:58'),
+(17, 2, 'submission', 'New submission from Group 2: Research Forum', 8, 0, '2026-02-05 21:36:50', '2026-02-05 21:36:50'),
+(18, 1, 'submission', 'New submission from Group 2 (BSIT): Research Forum', 8, 0, '2026-02-05 21:36:50', '2026-02-05 21:36:50'),
+(19, 2, 'submission', 'New submission from Group 2: Clearance', 9, 0, '2026-02-05 21:38:55', '2026-02-05 21:38:55'),
+(20, 1, 'submission', 'New submission from Group 2 (BSIT): Clearance', 9, 0, '2026-02-05 21:38:55', '2026-02-05 21:38:55'),
+(21, 2, 'submission', 'New submission from Group 2: Clearance', 10, 0, '2026-02-05 21:48:32', '2026-02-05 21:48:32'),
+(22, 1, 'submission', 'New submission from Group 2 (BSIT): Clearance', 10, 0, '2026-02-05 21:48:32', '2026-02-05 21:48:32'),
+(23, 7, 'status', 'Your proposal \'Clearance\' has been approved.', NULL, 0, '2026-02-05 21:49:52', '2026-02-05 21:49:52'),
+(24, 7, 'feedback', 'New feedback received for \'Clearance\': Clear and Readable', NULL, 0, '2026-02-05 21:49:52', '2026-02-05 21:49:52');
 
 -- --------------------------------------------------------
 
@@ -627,10 +649,11 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('9pCHJsdYyteSVTOHsmu8X5jejLxnlrAQnOinuMCK', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoicUk4cGVMbTg5bW4zMUVQZ2t3RVBkbmhwTExleGprQlNmVHV4OFRHQSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2RlZi1zY2hlZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjMxOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvZGVmLXNjaGVkIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1770343926),
-('JN07Wx1FvWiPQbesCmeervrJ0PYXfDR9LNuG8YvN', 7, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZEJodGd4T0NmMDY0RVZxY0hXckdMN1VFUkRSb1RCRGY0aG5wTGpGNiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9zdWJtaXNzaW9uIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6Nzt9', 1770345258),
-('NtJdoNCWqSxwa0KB3Kxn0MJ7g9iMqSXJmMwllBdl', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiNXo2emJvQ2JwY3FHbFp1a2pROWZ6UXZVVHprMXNkNlVLNXFDSW5KNyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2RlZi1zY2hlZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjM1OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvcGFuZWwtYWR2aXNlciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6MTQ6Im90cF9leHBpcmVzX2F0IjtpOjE3NzAzNDQ1NDk7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1770344882),
-('VIj6nP9Vh13jUVxwEQmmlAFMv7IenOZFXSVcoU5V', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiZ0tyUlhlRGxyUkF5Tk9jZWpVYkI1N3JBdldwVEhDa3dlZGt2SWZidSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo0ODoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2Nvb3JkaW5hdG9yLXRpdGxlLXByb3Bvc2FsIjt9czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9jb29yZGluYXRvci1tYW5hZ2UtZ3JvdXBzIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6Mjt9', 1770344974);
+('1lHAHiHo7Lqf6UZB3mNiSIzQha4shwNcOmt9r1Ai', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiTzE4ME45Y0JFSzIwQ3ZJRkdlbHU3NG01NzNmZmxibmNCallKc0Z0QSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hcGkvY29vcmRpbmF0b3Ivbm90aWZpY2F0aW9ucyI7fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjI7fQ==', 1770373272),
+('ay2517cj90QQKfN3ZCxLg8ZSUgVsk6kZVh7MJbC5', NULL, '::1', '', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOHN6bUxGcEVuaW5MOVBhaVNraGljc055bGNUdFhIcW4zZTVuSXlROCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzU6Imh0dHA6Ly9sb2NhbGhvc3QvY3JhZDMvcHVibGljL2xvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1770362041),
+('nYOBvn6wN3PMONbEaEdr0tRbMYsYYzb2WSN14tz8', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWmlydjFGYzBmQmszcGJYRURxTGQ3MzZBYXNhbDdLZ0YyVUgyYW1VTSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1NjoiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvY29vcmRpbmF0b3ItbWFuYWdlLWFkdmlzZXIiO31zOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czozNToiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvbG9naW4iO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1770361974),
+('ocvgnZripg1FRVJYcStxPiBk0aSI2fUgXqegthyc', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoidExBMTBBN3dSY1ZIcm95NWpyNWU4VVpPNTVrTHdna3E1WWZMU0N5QyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2RlZi1zY2hlZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ1OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2FkbWluL25vdGlmaWNhdGlvbnMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjE0OiJvdHBfZXhwaXJlc19hdCI7aToxNzcwMzQ2NjQwO3M6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1770373272),
+('Z2mDkkDc9km0nTe39FjkZwYcVCqkUDCCD0m6SUFG', NULL, '::1', '', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiT01pQmlaa0h2TUxIZTFhdkNwNmh1aEhjWVhVVmt6QThobUp1VWF2SiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1MjoiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvYXBpL3N1YmplY3QtbG9hZC1wcm94eSI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjUyOiJodHRwOi8vbG9jYWxob3N0L2NyYWQzL3B1YmxpYy9hcGkvc3ViamVjdC1sb2FkLXByb3h5Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1770362039);
 
 -- --------------------------------------------------------
 
@@ -709,7 +732,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_admin`, `role`, `otp`, `otp_expires_at`, `remember_token`, `created_at`, `updated_at`, `department`, `contact`, `cluster`, `group_no`, `deleted_at`, `group_id`) VALUES
-(1, 'Admin', 'crad7465@gmail.com', '2026-02-05 18:12:59', '$2y$12$mXkem47vm8uHN9opRKauV.L0HDuWYHbF3DbzmpZG2SuP5rEsb3scW', 1, 'admin', NULL, NULL, NULL, '2026-02-05 04:15:04', '2026-02-05 18:12:59', NULL, NULL, NULL, NULL, NULL, NULL),
+(1, 'Admin', 'crad7465@gmail.com', '2026-02-05 18:47:34', '$2y$12$mXkem47vm8uHN9opRKauV.L0HDuWYHbF3DbzmpZG2SuP5rEsb3scW', 1, 'admin', NULL, NULL, NULL, '2026-02-05 04:15:04', '2026-02-05 18:47:34', NULL, NULL, NULL, NULL, NULL, NULL),
 (2, 'Raymon Loria', 'raymon@gmail.com', NULL, '$2y$12$OOORMrSo9pzG1s/8PsEFa.LOB6lizCZ/8Yem4EraBlWzr3gcE2Sbq', 0, 'coordinator', NULL, NULL, NULL, '2026-02-05 04:24:24', '2026-02-05 04:24:39', 'BSIT', '09789565985', NULL, NULL, NULL, NULL),
 (5, 'IT001', 'sIT001', NULL, '$2y$12$Tjv0n.aCmM93KlSVO9ChoeKtMTDDRdJf1Y2MdrU/bE3zLEKSJmX.a', 0, 'student', NULL, NULL, NULL, '2026-02-05 06:17:48', '2026-02-05 06:18:49', 'BSIT', NULL, 4101, 1, NULL, 'IT001'),
 (7, 'IT002', 'sIT002', NULL, '$2y$12$lm3gJRZJWd/QCvdlVT3YUeQYz77QdBEjG4cRhSlNBqUgBkhjJ9fVO', 0, 'student', NULL, NULL, NULL, '2026-02-05 06:22:05', '2026-02-05 06:22:05', 'BSIT', NULL, 4101, 2, NULL, NULL),
@@ -1027,13 +1050,13 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `otps`
@@ -1075,7 +1098,7 @@ ALTER TABLE `sections`
 -- AUTO_INCREMENT for table `submissions`
 --
 ALTER TABLE `submissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `submission_histories`
