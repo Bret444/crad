@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Group;
+use App\Http\Controllers\FacultyApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,3 +47,11 @@ Route::get('/groups/by-number/{groupNumber}', function ($groupNumber, Request $r
         ], 500);
     }
 });
+
+// Faculty API Integration
+Route::get('/faculties/sync', [FacultyApiController::class, 'syncFaculties']);
+Route::get('/faculties/list', [FacultyApiController::class, 'listFaculties']);
+Route::get('/faculties/test-external', [FacultyApiController::class, 'testExternal']);
+
+// Student API Integration
+Route::get('/students/fetch', [\App\Http\Controllers\StudentApiController::class, 'fetchStudents']);

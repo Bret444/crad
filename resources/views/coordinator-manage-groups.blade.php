@@ -292,14 +292,24 @@
 
 <!-- Student List Modal -->
 <div class="modal fade" id="studentListModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">Student List</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Content will be added here -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <input type="text" id="studentSearch" class="form-control" placeholder="Search students..." style="width: 300px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="fetchStudents()">
+                        <i class="bi bi-arrow-repeat"></i> Fetch Students
+                    </button>
+                </div>
+                <div id="studentListContent">
+                    <p class="text-center text-muted">Click "Fetch Students" to load data</p>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -494,5 +504,88 @@
             }
         });
     });
+
+    // Student API Integration
+    function fetchStudents() {
+        const content = document.getElementById('studentListContent');
+        content.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading students...</p></div>';
+        
+        fetch('/api/students/fetch')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.students) {
+                    displayStudents(data.students);
+                } else {
+                    content.innerHTML = '<div class="alert alert-danger">Failed to load students: ' + (data.message || 'Unknown error') + '</div>';
+                }
+            })
+            .catch(error => {
+                content.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+            });
+    }
+
+    function displayStudents(students) {
+        const content = document.getElementById('studentListContent');
+        
+        // Handle nested data structure
+        const studentList = students.data || students;
+        
+        if (!studentList || studentList.length === 0) {
+            content.innerHTML = '<p class="text-center text-muted">No students found</p>';
+            return;
+        }
+        
+        let html = `
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i> Loaded ${studentList.length} students
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="studentTable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Course</th>
+                            <th>Year Level</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        studentList.forEach(student => {
+            html += `
+                <tr>
+                    <td>${student.StudentID || student.student_id || 'N/A'}</td>
+                    <td>${student.FirstName || student.firstname || ''} ${student.MiddleName || student.middlename || ''} ${student.LastName || student.lastname || ''}</td>
+                    <td>${student.CurrentCourse || student.course || 'N/A'}</td>
+                    <td>${student.CurrentYearLevel || student.year_level || 'N/A'}</td>
+                    <td>${student.email || 'N/A'}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        content.innerHTML = html;
+        setupStudentSearch();
+    }
+
+    function setupStudentSearch() {
+        const searchInput = document.getElementById('studentSearch');
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#studentTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
 </script>
 @endsection

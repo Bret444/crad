@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #667EEA; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #5568d3; }
+        .result { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; border-left: 4px solid #667EEA; }
+        .success { border-left-color: #00D26A; }
+        .error { border-left-color: #ff4444; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .loading { color: #667EEA; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Faculty API Integration Test</h1>
+        <p>Test the external API integration for faculty data sync</p>
+        
+        <div>
+            <button onclick="testSync()">🔄 Test Sync Faculties</button>
+            <button onclick="testList()">📋 Test List Faculties</button>
+            <button onclick="testListByDept()">🏢 Test List by Department (BSIT)</button>
+            <button onclick="testExternal()">🌐 Test External API Direct</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        function showLoading() {
+            resultDiv.innerHTML = '<div class="result loading">⏳ Loading...</div>';
+        }
+
+        function showResult(title, data, isError = false) {
+            const className = isError ? 'error' : 'success';
+            resultDiv.innerHTML = `
+                <div class="result ${className}">
+                    <h3>${title}</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        async function testSync() {
+            showLoading();
+            try {
+                const response = await fetch('api/faculties/sync');
+                const data = await response.json();
+                showResult('✅ Sync Faculties Result', data, !response.ok);
+            } catch (error) {
+                showResult('❌ Sync Error', { error: error.message }, true);
+            }
+        }
+
+        async function testList() {
+            showLoading();
+            try {
+                const response = await fetch('api/faculties/list');
+                const data = await response.json();
+                showResult('✅ List Faculties Result', data, !response.ok);
+            } catch (error) {
+                showResult('❌ List Error', { error: error.message }, true);
+            }
+        }
+
+        async function testListByDept() {
+            showLoading();
+            try {
+                const response = await fetch('api/faculties/list?department=BSIT');
+                const data = await response.json();
+                showResult('✅ List Faculties by Department (BSIT)', data, !response.ok);
+            } catch (error) {
+                showResult('❌ List Error', { error: error.message }, true);
+            }
+        }
+
+        async function testExternal() {
+            showLoading();
+            try {
+                const response = await fetch('api/faculties/test-external');
+                const data = await response.json();
+                showResult('✅ External API Test', data, !response.ok);
+            } catch (error) {
+                showResult('❌ External API Error', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -282,3 +282,11 @@ Route::get('/clusters', [CoordinatorController::class, 'getClusters'])->middlewa
 
 // API Proxy for Subject Load Tracker
 Route::get('/api/subject-load-proxy', [CoordinatorController::class, 'subjectLoadProxy'])->middleware('auth', 'coordinator')->name('api.subject-load-proxy');
+
+// Faculty API Routes
+Route::get('/api/faculties/test-external', [\App\Http\Controllers\FacultyApiController::class, 'testExternal']);
+Route::get('/api/faculties/sync', [\App\Http\Controllers\FacultyApiController::class, 'syncFaculties']);
+Route::get('/api/faculties/list', [\App\Http\Controllers\FacultyApiController::class, 'listFaculties']);
+
+// Student API Routes
+Route::get('/api/students/fetch', [\App\Http\Controllers\StudentApiController::class, 'fetchStudents']);
