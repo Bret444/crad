@@ -90,7 +90,7 @@ Route::post('/submissions/{id}/update-status', [AdminSubmissionController::class
     ->name('admin.submissions.updateStatus')
     ->middleware('auth', 'admin');
 
-    Route::prefix('student')->middleware(['auth' , 'student'])->group(function () {
+    Route::prefix('student')->middleware(['auth', 'student'])->group(function () {
         // Route for viewing a single submission file
         Route::get('/submission/file/{submission}', [StudentSubmissionController::class, 'viewFile'])->name('submission.file');
     });
@@ -157,6 +157,7 @@ Route::prefix('api')->middleware('auth', 'admin')->group(function () {
     Route::post('/save-adviser', [AssignmentController::class, 'saveAdviser']);
     Route::post('/save-panel', [AssignmentController::class, 'savePanel']);
     Route::post('/finalize/{department}/{section}', [AssignmentController::class, 'finalizeAssignment']);
+    Route::put('/assignments/{id}/update-panels', [AssignmentController::class, 'updatePanels']);
 });
 
 Route::get('/api/advisers/{clusterId}', [AdviserController::class, 'getAdvisersByCluster'])->middleware('auth', 'admin');
@@ -204,6 +205,8 @@ Route::get('/def-sched', function () {
 })->middleware('auth' ,'admin')->name('def-sched');
 
 Route::post('/defense-schedules', [DefenseScheduleController::class, 'store'])->middleware('auth');
+Route::put('/defense-schedules/{id}', [DefenseScheduleController::class, 'store'])->middleware('auth');
+Route::get('/defense-schedules/check', [DefenseScheduleController::class, 'check'])->middleware('auth');
 Route::get('/defense-schedules/by-type', [DefenseScheduleController::class, 'getByType'])->middleware('auth');
 Route::get('/defense-schedules/calendar', [DefenseScheduleController::class, 'getCalendarData'])->middleware('auth');
 Route::put('/defense-schedules/{id}/status', [DefenseScheduleController::class, 'updateStatus'])->middleware('auth');
@@ -232,6 +235,9 @@ Route::middleware('auth' , 'admin')->group(function () {
     Route::put('/coordinators/{id}', [CoordinatorController::class, 'update'])->name('coordinators.update');
     Route::delete('/coordinators/{id}', [CoordinatorController::class, 'destroy'])->name('coordinators.destroy');
     Route::post('/coordinators/{id}/restore', [CoordinatorController::class, 'restore'])->name('coordinators.restore');
+    Route::post('/coordinators/fms/{id}/archive', [CoordinatorController::class, 'archiveFMS'])->name('coordinators.fms.archive');
+    Route::post('/coordinators/fms/{id}/restore', [CoordinatorController::class, 'restoreFMS'])->name('coordinators.fms.restore');
+    Route::post('/coordinators/fms/{id}/set-password', [CoordinatorController::class, 'setPasswordFMS'])->name('coordinators.fms.setPassword');
 });
 
 // Coordinator Dashboard
@@ -271,6 +277,7 @@ Route::post('/groups', [\App\Http\Controllers\GroupController::class, 'store'])-
 Route::put('/groups/{id}', [\App\Http\Controllers\GroupController::class, 'update'])->middleware('auth', 'coordinator')->name('groups.update');
 Route::delete('/groups/{id}', [\App\Http\Controllers\GroupController::class, 'destroy'])->middleware('auth', 'coordinator')->name('groups.destroy');
 Route::get('/groups/archived', [\App\Http\Controllers\GroupController::class, 'archived'])->middleware('auth', 'coordinator')->name('groups.archived');
+Route::get('/groups/assigned-students', [\App\Http\Controllers\GroupController::class, 'assignedStudents'])->middleware('auth', 'coordinator')->name('groups.assignedStudents');
 Route::post('/groups/{id}/restore', [\App\Http\Controllers\GroupController::class, 'restore'])->middleware('auth', 'coordinator')->name('groups.restore');
 Route::get('/api/groups/by-number/{groupNumber}', [\App\Http\Controllers\GroupController::class, 'getByGroupNumber'])->middleware('auth')->name('groups.getByNumber');
 Route::get('/api/groups', [\App\Http\Controllers\GroupController::class, 'getGroups'])->middleware('auth')->name('groups.get');
@@ -278,7 +285,10 @@ Route::get('/api/group-document-status', [\App\Http\Controllers\GroupController:
 
 // Cluster Management Routes
 Route::post('/clusters', [CoordinatorController::class, 'storeCluster'])->middleware('auth', 'coordinator')->name('clusters.store');
-Route::get('/clusters', [CoordinatorController::class, 'getClusters'])->middleware('auth', 'coordinator')->name('clusters.get');
+Route::get('/clusters', [CoordinatorController::class, 'getClusters'])->middleware('auth')->name('clusters.get');
+Route::get('/api/clusters/bsit', function() {
+    return response()->json(['clusters' => \App\Models\Cluster::where('department', 'BSIT')->orderBy('cluster_number')->pluck('cluster_number')]);
+})->middleware('auth')->name('clusters.bsit');
 
 // API Proxy for Subject Load Tracker
 Route::get('/api/subject-load-proxy', [CoordinatorController::class, 'subjectLoadProxy'])->middleware('auth', 'coordinator')->name('api.subject-load-proxy');

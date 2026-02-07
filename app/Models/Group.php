@@ -3,11 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Group extends Model
+class Group extends Authenticatable
 {
+    use SoftDeletes;
+    
     protected $fillable = [
         'group_id',
+        'email',
         'password',
         'department',
         'cluster', 
@@ -24,4 +29,16 @@ class Group extends Model
         'member5_student_id',
         'leader_member'
     ];
+    
+    protected $hidden = ['password', 'remember_token'];
+    
+    public function getAuthIdentifierName()
+    {
+        return 'email';
+    }
+    
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
 }

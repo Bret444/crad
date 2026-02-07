@@ -53,39 +53,51 @@ class StudentController extends Controller
 
 public function dashboard()
 {
-    $userId = Auth::id();
-    $user = Auth::user();
-
-    // Get group information
-    $groupData = Group::where('department', $user->department)
-        ->where('cluster', $user->cluster)
-        ->where('group_number', $user->group_no)
-        ->first();
+    // Check if group login
+    if (session('is_group_login')) {
+        $groupId = session('group_id');
+        $department = session('group_department');
+        $cluster = session('group_cluster');
+        $groupNo = session('group_number');
+        
+        $groupData = Group::where('group_id', $groupId)->first();
+    } else {
+        $userId = Auth::id();
+        $user = Auth::user();
+        $department = $user->department;
+        $cluster = $user->cluster;
+        $groupNo = $user->group_no;
+        
+        $groupData = Group::where('department', $department)
+            ->where('cluster', $cluster)
+            ->where('group_number', $groupNo)
+            ->first();
+    }
 
     // Get adviser assigned to this group
-    $adviser = \App\Models\Adviser::where('department', $user->department)
-        ->whereJsonContains('sections', (int)$user->group_no)
+    $adviser = \App\Models\Adviser::where('department', $department)
+        ->whereJsonContains('sections', (int)$groupNo)
         ->first();
 
     // Get panel assignment
     $assignment = Assignment::with('assignmentPanels')
-        ->where('department', $user->department)
-        ->where('section', $user->cluster)
+        ->where('department', $department)
+        ->where('section', $cluster)
         ->first();
 
     $panelsList = $assignment ? $assignment->assignmentPanels : collect();
 
     // Get defense schedules
-    $defenseSchedules = \App\Models\DefenseSchedule::where('department', $user->department)
-        ->where('section', $user->cluster)
+    $defenseSchedules = \App\Models\DefenseSchedule::where('department', $department)
+        ->where('section', $cluster)
         ->where('group_id', $groupData ? $groupData->id : null)
         ->get();
 
     // Create group object with all data
     $group = (object) [
-        'group_no' => $user->group_no ?? 'N/A',
-        'department' => $user->department ?? 'N/A',
-        'cluster' => $user->cluster ?? 'N/A',
+        'group_no' => $groupNo ?? 'N/A',
+        'department' => $department ?? 'N/A',
+        'cluster' => $cluster ?? 'N/A',
         'adviser' => $adviser,
         'panels' => $panelsList,
         'members' => $groupData ? collect([
@@ -98,7 +110,8 @@ public function dashboard()
     ];
 
     // Upcoming submissions
-    $upcomingSubmissions = Submission::where('user_id', $userId)
+    $userId = session('is_group_login') ? null : Auth::id();
+    $upcomingSubmissions = $userId ? Submission::where('user_id', $userId)
         ->where('due_date', '>=', now())
         ->orderBy('due_date')
         ->get()
@@ -110,15 +123,15 @@ public function dashboard()
                 default => 'gray',
             };
             return $submission;
-        });
+        }) : collect();
 
     // Chapters progress
-    $chapters = [
+    $chapters = $userId ? [
         'Chapter 1: The Problem' => Submission::where('user_id', $userId)->where('chapter', 1)->first(),
         'Chapter 2: Review of Literature' => Submission::where('user_id', $userId)->where('chapter', 2)->first(),
         'Chapter 3: Methodology' => Submission::where('user_id', $userId)->where('chapter', 3)->first(),
         'Final Defense' => Submission::where('user_id', $userId)->where('chapter', 'final')->first(),
-    ];
+    ] : [];
 
     foreach ($chapters as $key => $chapter) {
         if ($chapter) {
@@ -131,7 +144,7 @@ public function dashboard()
         }
     }
 
-    $submissions = Submission::where('user_id', $userId)->get();
+    $submissions = $userId ? Submission::where('user_id', $userId)->get() : collect();
     $latestSubmission = $submissions->last();
     $submissionStatus = $latestSubmission ? $latestSubmission->status : 'PENDING';
     
@@ -145,8 +158,10 @@ public function dashboard()
     ];
     
     $progress = collect($progressSteps)->filter()->count();
+    
+    $notifications = $userId ? Notification::where('user_id', $userId)->orderBy('created_at', 'desc')->get() : collect();
 
-    return view('std-dashboard', compact('upcomingSubmissions', 'chapters', 'submissionStatus', 'progress', 'progressSteps', 'group', 'defenseSchedules'));
+    return view('std-dashboard', compact('upcomingSubmissions', 'chapters', 'submissionStatus', 'progress', 'progressSteps', 'group', 'defenseSchedules', 'notifications'));
 }
 
     public function submission()

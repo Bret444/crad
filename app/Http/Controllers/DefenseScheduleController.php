@@ -203,6 +203,20 @@ class DefenseScheduleController extends Controller
         return response()->json(['eligible' => true]);
     }
     
+    public function check(Request $request)
+    {
+        $schedule = DefenseSchedule::where('department', $request->get('department'))
+            ->where('section', $request->get('section'))
+            ->where('group_id', $request->get('group_id'))
+            ->where('defense_type', $request->get('defense_type'))
+            ->first();
+        
+        return response()->json([
+            'exists' => $schedule ? true : false,
+            'id' => $schedule ? $schedule->id : null
+        ]);
+    }
+    
     public function updateStatus(Request $request)
     {
         $validated = $request->validate([
@@ -402,12 +416,14 @@ class DefenseScheduleController extends Controller
             'defense_type' => 'required|string'
         ]);
 
-        DefenseSchedule::where('department', $validated['department'])
+        $deleted = DefenseSchedule::where('department', $validated['department'])
             ->where('section', $validated['section'])
             ->where('defense_type', $validated['defense_type'])
             ->delete();
 
-        return response()->json(['success' => true]);
+        \Log::info('Reset schedules', ['deleted' => $deleted, 'filters' => $validated]);
+
+        return response()->json(['success' => true, 'deleted' => $deleted]);
     }
     
     public function resetGroup(Request $request)

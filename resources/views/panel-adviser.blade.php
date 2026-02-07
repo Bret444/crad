@@ -1021,7 +1021,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Section/Cluster *</label>
-                                <select name="section" class="form-select" required onchange="filterModalMembers()" id="sectionClusterSelect">
+                                <select name="section" class="form-select" required onchange="showGroupSelection()" id="sectionClusterSelect">
                                     <option value="">Select Section</option>
                                     @if(isset($clusters) && $clusters->count() > 0)
                                         @foreach($clusters as $cluster)
@@ -1232,10 +1232,13 @@
     const backButton = document.getElementById('backToSelectionButton');
     const typeButtons = document.querySelectorAll('.adviser-type-button');
 
+    console.log('Type buttons found:', typeButtons.length);
+
     // Type button click handlers
-    typeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const selectedType = button.dataset.adviserType;
+    typeButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            console.log('Button clicked:', this.dataset.adviserType);
+            const selectedType = this.dataset.adviserType;
             localStorage.setItem('selectedAdviserType', selectedType);
             showAdviserPanelContent(selectedType);
         });
@@ -1243,7 +1246,7 @@
 
     // Back button handler
     if (backButton) {
-        backButton.addEventListener('click', () => {
+        backButton.addEventListener('click', function() {
             localStorage.removeItem('selectedAdviserType');
             typeSelectionView.classList.remove('hidden');
             adviserPanelContent.classList.add('hidden');
@@ -1257,7 +1260,7 @@
             if (assignmentFilter) assignmentFilter.value = '';
             
             // Hide all tab panes
-            document.querySelectorAll('.tab-pane').forEach(pane => {
+            document.querySelectorAll('.tab-pane').forEach(function(pane) {
                 pane.classList.remove('show', 'active');
                 pane.classList.add('fade');
             });
@@ -1297,7 +1300,7 @@
                 if (tabId === 'adviser-content') {
                     const adviserFilter = document.getElementById('adviserFilter');
                     if (adviserFilter) adviserFilter.value = '';
-                    document.querySelectorAll('#adviserTableBody tr').forEach(row => {
+                    document.querySelectorAll('#adviserTableBody tr').forEach(function(row) {
                         row.style.display = '';
                     });
                 }
@@ -1739,11 +1742,11 @@ function renderEditSlots(panelId) {
 // ------------------
 // Initialize Modals
 // ------------------
-document.getElementById('addAssignmentModal').addEventListener('show.bs.modal', () => {
+document.getElementById('addAssignmentModal').addEventListener('show.bs.modal', function() {
     const form = document.getElementById('addAssignmentForm');
     form.reset();
+    document.getElementById('groupSelectionDiv').style.display = 'none';
     
-    // Fetch fresh advisers list
     fetch('/api/advisers')
         .then(response => response.json())
         .then(advisers => {
@@ -1751,7 +1754,7 @@ document.getElementById('addAssignmentModal').addEventListener('show.bs.modal', 
             adviserSelect.innerHTML = '<option value="">Select Adviser</option>';
             advisers.forEach(adviser => {
                 const sections = Array.isArray(adviser.sections) ? adviser.sections.join(', ') : adviser.sections;
-                adviserSelect.innerHTML += `<option value="${adviser.id}" data-department="${adviser.department}" data-sections="${Array.isArray(adviser.sections) ? adviser.sections.join(',') : adviser.sections}">${adviser.name} (${adviser.department} - ${sections})</option>`;
+                adviserSelect.innerHTML += '<option value="' + adviser.id + '" data-department="' + adviser.department + '" data-sections="' + (Array.isArray(adviser.sections) ? adviser.sections.join(',') : adviser.sections) + '">' + adviser.name + ' (' + adviser.department + ' - ' + sections + ')</option>';
             });
             filterModalMembers();
         })
@@ -1761,12 +1764,39 @@ document.getElementById('addAssignmentModal').addEventListener('show.bs.modal', 
         });
 });
 
-document.getElementById('addPanelModal').addEventListener('show.bs.modal', () => {
+window.showGroupSelection = function() {
+    const clusterSelect = document.getElementById('sectionClusterSelect');
+    const cluster = clusterSelect.value;
+    const groupDiv = document.getElementById('groupSelectionDiv');
+    const container = document.getElementById('groupCheckboxContainer');
+    
+    if (!cluster) {
+        groupDiv.style.display = 'none';
+        return;
+    }
+    
+    const offset = (parseInt(cluster) - 4101) * 10;
+    let html = '';
+    
+    for (let i = 1; i <= 10; i++) {
+        const groupNum = offset + i;
+        html += '<div class="form-check">' +
+            '<input class="form-check-input" type="checkbox" name="group_numbers[]" value="' + groupNum + '" id="assignGroup' + groupNum + '">' +
+            '<label class="form-check-label" for="assignGroup' + groupNum + '">Group ' + groupNum + '</label>' +
+            '</div>';
+    }
+    
+    container.innerHTML = html;
+    groupDiv.style.display = 'block';
+    filterModalMembers();
+}
+
+document.getElementById('addPanelModal').addEventListener('show.bs.modal', function() {
     availabilitySlots = [];
     renderSlots();
 });
 
-document.getElementById('addAdviserModal').addEventListener('show.bs.modal', () => {
+document.getElementById('addAdviserModal').addEventListener('show.bs.modal', function() {
     // Reset form and update sections
     const modal = document.getElementById('addAdviserModal');
     modal.querySelector('select[name="department"]').value = '';

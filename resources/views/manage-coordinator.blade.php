@@ -33,9 +33,6 @@
                 <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#archivesModal" onclick="loadArchives()">
                     <i class="bi bi-archive-fill me-1"></i> Archives
                 </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCoordinatorModal">
-                    <i class="bi bi-person-plus-fill me-1"></i> Add Coordinator
-                </button>
             </div>
         </div>
 
@@ -58,20 +55,47 @@
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
+                                <th>ID</th>
+                                <th>Professor ID</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Department</th>
-                                <th>Contact</th>
+                                <th>Role</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="coordinatorTableBody">
-                            @forelse($coordinators as $coordinator)
+                            @if(isset($fmsCoordinators) && count($fmsCoordinators) > 0)
+                                @foreach($fmsCoordinators as $fmsCoord)
+                                    <tr style="background-color: #e7f3ff;" data-department="{{ $fmsCoord['department'] ?? '' }}">
+                                        <td>{{ $fmsCoord['id'] ?? 'N/A' }}</td>
+                                        <td>{{ $fmsCoord['professor_id'] ?? '-' }}</td>
+                                        <td>{{ $fmsCoord['name'] ?? 'N/A' }}</td>
+                                        <td>{{ $fmsCoord['email'] ?? 'N/A' }}</td>
+                                        <td>{{ $fmsCoord['department'] ?? '-' }}</td>
+                                        <td>{{ ucfirst($fmsCoord['role'] ?? 'N/A') }}</td>
+                                        <td><span class="badge bg-{{ ($fmsCoord['status'] ?? '') === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($fmsCoord['status'] ?? 'N/A') }}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" onclick="editFMSCoordinator({{ $fmsCoord['id'] }}, '{{ $fmsCoord['name'] }}', '{{ $fmsCoord['email'] }}')">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" onclick="archiveFMSCoordinator({{ $fmsCoord['id'] }})">
+                                                <i class="bi bi-archive"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                            @foreach($coordinators as $coordinator)
                             <tr data-department="{{ $coordinator->department }}">
+                                <td>{{ $coordinator->id }}</td>
+                                <td>{{ $coordinator->professor_id ?? '-' }}</td>
                                 <td>{{ $coordinator->name }}</td>
                                 <td>{{ $coordinator->email }}</td>
                                 <td>{{ $coordinator->department }}</td>
-                                <td>{{ $coordinator->contact ?? 'N/A' }}</td>
+                                <td>Coordinator</td>
+                                <td><span class="badge bg-success">Active</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-primary me-1" onclick="editCoordinator({{ $coordinator->id }}, '{{ $coordinator->name }}', '{{ $coordinator->email }}', '{{ $coordinator->department }}', '{{ $coordinator->contact }}')">
                                         <i class="bi bi-pencil"></i>
@@ -81,9 +105,7 @@
                                     </button>
                                 </td>
                             </tr>
-                            @empty
-                            <tr><td colspan="5" class="text-center text-muted">No coordinators found.</td></tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -400,6 +422,133 @@
         </div>
     </div>
 </div>
+
+<!-- Confirm Restore FMS Modal -->
+<div class="modal fade" id="confirmRestoreFMSModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Confirm Restore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to restore this FMS coordinator?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitRestoreFMS()">Restore</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit FMS Coordinator Modal -->
+<div class="modal fade" id="editFMSCoordinatorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editFMSCoordinatorForm">
+                @csrf
+                <input type="hidden" id="edit_fms_coordinator_id">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Edit FMS Coordinator</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" id="edit_fms_name" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="edit_fms_email" class="form-control" readonly>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> FMS coordinator details are read-only. You can only set password.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="showSetPassword()"><i class="bi bi-key"></i> Set Password</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Set Password Modal -->
+<div class="modal fade" id="setPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Set Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">New Password *</label>
+                    <div class="input-group">
+                        <input type="password" id="set_password" class="form-control" required minlength="8">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('set_password', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Minimum 8 characters</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirm New Password *</label>
+                    <div class="input-group">
+                        <input type="password" id="set_password_confirmation" class="form-control" required minlength="8">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('set_password_confirmation', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="validateSetPassword()">Set Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Set Password Modal -->
+<div class="modal fade" id="confirmSetPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Confirm Set Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to set password for this FMS coordinator?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitSetPassword()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Archive FMS Coordinator Modal -->
+<div class="modal fade" id="confirmArchiveFMSModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Confirm Archive</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to archive this FMS coordinator?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitArchiveFMS()">Archive</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -407,6 +556,126 @@
 let archiveCoordinatorId = null;
 let restoreCoordinatorId = null;
 let addFormData = null;
+let editFMSCoordinatorId = null;
+
+function editFMSCoordinator(id, name, email) {
+    editFMSCoordinatorId = id;
+    document.getElementById('edit_fms_coordinator_id').value = id;
+    document.getElementById('edit_fms_name').value = name;
+    document.getElementById('edit_fms_email').value = email;
+    new bootstrap.Modal(document.getElementById('editFMSCoordinatorModal')).show();
+}
+
+function archiveFMSCoordinator(id) {
+    archiveCoordinatorId = id;
+    new bootstrap.Modal(document.getElementById('confirmArchiveFMSModal')).show();
+}
+
+function showSetPassword() {
+    bootstrap.Modal.getInstance(document.getElementById('editFMSCoordinatorModal')).hide();
+    new bootstrap.Modal(document.getElementById('setPasswordModal')).show();
+}
+
+function validateSetPassword() {
+    const password = document.getElementById('set_password').value;
+    const confirmPassword = document.getElementById('set_password_confirmation').value;
+    
+    if (!password || !confirmPassword) {
+        bootstrap.Modal.getInstance(document.getElementById('setPasswordModal')).hide();
+        document.getElementById('errorMessage').textContent = 'Both password fields are required!';
+        document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-danger text-white';
+        document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Error';
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        bootstrap.Modal.getInstance(document.getElementById('setPasswordModal')).hide();
+        document.getElementById('errorMessage').textContent = 'Passwords do not match!';
+        document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-danger text-white';
+        document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Error';
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+        return;
+    }
+    
+    if (password.length < 8) {
+        bootstrap.Modal.getInstance(document.getElementById('setPasswordModal')).hide();
+        document.getElementById('errorMessage').textContent = 'Password must be at least 8 characters long!';
+        document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-danger text-white';
+        document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Error';
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+        return;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('setPasswordModal')).hide();
+    new bootstrap.Modal(document.getElementById('confirmSetPasswordModal')).show();
+}
+
+function submitSetPassword() {
+    const password = document.getElementById('set_password').value;
+    const confirmPassword = document.getElementById('set_password_confirmation').value;
+    
+    const formData = new FormData();
+    formData.append('password', password);
+    formData.append('password_confirmation', confirmPassword);
+    
+    fetch(`/coordinators/fms/${editFMSCoordinatorId}/set-password`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('confirmSetPasswordModal')).hide();
+        
+        if (data.success) {
+            document.getElementById('errorMessage').textContent = data.message;
+            document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-success text-white';
+            document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Success';
+            new bootstrap.Modal(document.getElementById('errorModal')).show();
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            document.getElementById('errorMessage').textContent = data.message || 'Failed to set password';
+            document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-danger text-white';
+            document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Error';
+            new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+    })
+    .catch(error => {
+        bootstrap.Modal.getInstance(document.getElementById('confirmSetPasswordModal')).hide();
+        document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+        document.getElementById('errorModal').querySelector('.modal-header').className = 'modal-header bg-danger text-white';
+        document.getElementById('errorModal').querySelector('.modal-title').textContent = 'Error';
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+    });
+}
+
+function submitArchiveFMS() {
+    fetch(`/coordinators/fms/${archiveCoordinatorId}/archive`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('confirmArchiveFMSModal')).hide();
+            location.reload();
+        } else {
+            bootstrap.Modal.getInstance(document.getElementById('confirmArchiveFMSModal')).hide();
+            document.getElementById('errorMessage').textContent = data.message || 'Failed to archive FMS coordinator';
+            new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+    })
+    .catch(error => {
+        bootstrap.Modal.getInstance(document.getElementById('confirmArchiveFMSModal')).hide();
+        document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+    });
+}
 
 function togglePassword(fieldId, button) {
     const field = document.getElementById(fieldId);
@@ -661,21 +930,47 @@ function loadArchives() {
     .then(response => response.json())
     .then(data => {
         const tbody = document.getElementById('archivedCoordinatorsBody');
-        if (data.coordinators.length === 0) {
+        const localCoords = data.coordinators || [];
+        const fmsCoords = data.fmsCoordinators || [];
+        
+        if (localCoords.length === 0 && fmsCoords.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No archived coordinators found.</td></tr>';
         } else {
-            tbody.innerHTML = data.coordinators.map(c => `
-                <tr>
-                    <td>${c.name}</td>
-                    <td>${c.email}</td>
-                    <td>${c.department}</td>
-                    <td>
-                        <button class="btn btn-sm btn-success" onclick="restoreCoordinator(${c.id})">
-                            <i class="bi bi-arrow-counterclockwise"></i> Restore
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            let html = '';
+            
+            // FMS Coordinators
+            fmsCoords.forEach(c => {
+                html += `
+                    <tr style="background-color: #e7f3ff;">
+                        <td>${c.name}</td>
+                        <td>${c.email}</td>
+                        <td>${c.department || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="restoreFMSCoordinator(${c.id})">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restore
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            // Local Coordinators
+            localCoords.forEach(c => {
+                html += `
+                    <tr>
+                        <td>${c.name}</td>
+                        <td>${c.email}</td>
+                        <td>${c.department}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="restoreCoordinator(${c.id})">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restore
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
         }
     });
 }
@@ -684,6 +979,12 @@ function restoreCoordinator(id) {
     restoreCoordinatorId = id;
     bootstrap.Modal.getInstance(document.getElementById('archivesModal')).hide();
     new bootstrap.Modal(document.getElementById('confirmRestoreModal')).show();
+}
+
+function restoreFMSCoordinator(id) {
+    restoreCoordinatorId = id;
+    bootstrap.Modal.getInstance(document.getElementById('archivesModal')).hide();
+    new bootstrap.Modal(document.getElementById('confirmRestoreFMSModal')).show();
 }
 
 function submitRestore() {
@@ -703,6 +1004,26 @@ function submitRestore() {
     .catch(error => {
         console.error('Error:', error);
         alert('Failed to restore coordinator');
+    });
+}
+
+function submitRestoreFMS() {
+    fetch(`/coordinators/fms/${restoreCoordinatorId}/restore`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('confirmRestoreFMSModal')).hide();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to restore FMS coordinator');
     });
 }
 </script>

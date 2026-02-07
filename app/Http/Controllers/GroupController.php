@@ -79,9 +79,11 @@ class GroupController extends Controller
             }
             
             $hashedPassword = bcrypt($request->password);
+            $email = 's' . $request->group_id;
             
             $group = Group::create([
                 'group_id' => $request->group_id,
+                'email' => $email,
                 'password' => $hashedPassword,
                 'department' => $department,
                 'cluster' => $cluster,
@@ -99,16 +101,15 @@ class GroupController extends Controller
                 'leader_member' => $request->leader_member
             ]);
             
-            // Create user account for group login
+            // Create user record for login
             \App\Models\User::create([
-                'name' => $request->group_id,
-                'email' => 's' . $request->group_id,
+                'name' => 'Group ' . $request->group_id,
+                'email' => $email,
                 'password' => $hashedPassword,
                 'role' => 'student',
                 'department' => $department,
                 'cluster' => $cluster,
-                'group_no' => $groupNumber,
-                'group_id' => $request->group_id
+                'group_no' => $groupNumber
             ]);
             
             return redirect()->route('coordinator-manage-groups')->with('success', 'Group created successfully');
@@ -135,7 +136,7 @@ class GroupController extends Controller
                 $cluster = 'Section ' . ceil($groupNumber / 10);
             }
             
-            $group->update([
+            $updateData = [
                 'cluster' => $cluster,
                 'group_number' => $groupNumber,
                 'member1_name' => $request->member1_name,
@@ -149,7 +150,29 @@ class GroupController extends Controller
                 'member5_name' => $request->member5_name,
                 'member5_student_id' => $request->member5_student_id,
                 'leader_member' => $request->leader_member
-            ]);
+            ];
+            
+            if ($request->filled('password')) {
+                $hashedPassword = bcrypt($request->password);
+                $updateData['password'] = $hashedPassword;
+                
+                // Update user password
+                $user = \App\Models\User::where('email', $group->email)->first();
+                if ($user) {
+                    $user->update(['password' => $hashedPassword]);
+                }
+            }
+            
+            $group->update($updateData);
+            
+            // Update user record
+            $user = \App\Models\User::where('email', $group->email)->first();
+            if ($user) {
+                $user->update([
+                    'cluster' => $cluster,
+                    'group_no' => $groupNumber
+                ]);
+            }
             
             return redirect()->route('coordinator-manage-groups')->with('success', 'Group updated successfully');
         } catch (\Exception $e) {
@@ -170,7 +193,30 @@ class GroupController extends Controller
     
     public function archived()
     {
-        // Implementation for archived groups
+        $coordinatorDepartment = auth()->user()->department;
+        $archivedGroups = Group::onlyTrashed()
+            ->where('department', $coordinatorDepartment)
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+        return response()->json($archivedGroups);
+    }
+    
+    public function assignedStudents()
+    {
+        $coordinatorDepartment = auth()->user()->department;
+        $assigned = [];
+        
+        $groups = Group::where('department', $coordinatorDepartment)->get();
+        foreach ($groups as $group) {
+            for ($i = 1; $i <= 5; $i++) {
+                $studentId = $group->{"member{$i}_student_id"};
+                if ($studentId) {
+                    $assigned[] = $studentId;
+                }
+            }
+        }
+        
+        return response()->json(['assigned' => $assigned]);
     }
     
     public function restore($id)

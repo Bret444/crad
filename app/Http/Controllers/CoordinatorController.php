@@ -15,7 +15,24 @@ class CoordinatorController extends Controller
     public function index()
     {
         $coordinators = User::where('role', 'coordinator')->whereNull('deleted_at')->get();
-        return view('manage-coordinator', compact('coordinators'));
+        
+        $fmsCoordinators = [];
+        try {
+            // Query FMS faculties table for complete coordinator data
+            $fmsCoordinators = \DB::connection('fms')->table('faculties')
+                ->where('role', 'coordinator')
+                ->whereNull('deleted_at')
+                ->select('id', 'professor_id', 'name', 'email', 'department', 'employment_type', 'role', 'status')
+                ->get()
+                ->map(function($item) {
+                    return (array) $item;
+                })
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('FMS Database Error: ' . $e->getMessage());
+        }
+        
+        return view('manage-coordinator', compact('coordinators', 'fmsCoordinators'));
     }
 
     public function dashboard()
@@ -64,7 +81,27 @@ class CoordinatorController extends Controller
     public function archivesData()
     {
         $coordinators = User::where('role', 'coordinator')->onlyTrashed()->get();
-        return response()->json(['coordinators' => $coordinators]);
+        
+        // Get archived FMS coordinators
+        $fmsArchivedCoordinators = [];
+        try {
+            $fmsArchivedCoordinators = \DB::connection('fms')->table('faculties')
+                ->where('role', 'coordinator')
+                ->whereNotNull('deleted_at')
+                ->select('id', 'professor_id', 'name', 'email', 'department')
+                ->get()
+                ->map(function($item) {
+                    return (array) $item;
+                })
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('FMS Archived Data Error: ' . $e->getMessage());
+        }
+        
+        return response()->json([
+            'coordinators' => $coordinators,
+            'fmsCoordinators' => $fmsArchivedCoordinators
+        ]);
     }
 
     public function store(Request $request)
@@ -99,6 +136,128 @@ class CoordinatorController extends Controller
     {
         User::withTrashed()->findOrFail($id)->restore();
         return response()->json(['success' => true, 'message' => 'Coordinator restored successfully']);
+    }
+
+    public function archiveFMS($id)
+    {
+        try {
+            // Soft delete FMS coordinator in the faculties table
+            \DB::connection('fms')->table('faculties')
+                ->where('id', $id)
+                ->update(['deleted_at' => now()]);
+            
+            return response()->json(['success' => true, 'message' => 'FMS coordinator archived successfully']);
+        } catch (\Exception $e) {
+            \Log::error('FMS Archive Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to archive FMS coordinator']);
+        }
+    }
+
+    public function restoreFMS($id)
+    {
+        try {
+            // Restore FMS coordinator by setting deleted_at to null
+            \DB::connection('fms')->table('faculties')
+                ->where('id', $id)
+                ->update(['deleted_at' => null]);
+            
+            return response()->json(['success' => true, 'message' => 'FMS coordinator restored successfully']);
+        } catch (\Exception $e) {
+            \Log::error('FMS Restore Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to restore FMS coordinator']);
+        }
+    }
+
+    public function setPasswordFMS(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'password' => 'required|min:8|confirmed'
+            ]);
+
+            $fmsCoord = \DB::connection('fms')->table('faculties')->where('id', $id)->first();
+            
+            if (!$fmsCoord) {
+                return response()->json(['success' => false, 'message' => 'FMS coordinator not found']);
+            }
+
+            $hashedPassword = Hash::make($request->password);
+            
+            \DB::connection('fms')->table('faculties')
+                ->where('id', $id)
+                ->update(['password' => $hashedPassword]);
+            
+            $existingUser = User::withTrashed()->where('email', $fmsCoord->email)->first();
+            
+            if ($existingUser) {
+                $existingUser->professor_id = $fmsCoord->professor_id;
+                $existingUser->name = $fmsCoord->name;
+                $existingUser->email = $fmsCoord->email;
+                $existingUser->department = $fmsCoord->department ?? 'N/A';
+                $existingUser->password = $hashedPassword;
+                $existingUser->deleted_at = null;
+                $existingUser->save();
+            } else {
+                \DB::table('users')->insert([
+                    'id' => $id,
+                    'professor_id' => $fmsCoord->professor_id,
+                    'name' => $fmsCoord->name,
+                    'email' => $fmsCoord->email,
+                    'password' => $hashedPassword,
+                    'role' => 'coordinator',
+                    'department' => $fmsCoord->department ?? 'N/A',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+            
+            return response()->json(['success' => true, 'message' => 'Password set successfully']);
+        } catch (\Exception $e) {
+            \Log::error('FMS Set Password Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to set password']);
+        }
+    }
+
+    public function syncFMSCoordinators()
+    {
+        try {
+            $fmsCoordinators = \DB::connection('fms')->table('faculties')
+                ->where('role', 'coordinator')
+                ->whereNull('deleted_at')
+                ->select('id', 'professor_id', 'name', 'email', 'department', 'password')
+                ->get();
+
+            if ($fmsCoordinators->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No coordinators found in FMS']);
+            }
+
+            $synced = 0;
+            foreach ($fmsCoordinators as $fmsCoord) {
+                if (!$fmsCoord->email) continue;
+                
+                $exists = User::where('email', $fmsCoord->email)->exists();
+                
+                if (!$exists) {
+                    \DB::table('users')->insert([
+                        'id' => $fmsCoord->id,
+                        'professor_id' => $fmsCoord->professor_id,
+                        'name' => $fmsCoord->name,
+                        'email' => $fmsCoord->email,
+                        'role' => 'coordinator',
+                        'department' => $fmsCoord->department ?? 'N/A',
+                        'password' => $fmsCoord->password,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    $synced++;
+                }
+            }
+
+            return response()->json(['success' => true, 'message' => "Synced {$synced} coordinators from FMS"]);
+        } catch (\Exception $e) {
+            \Log::error('FMS Sync Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Sync failed: ' . $e->getMessage()]);
+        }
     }
 
     public function update(Request $request, $id)
@@ -292,12 +451,19 @@ class CoordinatorController extends Controller
     public function subjectLoadProxy()
     {
         try {
+            $coordinator = Auth::user();
+            $department = $coordinator->department;
+            
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'http://fms3.jampzdev.com/api/subject-load-tracker/list');
+            curl_setopt($ch, CURLOPT_URL, env('FMS_API_URL'));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'X-API-Username: ' . env('FMS_API_USERNAME'),
+                'X-API-Key: ' . env('FMS_API_KEY')
+            ]);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -312,7 +478,13 @@ class CoordinatorController extends Controller
             }
             
             $data = json_decode($response, true);
-            return response()->json($data ?: []);
+            
+            // Filter by coordinator's department
+            $filtered = array_filter($data ?: [], function($item) use ($department) {
+                return isset($item['department']) && $item['department'] === $department;
+            });
+            
+            return response()->json(array_values($filtered));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

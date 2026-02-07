@@ -32,10 +32,20 @@ class StudentApiController extends Controller
                 ], 500);
             }
 
+            $allStudents = $students['students']['data'] ?? $students['data'] ?? $students ?? [];
+            $bsitStudents = array_values(array_filter($allStudents, function($student) {
+                $course = $student['CurrentCourse'] ?? $student['current_course'] ?? '';
+                return stripos($course, 'Information Technology') !== false || stripos($course, 'BSIT') !== false;
+            }));
+
             return response()->json([
                 'success' => true,
-                'count' => count($students),
-                'students' => $students
+                'count' => count($bsitStudents),
+                'students' => [
+                    'status' => 'success',
+                    'count' => count($bsitStudents),
+                    'data' => $bsitStudents
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([

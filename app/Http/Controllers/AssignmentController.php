@@ -157,4 +157,65 @@ class AssignmentController extends Controller
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    public function updatePanels(Request $request, $id)
+    {
+        try {
+            $assignment = Assignment::findOrFail($id);
+            
+            // Update chairperson if provided
+            if ($request->has('chairperson_id')) {
+                $chairperson = Panel::find($request->chairperson_id);
+                if ($chairperson) {
+                    AssignmentPanel::where('assignment_id', $assignment->id)
+                        ->where('role', 'Chairperson')
+                        ->delete();
+                    
+                    AssignmentPanel::create([
+                        'assignment_id' => $assignment->id,
+                        'panel_id' => $chairperson->id,
+                        'name' => $chairperson->name,
+                        'availability' => is_array($chairperson->availability) ? json_encode($chairperson->availability) : $chairperson->availability,
+                        'role' => 'Chairperson',
+                        'expertise' => $chairperson->expertise,
+                        'department' => $assignment->department,
+                        'section' => $assignment->section,
+                    ]);
+                }
+            }
+            
+            // Update members if provided
+            if ($request->has('member_ids') && is_array($request->member_ids)) {
+                AssignmentPanel::where('assignment_id', $assignment->id)
+                    ->where('role', 'Member')
+                    ->delete();
+                
+                foreach ($request->member_ids as $panelId) {
+                    $panel = Panel::find($panelId);
+                    if ($panel) {
+                        AssignmentPanel::create([
+                            'assignment_id' => $assignment->id,
+                            'panel_id' => $panel->id,
+                            'name' => $panel->name,
+                            'availability' => is_array($panel->availability) ? json_encode($panel->availability) : $panel->availability,
+                            'role' => 'Member',
+                            'expertise' => $panel->expertise,
+                            'department' => $assignment->department,
+                            'section' => $assignment->section,
+                        ]);
+                    }
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Panel assignment updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

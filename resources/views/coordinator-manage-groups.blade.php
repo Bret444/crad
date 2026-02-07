@@ -303,9 +303,14 @@
                     <div>
                         <input type="text" id="studentSearch" class="form-control" placeholder="Search students..." style="width: 300px;">
                     </div>
-                    <button class="btn btn-primary" onclick="fetchStudents()">
-                        <i class="bi bi-arrow-repeat"></i> Fetch Students
-                    </button>
+                    <div>
+                        <button class="btn btn-success me-2" onclick="addSelectedToGroup()" id="addToGroupBtn" style="display:none;">
+                            <i class="bi bi-plus-circle"></i> Add Selected to Group
+                        </button>
+                        <button class="btn btn-primary" onclick="fetchStudents()">
+                            <i class="bi bi-arrow-repeat"></i> Fetch Students
+                        </button>
+                    </div>
                 </div>
                 <div id="studentListContent">
                     <p class="text-center text-muted">Click "Fetch Students" to load data</p>
@@ -510,21 +515,23 @@
         const content = document.getElementById('studentListContent');
         content.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading students...</p></div>';
         
-        fetch('/api/students/fetch')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.students) {
-                    displayStudents(data.students);
-                } else {
-                    content.innerHTML = '<div class="alert alert-danger">Failed to load students: ' + (data.message || 'Unknown error') + '</div>';
-                }
-            })
-            .catch(error => {
-                content.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-            });
+        Promise.all([
+            fetch('/api/students/fetch').then(r => r.json()),
+            fetch('/groups/assigned-students').then(r => r.json())
+        ])
+        .then(([studentData, assignedData]) => {
+            if (studentData.success && studentData.students) {
+                displayStudents(studentData.students, assignedData.assigned || []);
+            } else {
+                content.innerHTML = '<div class="alert alert-danger">Failed to load students: ' + (studentData.message || 'Unknown error') + '</div>';
+            }
+        })
+        .catch(error => {
+            content.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+        });
     }
 
-    function displayStudents(students) {
+    function displayStudents(students, assignedStudents = []) {
         const content = document.getElementById('studentListContent');
         
         // Handle nested data structure
@@ -543,24 +550,27 @@
                 <table class="table table-striped table-hover" id="studentTable">
                     <thead>
                         <tr>
+                            <th>Select</th>
                             <th>Student ID</th>
                             <th>Name</th>
                             <th>Course</th>
-                            <th>Year Level</th>
-                            <th>Email</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
         
         studentList.forEach(student => {
+            const studentId = student.StudentID || student.student_id || 'N/A';
+            const fullName = `${student.FirstName || student.firstname || ''} ${student.MiddleName || student.middlename || ''} ${student.LastName || student.lastname || ''}`;
+            const course = student.CurrentCourse || student.course || 'N/A';
+            const isAssigned = assignedStudents.includes(studentId);
+            
             html += `
-                <tr>
-                    <td>${student.StudentID || student.student_id || 'N/A'}</td>
-                    <td>${student.FirstName || student.firstname || ''} ${student.MiddleName || student.middlename || ''} ${student.LastName || student.lastname || ''}</td>
-                    <td>${student.CurrentCourse || student.course || 'N/A'}</td>
-                    <td>${student.CurrentYearLevel || student.year_level || 'N/A'}</td>
-                    <td>${student.email || 'N/A'}</td>
+                <tr ${isAssigned ? 'class="table-secondary"' : ''}>
+                    <td><input type="checkbox" class="student-checkbox" data-id="${studentId}" data-name="${fullName.trim()}" onchange="handleCheckboxChange(this)" ${isAssigned ? 'disabled' : ''}></td>
+                    <td>${studentId}</td>
+                    <td>${fullName}${isAssigned ? ' <span class="badge bg-secondary">Assigned</span>' : ''}</td>
+                    <td>${course}</td>
                 </tr>
             `;
         });
@@ -585,6 +595,56 @@
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
+        });
+    }
+
+    function handleCheckboxChange(checkbox) {
+        const checked = document.querySelectorAll('.student-checkbox:checked').length;
+        
+        if (checked > 5) {
+            checkbox.checked = false;
+            alert('Maximum 5 students per group');
+            return;
+        }
+        
+        // Disable unchecked checkboxes if 5 are selected
+        const allCheckboxes = document.querySelectorAll('.student-checkbox:not(:disabled)');
+        allCheckboxes.forEach(cb => {
+            if (!cb.checked && checked === 5) {
+                cb.disabled = true;
+            } else if (checked < 5 && cb.dataset.id) {
+                cb.disabled = false;
+            }
+        });
+        
+        updateAddButton();
+    }
+
+    function updateAddButton() {
+        const checked = document.querySelectorAll('.student-checkbox:checked').length;
+        const btn = document.getElementById('addToGroupBtn');
+        btn.style.display = checked > 0 && checked <= 5 ? 'inline-block' : 'none';
+    }
+
+    function addSelectedToGroup() {
+        const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'));
+        if (selected.length === 0 || selected.length > 5) {
+            alert('Please select 1-5 students');
+            return;
+        }
+        
+        // Close student list modal
+        bootstrap.Modal.getInstance(document.getElementById('studentListModal')).hide();
+        
+        // Open add group modal and populate
+        const addModal = new bootstrap.Modal(document.getElementById('addGroupModal'));
+        addModal.show();
+        
+        // Populate member fields
+        selected.forEach((checkbox, index) => {
+            const memberNum = index + 1;
+            document.querySelector(`input[name="member${memberNum}_student_id"]`).value = checkbox.dataset.id;
+            document.querySelector(`input[name="member${memberNum}_name"]`).value = checkbox.dataset.name;
         });
     }
 </script>
