@@ -61,6 +61,7 @@ class PanelAdviserController extends Controller
                 'section' => $a->section,
                 'adviser' => $a->adviser ? $a->adviser->name : null,
                 'panels' => $panels,
+                'group_number' => $a->group_number,
                 'created_at' => $a->created_at ? $a->created_at->toDateTimeString() : null,
             ];
         });

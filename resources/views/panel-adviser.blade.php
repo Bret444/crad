@@ -311,6 +311,7 @@
                                         <th>Expertise</th>
                                         <th>Role</th>
                                         <th>Contact Number</th>
+                                        <th>Sections</th>
                                         <th>Availability</th>
                                         <th>Action</th>
                                     </tr>
@@ -323,6 +324,46 @@
                                             <td>{{ $panel->expertise }}</td>
                                             <td>{{ $panel->role ?? 'N/A' }}</td>
                                             <td>{{ $panel->contact_number ?? 'N/A' }}</td>
+                                            <td>
+                                                @php
+                                                    $panelAssignments = $assignments->filter(function($assignment) use ($panel) {
+                                                        return $assignment->assignmentPanels && $assignment->assignmentPanels->contains('panel_id', $panel->id);
+                                                    });
+                                                    $groupedByCluster = [];
+                                                    foreach($panelAssignments as $assignment) {
+                                                        $cluster = $assignment->section;
+                                                        if (!isset($groupedByCluster[$cluster])) {
+                                                            $groupedByCluster[$cluster] = [];
+                                                        }
+                                                        
+                                                        // Use selected groups from assignment's group_number field
+                                                        if ($assignment->group_number && is_array($assignment->group_number)) {
+                                                            $groupedByCluster[$cluster] = array_unique(array_merge($groupedByCluster[$cluster], $assignment->group_number));
+                                                        }
+                                                    }
+                                                    // Sort groups within each cluster
+                                                    foreach($groupedByCluster as $cluster => $groups) {
+                                                        sort($groupedByCluster[$cluster]);
+                                                    }
+                                                    ksort($groupedByCluster);
+                                                @endphp
+                                                @if(count($groupedByCluster) > 0)
+                                                    @foreach($groupedByCluster as $cluster => $groups)
+                                                        <div>
+                                                            <span class="badge bg-primary me-1 section-badge" style="cursor:pointer;" data-panel-id="{{ $panel->id }}" data-cluster="{{ $cluster }}">
+                                                                {{ $cluster }} ({{ count($groups) }}) <i class="bi bi-chevron-down" id="icon_panel_{{ $panel->id }}_{{ $cluster }}"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div id="groups_panel_{{ $panel->id }}_{{ $cluster }}" style="display:none;" class="ms-4">
+                                                            @foreach($groups as $group)
+                                                                <div><span class="badge bg-secondary me-1">G{{ $group }}</span></div>
+                                                            @endforeach
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">No sections assigned</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 @if(is_array($panel->availability) && count($panel->availability) > 0)
                                                     <ul class="list-unstyled mb-0">
@@ -1021,7 +1062,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Section/Cluster *</label>
-                                <select name="section" class="form-select" required onchange="showGroupSelection()" id="sectionClusterSelect">
+                                <select name="section" class="form-select" required onchange="loadGroupsForCluster(this.value, 'add')" id="sectionClusterSelect">
                                     <option value="">Select Section</option>
                                     @if(isset($clusters) && $clusters->count() > 0)
                                         @foreach($clusters as $cluster)
@@ -1033,7 +1074,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Adviser *</label>
-                            <select name="adviser_id" class="form-select" required onchange="updateAvailableGroups()">
+                            <select name="adviser_id" class="form-select" required>
                                 <option value="">Select Adviser</option>
                                 @foreach($advisers as $adviser)
                                     <option value="{{ $adviser->id }}" data-department="{{ $adviser->department }}" data-sections="{{ is_array($adviser->sections) ? implode(',', $adviser->sections) : $adviser->sections }}">
@@ -1043,8 +1084,10 @@
                             </select>
                         </div>
                         <div class="mb-3" id="groupSelectionDiv" style="display:none;">
-                            <label class="form-label">Select Groups *</label>
+                            <label class="form-label">Select Groups in this Cluster *</label>
+                            <small class="text-muted d-block mb-2">Choose which groups to assign</small>
                             <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;" id="groupCheckboxContainer">
+                                <p class="text-muted">Select a cluster first</p>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -1111,13 +1154,20 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Section/Cluster *</label>
-                                    <select name="section" class="form-select" required>
+                                    <select name="section" class="form-select" required onchange="loadGroupsForCluster(this.value, '{{ $assignment->id }}')">
                                         @if(isset($clusters) && $clusters->count() > 0)
                                             @foreach($clusters as $cluster)
                                                 <option value="{{ $cluster->cluster_number }}" {{ $assignment->section == $cluster->cluster_number ? 'selected' : '' }}>{{ $cluster->cluster_number }}</option>
                                             @endforeach
                                         @endif
                                     </select>
+                                </div>
+                            </div>
+                            <div class="mb-3" id="editGroupSelectionDiv{{ $assignment->id }}" style="display:none;">
+                                <label class="form-label">Select Groups in this Cluster *</label>
+                                <small class="text-muted d-block mb-2">Choose which groups to assign</small>
+                                <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;" id="editGroupCheckboxContainer{{ $assignment->id }}">
+                                    <p class="text-muted">Select a cluster first</p>
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -1200,6 +1250,7 @@
             const badge = e.target.closest('.section-badge');
             const adviserId = badge.dataset.adviserId;
             const assignmentId = badge.dataset.assignmentId;
+            const panelId = badge.dataset.panelId;
             const cluster = badge.dataset.cluster;
             
             let groupsSpan, icon;
@@ -1209,6 +1260,9 @@
             } else if (assignmentId) {
                 groupsSpan = document.getElementById(`groups_assignment_${assignmentId}_${cluster}`);
                 icon = document.getElementById(`icon_assignment_${assignmentId}_${cluster}`);
+            } else if (panelId) {
+                groupsSpan = document.getElementById(`groups_panel_${panelId}_${cluster}`);
+                icon = document.getElementById(`icon_panel_${panelId}_${cluster}`);
             }
             
             if (groupsSpan && icon) {
@@ -1491,7 +1545,7 @@ function filterModalMembers() {
                 
                 if (matchingAdviser) {
                     adviserSelect.value = matchingAdviser.id;
-                    updateAvailableGroups();
+                    loadGroupsForCluster(section, 'add');
                 }
             })
             .catch(error => console.error('Error fetching advisers:', error));
@@ -2286,6 +2340,118 @@ function evaluateDefense(department, section, assignmentId) {
     window.location.href = url.toString();
 }
 
+// Load groups for selected cluster
+function loadGroupsForCluster(cluster, modalType) {
+    const container = modalType === 'add' ? document.getElementById('groupCheckboxContainer') : document.getElementById('editGroupCheckboxContainer' + modalType);
+    const groupDiv = modalType === 'add' ? document.getElementById('groupSelectionDiv') : document.getElementById('editGroupSelectionDiv' + modalType);
+    
+    if (!cluster) {
+        groupDiv.style.display = 'none';
+        return;
+    }
+    
+    container.innerHTML = '<p class="text-muted">Loading groups...</p>';
+    groupDiv.style.display = 'block';
+    
+    const dept = modalType === 'add' ? 
+        document.querySelector('#addAssignmentModal select[name="department"]').value :
+        document.querySelector(`#editAssignmentModal${modalType} select[name="department"]`).value;
+    
+    // Auto-fill adviser when cluster is selected (only for add modal)
+    if (modalType === 'add' && dept) {
+        const adviserSelect = document.querySelector('#addAssignmentModal select[name="adviser_id"]');
+        fetch('/api/advisers')
+            .then(response => response.json())
+            .then(advisers => {
+                const sectionNum = parseInt(cluster);
+                const matchingAdviser = advisers.find(adviser => {
+                    if (adviser.department !== dept) return false;
+                    if (!adviser.sections) return false;
+                    const sections = Array.isArray(adviser.sections) ? adviser.sections : [adviser.sections];
+                    return sections.some(s => {
+                        const groupNum = parseInt(s);
+                        if (groupNum >= 4101 && groupNum <= 4110) return groupNum === sectionNum;
+                        if (groupNum >= 1 && groupNum <= 100) {
+                            const clusterCalc = 4101 + Math.floor((groupNum - 1) / 10);
+                            return clusterCalc === sectionNum;
+                        }
+                        return false;
+                    });
+                });
+                if (matchingAdviser) {
+                    adviserSelect.value = matchingAdviser.id;
+                }
+            });
+    }
+    
+    // For edit modal, show adviser name in readonly field
+    if (modalType !== 'add' && dept) {
+        const adviserInput = document.querySelector(`#editAssignmentModal${modalType} input[type="text"][readonly]`);
+        const adviserIdInput = document.querySelector(`#editAssignmentModal${modalType} input[name="adviser_id"]`);
+        if (adviserInput && adviserIdInput) {
+            fetch('/api/advisers')
+                .then(response => response.json())
+                .then(advisers => {
+                    const adviser = advisers.find(a => a.id == adviserIdInput.value);
+                    if (adviser) {
+                        adviserInput.value = `${adviser.name} (${dept})`;
+                    }
+                });
+        }
+    }
+    
+    fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
+        .then(response => response.json())
+        .then(data => {
+            const groups = data.groups || [];
+            if (groups.length === 0) {
+                container.innerHTML = '<p class="text-muted">No groups found in this cluster</p>';
+                return;
+            }
+            
+            // Fetch occupied groups from assignments
+            fetch(`/api/assignments?department=${dept}&section=${cluster}`)
+                .then(r => r.json())
+                .then(assignments => {
+                    const occupiedGroups = new Set();
+                    const currentAssignmentId = modalType !== 'add' ? parseInt(modalType) : null;
+                    
+                    assignments.forEach(assignment => {
+                        // Skip current assignment when editing
+                        if (currentAssignmentId && assignment.id === currentAssignmentId) return;
+                        
+                        if (assignment.group_number && Array.isArray(assignment.group_number)) {
+                            assignment.group_number.forEach(g => occupiedGroups.add(String(g)));
+                        }
+                    });
+                    
+                    let html = '';
+                    groups.forEach(group => {
+                        const groupNum = group.group_number || group.id;
+                        const groupId = group.group_id || `G${groupNum}`;
+                        const isOccupied = occupiedGroups.has(String(groupNum));
+                        
+                        html += `
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="selected_groups[]" value="${groupNum}" id="group_${modalType}_${groupNum}" ${isOccupied ? 'disabled' : 'checked'}>
+                                <label class="form-check-label ${isOccupied ? 'text-muted text-decoration-line-through' : ''}" for="group_${modalType}_${groupNum}">
+                                    Group ${groupNum} (${groupId}) ${isOccupied ? '<span class="badge bg-danger ms-1">Occupied</span>' : ''}
+                                </label>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error checking occupied groups:', error);
+                });
+        })
+        .catch(error => {
+            console.error('Error loading groups:', error);
+            container.innerHTML = '<p class="text-danger">Error loading groups</p>';
+        });
+}
+
 // Show success modal if update was successful
 document.addEventListener('DOMContentLoaded', function() {
     @foreach($advisers as $adviser)
@@ -2385,6 +2551,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     @endforeach
+
+
 });
 </script>
 @endsection

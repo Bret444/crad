@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost: 3306
--- Generation Time: Feb 07, 2026 at 03:35 AM
+-- Generation Time: Feb 07, 2026 at 04:48 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -693,11 +693,8 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('1lHAHiHo7Lqf6UZB3mNiSIzQha4shwNcOmt9r1Ai', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiTzE4ME45Y0JFSzIwQ3ZJRkdlbHU3NG01NzNmZmxibmNCallKc0Z0QSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hcGkvY29vcmRpbmF0b3Ivbm90aWZpY2F0aW9ucyI7fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjI7fQ==', 1770373272),
-('ay2517cj90QQKfN3ZCxLg8ZSUgVsk6kZVh7MJbC5', NULL, '::1', '', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOHN6bUxGcEVuaW5MOVBhaVNraGljc055bGNUdFhIcW4zZTVuSXlROCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzU6Imh0dHA6Ly9sb2NhbGhvc3QvY3JhZDMvcHVibGljL2xvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1770362041),
-('nYOBvn6wN3PMONbEaEdr0tRbMYsYYzb2WSN14tz8', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWmlydjFGYzBmQmszcGJYRURxTGQ3MzZBYXNhbDdLZ0YyVUgyYW1VTSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1NjoiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvY29vcmRpbmF0b3ItbWFuYWdlLWFkdmlzZXIiO31zOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czozNToiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvbG9naW4iO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1770361974),
-('ocvgnZripg1FRVJYcStxPiBk0aSI2fUgXqegthyc', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoidExBMTBBN3dSY1ZIcm95NWpyNWU4VVpPNTVrTHdna3E1WWZMU0N5QyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2RlZi1zY2hlZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ1OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2FkbWluL25vdGlmaWNhdGlvbnMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjE0OiJvdHBfZXhwaXJlc19hdCI7aToxNzcwMzQ2NjQwO3M6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1770373272),
-('Z2mDkkDc9km0nTe39FjkZwYcVCqkUDCCD0m6SUFG', NULL, '::1', '', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiT01pQmlaa0h2TUxIZTFhdkNwNmh1aEhjWVhVVmt6QThobUp1VWF2SiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1MjoiaHR0cDovL2xvY2FsaG9zdC9jcmFkMy9wdWJsaWMvYXBpL3N1YmplY3QtbG9hZC1wcm94eSI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjUyOiJodHRwOi8vbG9jYWxob3N0L2NyYWQzL3B1YmxpYy9hcGkvc3ViamVjdC1sb2FkLXByb3h5Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1770362039);
+('9lUVJm6EJM10phq1zwRUasNQMCD7CBfeMt0ytD88', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoicmpSM2llaGpTQjJoZHlZTkY4ZTVzR2IySmNxSGZEMVZRZVNJSWVBUCI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo0NToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2FwaS9hZG1pbi9ub3RpZmljYXRpb25zIjt9czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1770432303),
+('am9Q8VGU0WCDEYG5WKImyjyl3ziymWMcnydmBT5z', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoickVGN3ltYXIyaGJyUkZBZk1WNkloRXdSZkFkT3FxSndtQU1yVUJOZCI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1MToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2FwaS9jb29yZGluYXRvci9ub3RpZmljYXRpb25zIjt9czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1770432303);
 
 -- --------------------------------------------------------
 

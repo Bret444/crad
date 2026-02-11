@@ -74,18 +74,18 @@ public function dashboard()
             ->first();
     }
 
-    // Get adviser assigned to this group
-    $adviser = \App\Models\Adviser::where('department', $department)
-        ->whereJsonContains('sections', (int)$groupNo)
-        ->first();
-
-    // Get panel assignment
-    $assignment = Assignment::with('assignmentPanels')
-        ->where('department', $department)
-        ->where('section', $cluster)
-        ->first();
-
-    $panelsList = $assignment ? $assignment->assignmentPanels : collect();
+    // Get adviser and panels only if group has assignment_id
+    $adviser = null;
+    $panelsList = collect();
+    if ($groupData && $groupData->assignment_id) {
+        $assignment = Assignment::with('assignmentPanels', 'adviser')
+            ->where('id', $groupData->assignment_id)
+            ->first();
+        if ($assignment) {
+            $adviser = $assignment->adviser;
+            $panelsList = $assignment->assignmentPanels;
+        }
+    }
 
     // Get defense schedules
     $defenseSchedules = \App\Models\DefenseSchedule::where('department', $department)
@@ -98,6 +98,7 @@ public function dashboard()
         'group_no' => $groupNo ?? 'N/A',
         'department' => $department ?? 'N/A',
         'cluster' => $cluster ?? 'N/A',
+        'assignment_id' => $groupData ? $groupData->assignment_id : null,
         'adviser' => $adviser,
         'panels' => $panelsList,
         'members' => $groupData ? collect([

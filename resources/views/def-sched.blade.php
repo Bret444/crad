@@ -1440,7 +1440,7 @@
 
         const deptParam = dept || document.getElementById('dept-select').value;
         
-        fetch('/api/panels?department=' + deptParam)
+        fetch(`/api/panels?department=${deptParam}&cluster=${clusterParam}`)
             .then(r => r.json())
             .then(allPanels => {
                 const allDates = new Set();
@@ -2208,7 +2208,7 @@
         fetch(`/api/assignments?department=${dept}&section=${cluster}`)
             .then(response => response.json())
             .then(assignments => {
-                const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+                const assignment = assignments.find(a => a.department === dept && a.section === cluster && a.group_number && a.group_number.includes(String(displayNumber)));
                 
                 if (assignment) {
                     const panels = assignment.panels || [];
@@ -2990,3 +2990,4 @@
     });
 </script>
 @endsection
+

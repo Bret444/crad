@@ -109,13 +109,46 @@ class PanelController extends Controller
 
     public function getPanels(Request $request)
     {
-        $query = Panel::whereNull('deleted_at');
+        $query = Panel::with(['assignmentPanels.assignment.adviser'])->whereNull('deleted_at');
         
         if ($request->has('department')) {
             $query->where('department', $request->department);
         }
         
-        return response()->json($query->get());
+        // Filter by cluster if provided
+        if ($request->has('cluster')) {
+            $cluster = $request->cluster;
+            $query->whereHas('assignmentPanels.assignment', function($q) use ($cluster) {
+                $q->where('section', $cluster);
+            });
+        }
+        
+        $panels = $query->get()->map(function($panel) {
+            $assignments = [];
+            foreach($panel->assignmentPanels as $ap) {
+                if ($ap->assignment) {
+                    $cluster = $ap->assignment->section;
+                    if (!isset($assignments[$cluster])) {
+                        $assignments[$cluster] = [];
+                    }
+                    if ($ap->assignment->adviser && $ap->assignment->adviser->sections) {
+                        $sections = is_array($ap->assignment->adviser->sections) ? $ap->assignment->adviser->sections : [$ap->assignment->adviser->sections];
+                        foreach($sections as $group) {
+                            if (is_numeric($group) && $group > 0) {
+                                $groupCluster = 4101 + floor(($group - 1) / 10);
+                                if ($groupCluster == $cluster) {
+                                    $assignments[$cluster][] = $group;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $panel->assignments = $assignments;
+            return $panel;
+        });
+        
+        return response()->json($panels);
     }
 
     public function getPanelsByCluster($clusterId)

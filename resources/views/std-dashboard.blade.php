@@ -1,4 +1,5 @@
 @extends('layouts.student')
+{{-- Updated: Panel filtering by assignment_id --}}
 
 @push('styles')
 <style>
@@ -81,6 +82,7 @@
     <div class="welcome-header">
         <h2 class="mb-2">Welcome to Your Research Dashboard</h2>
         <p class="mb-0">Track your research progress and manage your submissions</p>
+        <!-- DEBUG: Group {{ $group->group_no }} - Assignment ID: {{ $group->assignment_id ?? 'NULL' }} -->
     </div>
 
     <div class="row g-4">
@@ -136,7 +138,7 @@
                             <i class="fas fa-users text-info me-2"></i>
                             <strong>Panel Members:</strong>
                         </div>
-                        @if($group->panels && $group->panels->count() > 0)
+                        @if($group->assignment_id && $group->panels && $group->panels->count() > 0)
                             <div class="ms-4">
                                 @foreach($group->panels as $panel)
                                     <div class="d-flex justify-content-between align-items-start mb-2 p-2 bg-light rounded">

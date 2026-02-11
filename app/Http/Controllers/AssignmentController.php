@@ -22,12 +22,21 @@ class AssignmentController extends Controller
                 'panel_ids.*' => 'integer',
             ]);
 
-            // Create the main assignment
+            // Create the main assignment with selected groups
             $assignment = Assignment::create([
                 'department' => $validated['department'],
                 'section' => $validated['section'],
                 'adviser_id' => $validated['adviser_id'],
+                'group_number' => $request->has('selected_groups') ? $request->selected_groups : null,
             ]);
+
+            // Link selected groups to this assignment
+            if ($request->has('selected_groups') && is_array($request->selected_groups)) {
+                \App\Models\Group::where('cluster', $validated['section'])
+                    ->where('department', $validated['department'])
+                    ->whereIn('group_number', $request->selected_groups)
+                    ->update(['assignment_id' => $assignment->id]);
+            }
 
             // Add chairperson
             $chairperson = Panel::find($validated['chairperson_id']);
@@ -82,6 +91,9 @@ class AssignmentController extends Controller
     public function destroy(Assignment $assignment)
     {
         try {
+            // Unlink groups from this assignment
+            \App\Models\Group::where('assignment_id', $assignment->id)->update(['assignment_id' => null]);
+            
             // Delete related assignment panels first
             AssignmentPanel::where('assignment_id', $assignment->id)->delete();
             
@@ -116,7 +128,17 @@ class AssignmentController extends Controller
                 'department' => $validated['department'],
                 'section' => $validated['section'],
                 'adviser_id' => $validated['adviser_id'],
+                'group_number' => $request->has('selected_groups') ? $request->selected_groups : null,
             ]);
+
+            // Update group assignments
+            \App\Models\Group::where('assignment_id', $assignment->id)->update(['assignment_id' => null]);
+            if ($request->has('selected_groups') && is_array($request->selected_groups)) {
+                \App\Models\Group::where('cluster', $validated['section'])
+                    ->where('department', $validated['department'])
+                    ->whereIn('group_number', $request->selected_groups)
+                    ->update(['assignment_id' => $assignment->id]);
+            }
 
             AssignmentPanel::where('assignment_id', $assignment->id)->delete();
 

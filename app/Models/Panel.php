@@ -15,5 +15,9 @@ class Panel extends Model
         'availability' => 'array', 
     ];
 
+    public function assignmentPanels()
+    {
+        return $this->hasMany(AssignmentPanel::class, 'panel_id');
+    }
     
 }
