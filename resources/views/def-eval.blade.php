@@ -2,6 +2,7 @@
 
 @section('styles')
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     :root {
         --primary-blue: #1a73e8;
@@ -368,10 +369,10 @@
 
                                 <td class="evaluation-cell">
                                     <div class="d-flex flex-wrap justify-content-center gap-1">
-                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed">✓</button>
-                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense">↻</button>
-                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed">✗</button>
-                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Feedback">💬</button>
+                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed" disabled style="opacity: 0.3; cursor: not-allowed;">✓</button>
+                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense" disabled style="opacity: 0.3; cursor: not-allowed;">↻</button>
+                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed" disabled style="opacity: 0.3; cursor: not-allowed;">✗</button>
+                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Send Feedback">💬</button>
                                     </div>
                                 </td>
                             </tr>
@@ -411,10 +412,10 @@
 
                                 <td class="evaluation-cell">
                                     <div class="d-flex flex-wrap justify-content-center gap-1">
-                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed">✓</button>
-                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense">↻</button>
-                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed">✗</button>
-                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Feedback">💬</button>
+                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed" disabled style="opacity: 0.3; cursor: not-allowed;">✓</button>
+                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense" disabled style="opacity: 0.3; cursor: not-allowed;">↻</button>
+                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed" disabled style="opacity: 0.3; cursor: not-allowed;">✗</button>
+                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Send Feedback">💬</button>
                                     </div>
                                 </td>
                             </tr>
@@ -437,7 +438,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-3">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Add Feedback</h5>
+                <h5 class="modal-title">Send Feedback</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -449,7 +450,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveFeedback">Save Feedback</button>
+                <button type="button" class="btn btn-primary" id="saveFeedback">Send Feedback</button>
             </div>
         </div>
     </div>
@@ -644,19 +645,14 @@
             let statusClass = 'status-pending';
             
             if (statusResult === 'Passed') {
-                statusText = 'Defended';
-                statusClass = 'status-defended';
+                statusText = 'Passed';
+                statusClass = 'status-passed';
             } else if (statusResult === 'Redefense') {
                 statusText = 'Re-defense';
                 statusClass = 'status-redefense';
             } else if (statusResult === 'Failed') {
-                if (defenseType === 'REDEFENSE') {
-                    statusText = 'Failed';
-                    statusClass = 'status-failed';
-                } else {
-                    statusText = 'Re-defense';
-                    statusClass = 'status-redefense';
-                }
+                statusText = 'Failed';
+                statusClass = 'status-failed';
             }
             
             statusCell.innerHTML = `<span class="status-badge ${statusClass}">${statusText}</span>`;
@@ -667,10 +663,10 @@
         const defenseTypeDisplay = document.getElementById('defense-type-display');
         const currentDefenseType = defenseTypeDisplay ? defenseTypeDisplay.textContent.split(' ')[0] : 'UNKNOWN';
         
-        // Check if evaluation button is disabled (defense time not reached)
-        const evalButton = document.querySelector(`[data-group-id="${groupId}"] .btn-eval[onclick*="${result}"]`);
+        // Check if evaluation button is disabled
+        const evalButton = event.target;
         if (evalButton && evalButton.disabled) {
-            showAlert('warning', 'Evaluation Not Available', 'Defense evaluation is only available after the scheduled defense time has passed.');
+            showAlert('warning', 'Evaluation Not Available', 'Defense evaluation is only available when a schedule exists and the defense date has passed.');
             return;
         }
         
@@ -679,106 +675,120 @@
             return;
         }
         
-        const confirmMessage = `Are you sure you want to mark Group ${groupId} as "${result.toUpperCase()}"? This action cannot be reversed.`;
+        // Prompt for feedback/reason
+        const { value: feedback } = await Swal.fire({
+            title: `Mark Group ${groupId} as "${result.toUpperCase()}"`,
+            html: `
+                <p class="mb-3">Please provide feedback or reason for this evaluation:</p>
+                <textarea id="swal-feedback" class="swal2-textarea" placeholder="Enter your feedback here..." rows="4" style="width: 100%;"></textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Submit Evaluation',
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                const feedbackText = document.getElementById('swal-feedback').value;
+                if (!feedbackText || feedbackText.trim() === '') {
+                    Swal.showValidationMessage('Feedback is required');
+                    return false;
+                }
+                return feedbackText;
+            }
+        });
         
-        const confirmed = await showConfirm('Confirm Evaluation', confirmMessage, 'Yes, confirm!');
+        if (!feedback) return;
         
-        if (confirmed) {
-            initializeGroupStatus(groupId);
-            
-            const redefenseType = document.getElementById('redefense-type-select').value;
-            
-            // Save evaluation to database
-            const dept = document.getElementById('dept-select').value;
-            const cluster = document.getElementById('cluster-select').value;
-            
-            const evaluationData = {
-                department: dept,
-                cluster: cluster,
-                group_id: groupId,
-                defense_type: currentDefenseType,
-                redefense_type: currentDefenseType === 'REDEFENSE' ? redefenseType : null,
-                result: result
-            };
-            
-            fetch('/api/evaluations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(evaluationData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update local group status
-                    if (currentDefenseType === 'PRE-ORAL') {
-                        groupStatuses[groupId].preOralResult = result;
-                    } else if (currentDefenseType === 'FINAL') {
-                        groupStatuses[groupId].finalDefenseResult = result;
-                    } else if (currentDefenseType === 'REDEFENSE') {
-                        if (redefenseType === 'PRE-ORAL') {
-                            groupStatuses[groupId].preOralRedefenseResult = result;
-                        } else if (redefenseType === 'FINAL DEFENSE') {
-                            groupStatuses[groupId].finalRedefenseResult = result;
-                        }
+        initializeGroupStatus(groupId);
+        
+        const redefenseType = document.getElementById('redefense-type-select').value;
+        
+        // Save evaluation to database
+        const dept = document.getElementById('dept-select').value;
+        const cluster = document.getElementById('cluster-select').value;
+        
+        const evaluationData = {
+            department: dept,
+            cluster: cluster,
+            group_id: groupId,
+            defense_type: currentDefenseType,
+            redefense_type: currentDefenseType === 'REDEFENSE' ? redefenseType : null,
+            result: result,
+            feedback: feedback
+        };
+        
+        fetch('/api/evaluations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(evaluationData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update local group status
+                if (currentDefenseType === 'PRE-ORAL') {
+                    groupStatuses[groupId].preOralResult = result;
+                } else if (currentDefenseType === 'FINAL') {
+                    groupStatuses[groupId].finalDefenseResult = result;
+                } else if (currentDefenseType === 'REDEFENSE') {
+                    if (redefenseType === 'PRE-ORAL') {
+                        groupStatuses[groupId].preOralRedefenseResult = result;
+                    } else if (redefenseType === 'FINAL DEFENSE') {
+                        groupStatuses[groupId].finalRedefenseResult = result;
                     }
-                    
-                    // Update status display
-                    updateGroupStatus(groupId, currentDefenseType, result);
-                    
-                    // Disable all evaluation buttons permanently
-                    const evalButtons = document.querySelectorAll(`[data-group-id="${groupId}"] .btn-eval`);
-                    evalButtons.forEach(btn => {
-                        btn.disabled = true;
-                        btn.style.opacity = '0.3';
-                        btn.style.cursor = 'not-allowed';
-                    });
-                    
-                    // Show selected result
-                    const evalCell = document.querySelector(`[data-group-id="${groupId}"] .evaluation-cell`);
-                    evalCell.innerHTML = `<span class="status-badge status-${result.toLowerCase()}">${result}</span>`;
-                    
-                    // Update defense schedule status
-                    updateDefenseScheduleStatus(groupId, result, dept, cluster, currentDefenseType);
-                    
-                    showAlert('success', 'Evaluation Recorded', `Group ${groupId} has been marked as ${result}.`);
-                    
-                    // If result is Redefense, fetch data and redirect to redefense scheduling
-                    if (result === 'Redefense') {
-                        fetchRedefenseData(groupId, dept, cluster, currentDefenseType);
-                    }
-                    
-                    // If result is Failed, create redefense schedule entry
-                    if (result === 'Failed') {
-                        createRedefenseSchedule(groupId, dept, cluster, currentDefenseType);
-                    }
-                    
-                    // ONLY if pre-oral is passed, create final defense schedule entry
-                    if (currentDefenseType === 'PRE-ORAL' && result === 'Passed') {
+                }
+                
+                // Update status display
+                updateGroupStatus(groupId, currentDefenseType, result);
+                
+                // Disable all evaluation buttons permanently
+                const evalButtons = document.querySelectorAll(`[data-group-id="${groupId}"] .btn-eval`);
+                evalButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                    btn.style.cursor = 'not-allowed';
+                });
+                
+                // Show selected result
+                const evalCell = document.querySelector(`[data-group-id="${groupId}"] .evaluation-cell`);
+                evalCell.innerHTML = `<span class="status-badge status-${result.toLowerCase()}">${result}</span>`;
+                
+                // Update defense schedule status
+                updateDefenseScheduleStatus(groupId, result, dept, cluster, currentDefenseType);
+                
+                // If result is Redefense, create REDEFENSE schedule record
+                if (result === 'Redefense') {
+                    console.log('🔄 Group marked for redefense:', {groupId, dept, cluster, currentDefenseType});
+                }
+                
+                showAlert('success', 'Evaluation Recorded', `Group ${groupId} has been marked as ${result}.`);
+                
+                // ONLY if pre-oral is passed, create final defense schedule entry
+                if (currentDefenseType === 'PRE-ORAL' && result === 'Passed') {
+                    createFinalDefenseSchedule(groupId, dept, cluster);
+                }
+                
+                // If redefense is passed, create next defense schedule
+                if (currentDefenseType === 'REDEFENSE' && result === 'Passed') {
+                    const redefenseType = document.getElementById('redefense-type-select').value;
+                    if (redefenseType === 'PRE-ORAL') {
+                        // Pre-oral redefense passed, create final defense schedule
                         createFinalDefenseSchedule(groupId, dept, cluster);
                     }
-                    
-                    // If redefense is passed, create next defense schedule
-                    if (currentDefenseType === 'REDEFENSE' && result === 'Passed') {
-                        const redefenseType = document.getElementById('redefense-type-select').value;
-                        if (redefenseType === 'PRE-ORAL') {
-                            // Pre-oral redefense passed, create final defense schedule
-                            createFinalDefenseSchedule(groupId, dept, cluster);
-                        }
-                        // If final defense redefense passed, no further action needed
-                    }
-                } else {
-                    showAlert('error', 'Save Failed', 'Failed to save evaluation result.');
+                    // If final defense redefense passed, no further action needed
                 }
-            })
-            .catch(error => {
-                console.error('Error saving evaluation:', error);
+            } else {
                 showAlert('error', 'Save Failed', 'Failed to save evaluation result.');
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Error saving evaluation:', error);
+            showAlert('error', 'Save Failed', 'Failed to save evaluation result.');
+        });
     }
+
+
 
     window.handleFeedback = function(groupId) {
         document.getElementById('feedbackGroupId').textContent = `Group ${groupId}`;
@@ -849,38 +859,54 @@
     }
     
     function createRedefenseSchedule(groupId, dept, cluster, defenseType) {
-        const scheduleData = {
-            department: dept,
-            section: cluster,
-            group_id: groupId,
-            defense_type: 'REDEFENSE',
-            original_defense_type: defenseType,
-            assignment_id: 1,
-            status: 'Pending',
-            panel_data: {
-                adviser: 'No Adviser',
-                chairperson: 'No Chairperson',
-                members: 'No Members'
-            }
-        };
-        
-        fetch('/defense-schedules', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify(scheduleData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log(`Redefense schedule created for group ${groupId}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error creating redefense schedule:', error);
-        });
+        // Fetch assignment data to get panel info
+        fetch(`/api/assignments?department=${dept}&section=${cluster}`)
+            .then(response => response.json())
+            .then(assignments => {
+                const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+                const assignmentId = assignment ? assignment.id : 1;
+                
+                const scheduleData = {
+                    department: dept,
+                    section: cluster,
+                    group_id: groupId,
+                    defense_type: 'REDEFENSE',
+                    original_defense_type: defenseType,
+                    assignment_id: assignmentId,
+                    status: 'Pending',
+                    panel_data: assignment ? {
+                        adviser: assignment.adviser || 'No Adviser',
+                        chairperson: assignment.panels?.find(p => p.role === 'Chairperson')?.name || 'No Chairperson',
+                        members: assignment.panels?.filter(p => p.role === 'Member').map(p => p.name).join(', ') || 'No Members'
+                    } : {
+                        adviser: 'No Adviser',
+                        chairperson: 'No Chairperson',
+                        members: 'No Members'
+                    }
+                };
+                
+                console.log('Creating REDEFENSE schedule:', scheduleData);
+                
+                return fetch('/defense-schedules', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(scheduleData)
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`✅ REDEFENSE schedule created for group ${groupId}`);
+                } else {
+                    console.error('❌ Failed to create REDEFENSE schedule:', data);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error creating redefense schedule:', error);
+            });
     }
     
     function createFinalDefenseSchedule(groupId, dept, cluster) {
@@ -1026,7 +1052,7 @@
             
             groups.forEach((group, index) => {
                 const groupId = group.group_id || group.id;
-                const displayNumber = index + 1;
+                const displayNumber = group.group_number || (index + 1);
                 const isFirstOfSet = index === 0 || index === Math.ceil(groups.length / 2);
                 const setSize = Math.ceil(groups.length / 2);
                 
@@ -1050,10 +1076,10 @@
                 
                 rowHTML += '<td class="evaluation-cell">' +
                     '<div class="d-flex flex-wrap justify-content-center gap-1">' +
-                    '<button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation(\'' + groupId + '\', \'Passed\')" title="Passed">✓</button>' +
-                    '<button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation(\'' + groupId + '\', \'Redefense\')" title="Redefense">↻</button>' +
-                    '<button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation(\'' + groupId + '\', \'Failed\')" title="Failed">✗</button>' +
-                    '<button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback(\'' + groupId + '\')" title="Feedback">💬</button>' +
+                    '<button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation(\'' + groupId + '\', \'Passed\')" title="Passed" disabled style="opacity: 0.3; cursor: not-allowed;">✓</button>' +
+                    '<button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation(\'' + groupId + '\', \'Redefense\')" title="Redefense" disabled style="opacity: 0.3; cursor: not-allowed;">↻</button>' +
+                    '<button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation(\'' + groupId + '\', \'Failed\')" title="Failed" disabled style="opacity: 0.3; cursor: not-allowed;">✗</button>' +
+                    '<button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback(\'' + groupId + '\')" title="Send Feedback">💬</button>' +
                     '</div></td>';
                 
                 rowHTML += '</tr>';
@@ -1088,6 +1114,28 @@
         fetch(`/defense-schedules/by-type?${params}`)
         .then(response => response.json())
         .then(schedules => {
+            // First, disable all buttons for groups without schedules
+            const allRows = document.querySelectorAll('#schedule-table-body tr[data-group-id]');
+            allRows.forEach(row => {
+                const groupId = row.getAttribute('data-group-id');
+                const hasSchedule = schedules.some(s => s.group_id === groupId);
+                
+                if (!hasSchedule) {
+                    const statusCell = document.getElementById(`status-${groupId}`);
+                    const evalButtons = document.querySelectorAll(`[data-group-id="${groupId}"] .btn-eval`);
+                    
+                    if (statusCell) {
+                        statusCell.innerHTML = '<span class="status-badge status-pending">No Schedule</span>';
+                    }
+                    evalButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.3';
+                        btn.style.cursor = 'not-allowed';
+                    });
+                }
+            });
+            
+            // Then process groups with schedules
             schedules.forEach(schedule => {
                 const statusCell = document.getElementById(`status-${schedule.group_id}`);
                 const evalButtons = document.querySelectorAll(`[data-group-id="${schedule.group_id}"] .btn-eval`);
@@ -1103,7 +1151,16 @@
                             btn.style.cursor = 'not-allowed';
                         });
                         evalCell.innerHTML = `<span class="status-badge status-${schedule.status.toLowerCase().replace('-', '')}">${schedule.status}</span>`;
+                    } else if (!schedule.defense_date) {
+                        // No defense date set
+                        statusCell.innerHTML = '<span class="status-badge status-pending">Pending Schedule</span>';
+                        evalButtons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.style.opacity = '0.3';
+                            btn.style.cursor = 'not-allowed';
+                        });
                     } else {
+                        // Has defense date, check if it has passed
                         const scheduleDate = new Date(schedule.defense_date);
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
@@ -1114,12 +1171,14 @@
                             evalButtons.forEach(btn => {
                                 btn.disabled = false;
                                 btn.style.opacity = '1';
+                                btn.style.cursor = 'pointer';
                             });
                         } else {
                             statusCell.innerHTML = '<span class="status-badge status-ongoing">Scheduled</span>';
                             evalButtons.forEach(btn => {
                                 btn.disabled = true;
-                                btn.style.opacity = '0.5';
+                                btn.style.opacity = '0.3';
+                                btn.style.cursor = 'not-allowed';
                             });
                         }
                     }
@@ -1221,19 +1280,28 @@
         const dept = document.getElementById('dept-select').value;
         const cluster = document.getElementById('cluster-select').value;
         
-        return fetch(`/api/group-status?department=${dept}&section=${cluster}&defense_type=${defenseType}&result=Redefense`)
+        console.log('🔍 getRedefenseGroups called with:', {dept, cluster, defenseType});
+        
+        // Fetch schedules with Re-defense status
+        return fetch(`/defense-schedules/by-type?defense_type=${defenseType}&department=${dept}&section=${cluster}`)
             .then(response => {
+                console.log('📥 Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then(data => {
-                console.log('Redefense groups data:', data);
-                return data.groups ? data.groups.map(group => group.group_id) : [];
+            .then(schedules => {
+                console.log('📦 All schedules:', schedules);
+                // Filter for groups with Re-defense status
+                const redefenseGroups = schedules
+                    .filter(s => s.status === 'Re-defense')
+                    .map(s => s.group_id);
+                console.log('✅ Redefense groups found:', redefenseGroups);
+                return redefenseGroups;
             })
             .catch(error => {
-                console.error('Error fetching redefense groups:', error);
+                console.error('❌ Error fetching redefense groups:', error);
                 return [];
             });
     }
@@ -1267,7 +1335,6 @@
                             <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('${groupId}', 'Passed')">Passed</button>
                             <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('${groupId}', 'Redefense')">Redefense</button>
                             <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('${groupId}', 'Failed')">Failed</button>
-                            <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('${groupId}')">Feedback</button>
                         </div>
                     </td>
                 </tr>
@@ -1504,43 +1571,36 @@
             
             const dept = document.getElementById('dept-select').value;
             const cluster = document.getElementById('cluster-select').value;
-            const defenseTypeDisplay = document.getElementById('defense-type-display');
-            const currentDefenseType = defenseTypeDisplay ? defenseTypeDisplay.textContent.split(' ')[0] : 'UNKNOWN';
-            const redefenseType = document.getElementById('redefense-type-select').value;
             
-            const feedbackData = {
-                department: dept,
-                cluster: cluster,
-                group_id: groupId,
-                defense_type: currentDefenseType,
-                redefense_type: currentDefenseType === 'REDEFENSE' ? redefenseType : null,
-                result: 'Feedback',
-                feedback: feedback
-            };
-            
-            fetch('/api/evaluations', {
+            fetch('/api/send-feedback', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
-                body: JSON.stringify(feedbackData)
+                body: JSON.stringify({
+                    group_id: groupId,
+                    department: dept,
+                    cluster: cluster,
+                    feedback: feedback
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('success', 'Feedback Saved', 'Feedback has been saved successfully.');
+                    showAlert('success', 'Feedback Sent', 'Feedback has been sent to the group successfully.');
                     bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
                 } else {
-                    showAlert('error', 'Save Failed', 'Failed to save feedback.');
+                    showAlert('error', 'Send Failed', data.message || 'Failed to send feedback.');
                 }
             })
             .catch(error => {
-                console.error('Error saving feedback:', error);
-                showAlert('error', 'Save Failed', 'Failed to save feedback.');
+                console.error('Error sending feedback:', error);
+                showAlert('error', 'Send Failed', 'Failed to send feedback.');
             });
         });
         
+
         // Restore saved evaluation type
         const savedEvalType = localStorage.getItem('selectedEvalType');
         if (savedEvalType && !department) {

@@ -140,7 +140,9 @@ class AdminController extends Controller
             'total' => DefenseSchedule::count(),
             'scheduled' => DefenseSchedule::where('status', 'Scheduled')->count(),
             'passed' => DefenseSchedule::where('status', 'Passed')->count(),
-            'pending' => DefenseSchedule::where('status', 'Pending')->count()
+            'pending' => DefenseSchedule::where('status', 'Pending')->count(),
+            'redefense' => DefenseSchedule::where('status', 'Re-defense')->count(),
+            'failed' => DefenseSchedule::where('status', 'Failed')->count()
         ];
             
         return view('admin-dashboard', compact(
@@ -193,6 +195,7 @@ class AdminController extends Controller
         $scheduledDefenses = (clone $defenseQuery)->where('status', 'Scheduled')->count();
         $passedDefenses = (clone $defenseQuery)->where('status', 'Passed')->count();
         $failedDefenses = (clone $defenseQuery)->where('status', 'Failed')->count();
+        $redefenseDefenses = (clone $defenseQuery)->where('status', 'Re-defense')->count();
         $pendingDefenses = (clone $defenseQuery)->where('status', 'Pending')->count();
         
         // Defense type breakdown
@@ -200,6 +203,7 @@ class AdminController extends Controller
             COUNT(*) as total,
             SUM(CASE WHEN status = "Passed" THEN 1 ELSE 0 END) as passed,
             SUM(CASE WHEN status = "Failed" THEN 1 ELSE 0 END) as failed,
+            SUM(CASE WHEN status = "Re-defense" THEN 1 ELSE 0 END) as redefense,
             SUM(CASE WHEN status = "Scheduled" THEN 1 ELSE 0 END) as scheduled,
             SUM(CASE WHEN status = "Pending" THEN 1 ELSE 0 END) as pending')
             ->when($selectedDepartment, function($q) use ($selectedDepartment) {
@@ -216,7 +220,7 @@ class AdminController extends Controller
             'approvedSubmissions', 'rejectedSubmissions', 'pendingSubmissions',
             'completionRate', 'departmentStats', 'recentSubmissions',
             'totalDefenseSchedules', 'scheduledDefenses', 'passedDefenses', 
-            'failedDefenses', 'pendingDefenses', 'defenseTypeStats', 'recentDefenseSchedules'
+            'failedDefenses', 'redefenseDefenses', 'pendingDefenses', 'defenseTypeStats', 'recentDefenseSchedules'
         ));
     }
 

@@ -441,9 +441,9 @@
 @section('content')
 <script>
 // Define functions immediately so onclick handlers work
-var currentDefenseType = '';
-var groupStatuses = {};
-var scheduleData = {};
+window.currentDefenseType = '';
+window.groupStatuses = {};
+window.scheduleData = {};
 
 window.selectDefenseType = function(type) {
     console.log('selectDefenseType called with:', type);
@@ -460,9 +460,10 @@ window.selectDefenseType = function(type) {
     } else {
         redefenseTypeGroup.style.display = 'none';
     }
-    document.getElementById('dept-select').value = '';
-    document.getElementById('cluster-select').value = '';
-    document.getElementById('redefense-type-select').value = '';
+    // Populate clusters if BSIT is selected
+    setTimeout(() => {
+        if (window.populateClusters) window.populateClusters();
+    }, 100);
 };
 
 window.showCalendar = function() {
@@ -473,76 +474,139 @@ window.showCalendar = function() {
     document.getElementById('schedule-view').style.display = 'none';
     document.getElementById('filter-page').classList.add('hidden');
     document.getElementById('calendar-view').style.display = 'block';
-    if (window.loadCalendarData) window.loadCalendarData();
+    if (window.loadCalendarData) {
+        window.loadCalendarData();
+    } else {
+        // Fallback: call after a short delay to ensure DOMContentLoaded has fired
+        setTimeout(() => {
+            if (window.loadCalendarData) window.loadCalendarData();
+        }, 100);
+    }
 };
 
 window.showTypeSelection = function() {
     document.getElementById('type-selection-view').classList.remove('hidden');
     document.getElementById('filter-page').classList.add('hidden');
     document.getElementById('schedule-view').style.display = 'none';
+    document.getElementById('calendar-view').style.display = 'none';
 };
 
 window.showFilterPage = function() {
     document.getElementById('type-selection-view').classList.add('hidden');
     document.getElementById('filter-page').classList.remove('hidden');
     document.getElementById('schedule-view').style.display = 'none';
+    document.getElementById('calendar-view').style.display = 'none';
 };
 
 window.showSchedulePage = function() {
     document.getElementById('type-selection-view').classList.add('hidden');
     document.getElementById('filter-page').classList.add('hidden');
     document.getElementById('schedule-view').style.display = 'block';
+    document.getElementById('calendar-view').style.display = 'none';
 };
 
-// Department change handler - populate clusters
-document.addEventListener('DOMContentLoaded', function() {
+window.populateClusters = function() {
     const deptSelect = document.getElementById('dept-select');
     const clusterSelect = document.getElementById('cluster-select');
+    const clusterLabel = document.getElementById('cluster-label');
+    const clusterHeader = document.getElementById('cluster-header');
     
-    deptSelect.addEventListener('change', function() {
-        const clusterLabel = document.getElementById('cluster-label');
-        const clusterHeader = document.getElementById('cluster-header');
+    if (!deptSelect.value) return;
+    
+    clusterSelect.innerHTML = '<option selected disabled value="">Loading...</option>';
+    
+    if (deptSelect.value === 'BSIT') {
+        clusterLabel.textContent = 'Cluster';
+        if (clusterHeader) clusterHeader.textContent = 'Cluster';
         
-        clusterSelect.innerHTML = '<option selected disabled value="">Loading...</option>';
-        
-        if (this.value === 'BSIT') {
-            clusterLabel.textContent = 'Cluster';
-            if (clusterHeader) clusterHeader.textContent = 'Cluster';
-            
-            fetch('/api/clusters/bsit')
-                .then(response => {
-                    if (!response.ok) throw new Error('Failed to fetch');
-                    return response.json();
-                })
-                .then(data => {
-                    const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
-                    clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
-                    if (clusters.length > 0) {
-                        clusters.forEach(cluster => {
-                            clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
-                        });
-                    } else {
-                        clusterSelect.innerHTML = '<option selected disabled value="">No clusters available</option>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading clusters:', error);
-                    clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+        fetch('/api/clusters/bsit')
+            .then(r => r.json())
+            .then(data => {
+                const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
+                clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                clusters.forEach(c => {
+                    clusterSelect.innerHTML += `<option value="${c}">${c}</option>`;
                 });
-        } else {
-            clusterLabel.textContent = 'Section';
-            if (clusterHeader) clusterHeader.textContent = 'Section';
-            clusterSelect.innerHTML = `
-                <option selected disabled value="">Select Section</option>
-                <option value="Section 1">Section 1</option>
-                <option value="Section 2">Section 2</option>
-                <option value="Section 3">Section 3</option>
-                <option value="Section 4">Section 4</option>
-                <option value="Section 5">Section 5</option>
-            `;
-        }
-    });
-});
+            })
+            .catch(() => {
+                clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+            });
+    } else {
+        clusterLabel.textContent = 'Section';
+        if (clusterHeader) clusterHeader.textContent = 'Section';
+        clusterSelect.innerHTML = `
+            <option selected disabled value="">Select Section</option>
+            <option value="Section 1">Section 1</option>
+            <option value="Section 2">Section 2</option>
+            <option value="Section 3">Section 3</option>
+            <option value="Section 4">Section 4</option>
+            <option value="Section 5">Section 5</option>
+        `;
+    }
+};
+
+window.handleEnterClick = function() {
+    const dept = document.getElementById('dept-select').value;
+    const cluster = document.getElementById('cluster-select').value;
+    const redefenseType = document.getElementById('redefense-type-select').value;
+    if (!dept || !cluster) {
+        alert('Please select both Department and Cluster.');
+        return;
+    }
+    if (currentDefenseType === 'REDEFENSE' && !redefenseType) {
+        alert('Please select Defense Type for Re-defense.');
+        return;
+    }
+    localStorage.setItem('currentView', 'schedule');
+    localStorage.setItem('selectedDept', dept);
+    localStorage.setItem('selectedCluster', cluster);
+    if (currentDefenseType === 'REDEFENSE') localStorage.setItem('selectedRedefenseType', redefenseType);
+    
+    window.showSchedulePage();
+    
+    // Call updateScheduleView directly here
+    const defenseType = currentDefenseType;
+    const displayType = defenseType === 'REDEFENSE' ? `${defenseType} (${redefenseType})` : defenseType;
+    document.getElementById('dept-header').textContent = `${displayType}: DEPT. OF ${dept} (Cluster ${cluster})`;
+    document.getElementById('schedule-content').style.display = 'block';
+    document.getElementById('empty-state').style.display = 'none';
+    
+    // Fetch assignment data and generate table
+    fetch(`/api/assignments?department=${dept}&section=${cluster}`)
+        .then(response => response.json())
+        .then(assignments => {
+            const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+            let adviser = 'No Adviser';
+            let chairName = 'No Chairperson';
+            let memberNames = 'No Members';
+            
+            if (assignment) {
+                adviser = assignment.adviser || 'No Adviser';
+                const panels = assignment.panels || [];
+                const chairperson = panels.find(p => p.role === 'Chairperson');
+                const members = panels.filter(p => p.role === 'Member');
+                chairName = chairperson ? chairperson.name : 'No Chairperson';
+                memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
+            }
+            
+            if (window.generateTableRows) {
+                window.generateTableRows(adviser, chairName, memberNames);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching assignments:', error);
+        });
+};
+
+window.handleBackToFilter = function() {
+    localStorage.clear();
+    currentDefenseType = '';
+    window.showTypeSelection();
+};
+
+window.handleBackFromSchedule = function() {
+    window.showFilterPage();
+};
 </script>
 <div class="container-fluid" id="main-container-bs">
     
@@ -553,13 +617,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="defense-type-button" onclick="selectDefenseType('PRE-ORAL')">Pre-oral Defense</button>
             <button class="defense-type-button" onclick="selectDefenseType('FINAL DEFENSE')">Final Defense</button>
             <button class="defense-type-button" onclick="selectDefenseType('REDEFENSE')">Re-defense</button>
-            <button class="defense-type-button" onclick="showCalendar()" style="background-color: #28a745;">📅 Defense Calendar</button>
+            <button class="defense-type-button" onclick="showCalendar()" style="background-color: #28a745;">&#128197; Defense Calendar</button>
         </div>
     </div>
     
     <div id="filter-page" class="bg-white p-4 rounded-3 mb-4 hidden">
         <div class="d-flex align-items-center mb-4">
-            <button class="btn btn-outline-secondary me-3" id="backToFilterButton">
+            <button class="btn btn-outline-secondary me-3" id="backToFilterButton" onclick="if(window.handleBackToFilter) window.handleBackToFilter()">
                 <i class="bi bi-arrow-left"></i> Back
             </button>
             <h1 class="selected-type-display mb-0" id="defense-type-display"></h1>
@@ -568,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="d-grid gap-3">
             <div class="filter-group">
                 <label for="dept-select" class="form-label small fw-bold">Department</label>
-                <select id="dept-select" class="form-select">
+                <select id="dept-select" class="form-select" onchange="if(window.populateClusters) window.populateClusters()">
                     <option selected disabled value="">Select Department</option>
                     <option value="BSIT">BSIT</option>
                     <option value="CRIM">CRIM</option>
@@ -583,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="filter-group">
                 <label for="cluster-select" class="form-label small fw-bold" id="cluster-label">Cluster/Section</label>
                 <select id="cluster-select" class="form-select">
-                    <option selected disabled value="">Select Cluster/Section</option>
+                    <option selected disabled value="">Select Department First</option>
                 </select>
             </div>
 
@@ -596,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
             </div>
 
-            <button class="btn btn-custom-merged py-2" id="enterButton">
+            <button class="btn btn-custom-merged py-2" id="enterButton" onclick="if(window.handleEnterClick) window.handleEnterClick()">
                 <i class="bi bi-arrow-right-circle"></i> View Schedule
             </button>
         </div>
@@ -604,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <div id="schedule-view" style="display: none;">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <button class="btn btn-outline-secondary" id="backToFilterFromSchedule">
+            <button class="btn btn-outline-secondary" id="backToFilterFromSchedule" onclick="if(window.handleBackFromSchedule) window.handleBackFromSchedule()">
                 <i class="bi bi-arrow-left"></i> Back
             </button>
             <button class="btn btn-danger" id="resetScheduleBtn" onclick="resetSchedules()">
@@ -952,12 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.removeProperty('overflow');
     document.body.style.removeProperty('padding-right');
     
-    // Global variables (already declared in inline script above)
-    // let currentDefenseType = '';
-    // let groupStatuses = {};
-    // let scheduleData = {};
-    let groupStatuses = {};
-    let scheduleData = {};
+    // Global variables already declared in inline script above
     // Global function for show availability button
     window.showAvailability = function() {
         console.log('showAvailability called');
@@ -1064,35 +1123,48 @@ document.addEventListener('DOMContentLoaded', function() {
         return (clusterNum - 4101) * 10;
     }
 
-    function generateTableRows(adviser, chairName, memberNames) {
+    window.generateTableRows = function(adviser, chairName, memberNames) {
         const tbody = document.getElementById('schedule-table-body');
         const cluster = document.getElementById('cluster-select').value;
         const dept = document.getElementById('dept-select').value;
         
+        console.log('🔍 generateTableRows called with:', {dept, cluster, adviser, chairName, memberNames});
+        
+        if (!dept || !cluster) {
+            console.error('❌ Missing dept or cluster');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Please select department and cluster</td></tr>';
+            return;
+        }
+        
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading groups...</td></tr>';
         
-        // For REDEFENSE, only show groups marked as "Re-defense"
+        // For REDEFENSE, fetch groups with Re-defense status from original defense type
         if (currentDefenseType === 'REDEFENSE') {
             const redefenseType = document.getElementById('redefense-type-select').value;
             
+            console.log('🔍 Fetching groups with Re-defense status for:', {redefenseType, dept, cluster});
+            
+            // Fetch schedules from original defense type with Re-defense status
             fetch(`/defense-schedules/by-type?defense_type=${redefenseType}&department=${dept}&section=${cluster}`)
                 .then(response => response.json())
                 .then(schedules => {
-                    // Filter schedules with "Re-defense" status
-                    const redefenseGroups = schedules.filter(s => s.status === 'Re-defense');
+                    console.log('📦 All schedules:', schedules);
+                    const redefenseGroups = schedules
+                        .filter(s => s.status === 'Re-defense')
+                        .map(s => s.group_id);
+                    console.log('✅ Groups marked for redefense:', redefenseGroups);
                     
                     if (redefenseGroups.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups marked for re-defense</td></tr>';
                         return;
                     }
                     
-                    // Fetch full group data for these groups
                     fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
                         .then(r => r.json())
                         .then(data => {
                             const allGroups = data.groups || [];
                             const groups = allGroups.filter(g => 
-                                redefenseGroups.some(rg => rg.group_id === (g.group_id || g.id))
+                                redefenseGroups.includes(g.group_id || g.id)
                             );
                             
                             renderGroupRows(groups, adviser, chairName, memberNames, tbody, cluster, dept);
@@ -1110,21 +1182,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // For PRE-ORAL and FINAL DEFENSE, show all groups
-        fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
-            .then(response => response.json())
+        const apiUrl = `/api/groups?department=${dept}&cluster=${cluster}`;
+        console.log('📡 Fetching from:', apiUrl);
+        
+        fetch(apiUrl)
+            .then(response => {
+                console.log('📥 Response status:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('📦 Raw API Response:', JSON.stringify(data, null, 2));
                 const groups = data.groups || data || [];
+                console.log('📊 Extracted groups array:', groups);
+                console.log('📏 Groups length:', groups.length);
                 
-                if (groups.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups found</td></tr>';
+                if (!Array.isArray(groups)) {
+                    console.error('❌ Groups is not an array:', typeof groups);
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Invalid data format from API</td></tr>';
                     return;
                 }
                 
+                if (groups.length === 0) {
+                    console.warn('⚠️ No groups returned from API');
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center">No groups found for ${dept} - ${cluster}. Please check if groups exist in the database.</td></tr>`;
+                    return;
+                }
+                
+                console.log('✅ Calling renderGroupRows with', groups.length, 'groups');
                 renderGroupRows(groups, adviser, chairName, memberNames, tbody, cluster, dept);
             })
             .catch(error => {
-                console.error('Error fetching groups:', error);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading groups</td></tr>';
+                console.error('❌ Error fetching groups:', error);
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${error.message}</td></tr>`;
             });
     }
     
@@ -1200,12 +1292,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         .catch(() => {});
                 });
                 
-                setTimeout(() => loadScheduleData(), 100);
-            })
-            .catch(error => {
-                console.error('Error fetching groups:', error);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading groups</td></tr>';
-            });
+                // Don't load old schedule data for REDEFENSE - they need new schedules
+                if (currentDefenseType !== 'REDEFENSE') {
+                    setTimeout(() => loadScheduleData(), 100);
+                }
+                
+                // For FINAL DEFENSE, disable buttons for groups that haven't passed PRE-ORAL
+                if (currentDefenseType === 'FINAL DEFENSE') {
+                    setTimeout(() => disableFinalDefenseForNonPassed(), 200);
+                }
     }
 
     async function fetchGroupStudents(groupNumber, department) {
@@ -1494,14 +1589,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getDefenseStatus(groupId, defenseType, isScheduled, statusResult) {
-        // If there's an evaluation result, show Completed
-        if (statusResult === 'Passed' || statusResult === 'Re-defense' || statusResult === 'Failed') {
-            return { text: 'Completed', class: 'status-completed' };
+        // If there's an evaluation result, show it
+        if (statusResult === 'Passed') {
+            return { text: 'Passed', class: 'status-passed' };
+        } else if (statusResult === 'Re-defense') {
+            return { text: 'Re-defense', class: 'status-redefense' };
+        } else if (statusResult === 'Failed') {
+            return { text: 'Failed', class: 'status-failed' };
         }
         
         // If scheduled but no evaluation result yet
         if (isScheduled) {
-            return { text: 'Ongoing', class: 'status-ongoing' };
+            return { text: 'Scheduled', class: 'status-ongoing' };
         }
         
         // Default status when no schedule is set
@@ -1880,18 +1979,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 targetCell.innerHTML = scheduledTagHtml;
                 
-                // Update status based on evaluation result or schedule status
-                // Fetch evaluation result from API
-                fetch(`/api/group-status?department=${dept}&section=${cluster}&defense_type=${currentDefenseType}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const groupEval = data.groups?.find(g => g.group_id === schedule.group_id);
-                        const evalResult = groupEval?.result || null;
-                        updateGroupStatus(schedule.group_id, currentDefenseType, true, evalResult);
-                    })
-                    .catch(() => {
-                        updateGroupStatus(schedule.group_id, currentDefenseType, true, null);
-                    });
+                // Update status based on schedule status field
+                updateGroupStatus(schedule.group_id, currentDefenseType, true, schedule.status);
             }
         });
         
@@ -1984,8 +2073,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     }
+    
+    function disableFinalDefenseForNonPassed() {
+        const dept = document.getElementById('dept-select').value;
+        const cluster = document.getElementById('cluster-select').value;
+        if (dept && cluster) {
+            disableIneligibleButtons(dept, cluster);
+        }
+    }
 
-    function loadCalendarData() {
+    window.loadCalendarData = function() {
         console.log('Loading calendar data...');
         
         fetch('/defense-schedules/calendar')
@@ -2030,7 +2127,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentCalendarDate = new Date();
 
-    function renderCalendar() {
+    window.renderCalendar = function() {
         const year = currentCalendarDate.getFullYear();
         const month = currentCalendarDate.getMonth();
         
@@ -2086,9 +2183,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             dayEvents.forEach(schedule => {
-                const event = document.createElement('div');
-                event.textContent = `${schedule.start_time} ${schedule.group_id}`;
-                event.style.cssText = 'display:block!important;background:#1a73e8!important;color:white!important;font-size:10px!important;padding:1px 2px!important;margin:1px 0!important;border-radius:2px!important;';
+                const event = document.createElement('span');
+                event.className = 'calendar-event';
+                const defenseClass = schedule.defense_type === 'PRE-ORAL' ? 'pre-oral' : 
+                                    schedule.defense_type === 'FINAL DEFENSE' ? 'final-defense' : 'redefense';
+                event.classList.add(defenseClass);
+                event.textContent = `${schedule.start_time} G${schedule.group_id}`;
                 dayCell.appendChild(event);
             });
             
@@ -2111,7 +2211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showDateDetails(date, events) {
+    window.showDateDetails = function(date, events) {
         const dateStr = date.toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -2122,7 +2222,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('selected-date-title').textContent = `Defenses for ${dateStr}`;
         const detailsBody = document.getElementById('date-details-body');
         
-        const clickedDateStr = date.toISOString().split('T')[0];
+        // Create date string in local timezone (not UTC)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const clickedDateStr = `${year}-${month}-${day}`;
+        
         console.log('Looking for date:', clickedDateStr);
         console.log('Available schedule dates:', (window.calendarSchedules || []).map(s => s.defense_date));
         
@@ -2301,8 +2406,9 @@ document.addEventListener('DOMContentLoaded', function() {
             department: dept,
             section: cluster,
             group_id: targetId,
-            defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType,
+            defense_type: currentDefenseType === 'REDEFENSE' ? 'REDEFENSE' : currentDefenseType,
             original_defense_type: currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : null,
+            status: currentDefenseType === 'REDEFENSE' ? 'Pending' : 'Scheduled',
             assignment_id: 1,
             defense_date: dateActual,
             start_time: startTime,
@@ -2328,27 +2434,31 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             console.log('Response status:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
+            console.log('Response headers:', response.headers);
+            return response.text().then(text => {
+                console.log('Raw response text:', text);
+                if (!response.ok) {
                     try {
                         const errorData = JSON.parse(text);
+                        console.error('Parsed error data:', errorData);
                         if (errorData.conflicts && errorData.conflicts.length > 0) {
                             throw new Error('Conflict: ' + errorData.conflicts.join('\n'));
                         }
-                        throw new Error(errorData.error || 'Failed to save schedule');
+                        if (errorData.details) {
+                            const detailsStr = JSON.stringify(errorData.details);
+                            throw new Error(errorData.error + ': ' + detailsStr);
+                        }
+                        throw new Error(errorData.error || errorData.message || 'Failed to save schedule');
                     } catch(e) {
                         if (e.message.startsWith('Conflict:')) throw e;
-                        throw new Error('Invalid response: ' + text.substring(0, 100));
+                        console.error('Parse error:', e);
+                        throw new Error('Server error: ' + text.substring(0, 200));
                     }
-                });
-            }
-            return response.text().then(text => {
-                console.log('Response text:', text);
+                }
                 try {
                     return JSON.parse(text);
                 } catch(e) {
-                    throw new Error('Invalid response: ' + text.substring(0, 100));
+                    throw new Error('Invalid JSON response: ' + text.substring(0, 100));
                 }
             });
         })
@@ -2697,7 +2807,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (savedView === 'schedule' && savedDept && savedCluster) {
                     console.log('✅ Restoring schedule view...');
-                    deptSelect.value = savedDept;
                     
                     // Load clusters first if BSIT
                     if (savedDept === 'BSIT') {
@@ -2709,17 +2818,73 @@ document.addEventListener('DOMContentLoaded', function() {
                                 clusters.forEach(cluster => {
                                     clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
                                 });
+                                
+                                // Set values AFTER populating
+                                deptSelect.value = savedDept;
                                 clusterSelect.value = savedCluster;
                                 
                                 window.showSchedulePage();
-                                updateScheduleView();
-                                setTimeout(() => loadScheduleData(), 200);
+                                const displayType = currentDefenseType === 'REDEFENSE' ? `${currentDefenseType} (${savedRedefenseType})` : currentDefenseType;
+                                document.getElementById('dept-header').textContent = `${displayType}: DEPT. OF ${savedDept} (Cluster ${savedCluster})`;
+                                document.getElementById('schedule-content').style.display = 'block';
+                                document.getElementById('empty-state').style.display = 'none';
+                                
+                                // Fetch and generate table
+                                fetch(`/api/assignments?department=${savedDept}&section=${savedCluster}`)
+                                    .then(response => response.json())
+                                    .then(assignments => {
+                                        const assignment = assignments.find(a => a.department === savedDept && a.section === savedCluster);
+                                        let adviser = 'No Adviser';
+                                        let chairName = 'No Chairperson';
+                                        let memberNames = 'No Members';
+                                        
+                                        if (assignment) {
+                                            adviser = assignment.adviser || 'No Adviser';
+                                            const panels = assignment.panels || [];
+                                            const chairperson = panels.find(p => p.role === 'Chairperson');
+                                            const members = panels.filter(p => p.role === 'Member');
+                                            chairName = chairperson ? chairperson.name : 'No Chairperson';
+                                            memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
+                                        }
+                                        
+                                        if (window.generateTableRows) {
+                                            window.generateTableRows(adviser, chairName, memberNames);
+                                        }
+                                    });
                             });
                     } else {
+                        // Set values FIRST for non-BSIT
+                        deptSelect.value = savedDept;
                         clusterSelect.value = savedCluster;
+                        
                         window.showSchedulePage();
-                        updateScheduleView();
-                        setTimeout(() => loadScheduleData(), 200);
+                        const displayType = currentDefenseType === 'REDEFENSE' ? `${currentDefenseType} (${savedRedefenseType})` : currentDefenseType;
+                        document.getElementById('dept-header').textContent = `${displayType}: DEPT. OF ${savedDept} (Cluster ${savedCluster})`;
+                        document.getElementById('schedule-content').style.display = 'block';
+                        document.getElementById('empty-state').style.display = 'none';
+                        
+                        // Fetch and generate table
+                        fetch(`/api/assignments?department=${savedDept}&section=${savedCluster}`)
+                            .then(response => response.json())
+                            .then(assignments => {
+                                const assignment = assignments.find(a => a.department === savedDept && a.section === savedCluster);
+                                let adviser = 'No Adviser';
+                                let chairName = 'No Chairperson';
+                                let memberNames = 'No Members';
+                                
+                                if (assignment) {
+                                    adviser = assignment.adviser || 'No Adviser';
+                                    const panels = assignment.panels || [];
+                                    const chairperson = panels.find(p => p.role === 'Chairperson');
+                                    const members = panels.filter(p => p.role === 'Member');
+                                    chairName = chairperson ? chairperson.name : 'No Chairperson';
+                                    memberNames = members.length > 0 ? members.map(m => m.name).join(', ') : 'No Members';
+                                }
+                                
+                                if (window.generateTableRows) {
+                                    window.generateTableRows(adviser, chairName, memberNames);
+                                }
+                            });
                     }
                 } else {
                     window.showFilterPage();
@@ -2792,48 +2957,117 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-        // Navigation functions now defined globally in inline script
+        // Navigation functions
+        const backToFilterButton = document.getElementById('backToFilterButton');
+        if (backToFilterButton) {
+            backToFilterButton.addEventListener('click', function() {
+                console.log('Back to filter button clicked');
+                localStorage.clear();
+                currentDefenseType = '';
+                window.showTypeSelection();
+            });
+        }
         
-        document.getElementById('backToFilterButton').addEventListener('click', function() {
-            localStorage.removeItem('selectedDefenseType');
-            localStorage.removeItem('currentView');
-            localStorage.removeItem('selectedDept');
-            localStorage.removeItem('selectedCluster');
-            localStorage.removeItem('selectedRedefenseType');
-            window.showTypeSelection();
-        });
-        
-        document.getElementById('backToFilterFromSchedule').addEventListener('click', function() {
-            window.showFilterPage();
-        });
+        const backToFilterFromSchedule = document.getElementById('backToFilterFromSchedule');
+        if (backToFilterFromSchedule) {
+            backToFilterFromSchedule.addEventListener('click', function() {
+                console.log('Back to filter from schedule clicked');
+                window.showFilterPage();
+            });
+        }
 
-
-        
-        // Department change handler moved to inline script above
-
-        enterButton.addEventListener('click', () => {
-            const dept = deptSelect.value;
-            const cluster = clusterSelect.value;
-            const redefenseType = document.getElementById('redefense-type-select').value;
+        // Department change handler
+        deptSelect.addEventListener('change', function() {
+            console.log('Department changed to:', this.value);
+            const clusterLabel = document.getElementById('cluster-label');
+            const clusterHeader = document.getElementById('cluster-header');
             
-            localStorage.setItem('currentView', 'schedule');
-            localStorage.setItem('selectedDept', dept);
-            localStorage.setItem('selectedCluster', cluster);
-            if (currentDefenseType === 'REDEFENSE') {
-                localStorage.setItem('selectedRedefenseType', redefenseType);
+            clusterSelect.innerHTML = '<option selected disabled value="">Loading...</option>';
+            
+            if (this.value === 'BSIT') {
+                clusterLabel.textContent = 'Cluster';
+                if (clusterHeader) clusterHeader.textContent = 'Cluster';
+                
+                fetch('/api/clusters/bsit')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to fetch');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Clusters loaded:', data);
+                        const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
+                        clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                        if (clusters.length > 0) {
+                            clusters.forEach(cluster => {
+                                clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
+                            });
+                        } else {
+                            clusterSelect.innerHTML = '<option selected disabled value="">No clusters available</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading clusters:', error);
+                        clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                    });
+            } else {
+                clusterLabel.textContent = 'Section';
+                if (clusterHeader) clusterHeader.textContent = 'Section';
+                clusterSelect.innerHTML = `
+                    <option selected disabled value="">Select Section</option>
+                    <option value="Section 1">Section 1</option>
+                    <option value="Section 2">Section 2</option>
+                    <option value="Section 3">Section 3</option>
+                    <option value="Section 4">Section 4</option>
+                    <option value="Section 5">Section 5</option>
+                `;
             }
-            
-            window.showSchedulePage();
-            updateScheduleView();
-            loadScheduleData();
-            if (currentDefenseType === 'FINAL DEFENSE') {
+        });
+        
+        // Trigger change event if BSIT is already selected
+        if (deptSelect.value === 'BSIT') {
+            deptSelect.dispatchEvent(new Event('change'));
+        }
+
+        if (enterButton) {
+            enterButton.addEventListener('click', () => {
+                console.log('Enter button clicked');
                 const dept = deptSelect.value;
                 const cluster = clusterSelect.value;
-                if (dept && cluster) {
-                    loadEvaluationStatuses(dept, cluster);
+                const redefenseType = document.getElementById('redefense-type-select').value;
+                
+                console.log('Values:', {dept, cluster, redefenseType, currentDefenseType});
+                
+                if (!dept || !cluster) {
+                    showAlert('warning', 'Missing Information', 'Please select both Department and Cluster.');
+                    return;
                 }
-            }
-        });
+                
+                if (currentDefenseType === 'REDEFENSE' && !redefenseType) {
+                    showAlert('warning', 'Missing Information', 'Please select Defense Type for Re-defense.');
+                    return;
+                }
+                
+                localStorage.setItem('currentView', 'schedule');
+                localStorage.setItem('selectedDept', dept);
+                localStorage.setItem('selectedCluster', cluster);
+                if (currentDefenseType === 'REDEFENSE') {
+                    localStorage.setItem('selectedRedefenseType', redefenseType);
+                }
+                
+                window.showSchedulePage();
+                updateScheduleView();
+                loadScheduleData();
+                if (currentDefenseType === 'FINAL DEFENSE') {
+                    const dept = deptSelect.value;
+                    const cluster = clusterSelect.value;
+                    if (dept && cluster) {
+                        loadEvaluationStatuses(dept, cluster);
+                    }
+                }
+            });
+        } else {
+            console.error('enterButton not found!');
+        }
         document.getElementById('redefense-type-select').addEventListener('change', () => {
             updateScheduleView();
             loadScheduleData();

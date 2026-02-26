@@ -68,7 +68,7 @@
 
     <!-- Defense Metrics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-center shadow-sm" style="border-left: 4px solid #0d6efd;">
                 <div class="card-body">
                     <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
@@ -77,7 +77,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-center shadow-sm" style="border-left: 4px solid #198754;">
                 <div class="card-body">
                     <i class="fas fa-check-double fa-2x text-success mb-2"></i>
@@ -86,7 +86,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-center shadow-sm" style="border-left: 4px solid #dc3545;">
                 <div class="card-body">
                     <i class="fas fa-times fa-2x text-danger mb-2"></i>
@@ -95,12 +95,30 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center shadow-sm" style="border-left: 4px solid #ffc107;">
+        <div class="col-md-2">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #fd7e14;">
                 <div class="card-body">
-                    <i class="fas fa-calendar-check fa-2x text-warning mb-2"></i>
+                    <i class="fas fa-redo fa-2x text-warning mb-2"></i>
+                    <h6>Re-defense</h6>
+                    <p class="fs-4 fw-bold" style="color: #fd7e14;">{{ $redefenseDefenses ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #0dcaf0;">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x text-info mb-2"></i>
                     <h6>Scheduled</h6>
-                    <p class="fs-4 fw-bold text-warning">{{ $scheduledDefenses ?? 0 }}</p>
+                    <p class="fs-4 fw-bold text-info">{{ $scheduledDefenses ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center shadow-sm" style="border-left: 4px solid #6c757d;">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-secondary mb-2"></i>
+                    <h6>Pending</h6>
+                    <p class="fs-4 fw-bold text-secondary">{{ $pendingDefenses ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -172,6 +190,7 @@
                             <th>Total</th>
                             <th>Passed</th>
                             <th>Failed</th>
+                            <th>Re-defense</th>
                             <th>Scheduled</th>
                             <th>Pending</th>
                             <th>Success Rate</th>
@@ -184,8 +203,9 @@
                                 <td>{{ $stat->total }}</td>
                                 <td><span class="badge bg-success">{{ $stat->passed }}</span></td>
                                 <td><span class="badge bg-danger">{{ $stat->failed }}</span></td>
+                                <td><span class="badge bg-warning">{{ $stat->redefense }}</span></td>
                                 <td><span class="badge bg-info">{{ $stat->scheduled }}</span></td>
-                                <td><span class="badge bg-warning">{{ $stat->pending }}</span></td>
+                                <td><span class="badge bg-secondary">{{ $stat->pending }}</span></td>
                                 <td>
                                     @php
                                         $evaluated = $stat->passed + $stat->failed;
@@ -393,10 +413,10 @@
     new Chart(document.getElementById("defenseChart"), {
         type: "doughnut",
         data: {
-            labels: ["Passed", "Failed", "Scheduled", "Pending"],
+            labels: ["Passed", "Failed", "Re-defense", "Scheduled", "Pending"],
             datasets: [{
-                data: [{{ $passedDefenses ?? 0 }}, {{ $failedDefenses ?? 0 }}, {{ $scheduledDefenses ?? 0 }}, {{ $pendingDefenses ?? 0 }}],
-                backgroundColor: ["#198754", "#dc3545", "#0d6efd", "#ffc107"]
+                data: [{{ $passedDefenses ?? 0 }}, {{ $failedDefenses ?? 0 }}, {{ $redefenseDefenses ?? 0 }}, {{ $scheduledDefenses ?? 0 }}, {{ $pendingDefenses ?? 0 }}],
+                backgroundColor: ["#198754", "#dc3545", "#fd7e14", "#0dcaf0", "#6c757d"]
             }]
         },
         options: {

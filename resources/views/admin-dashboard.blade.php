@@ -227,18 +227,28 @@ document.addEventListener("DOMContentLoaded", function () {
     const defenseChart = new Chart(defenseCtx, {
         type: 'pie',
         data: {
-            labels: ['Scheduled', 'Completed', 'Pending'],
+            labels: ['Scheduled', 'Passed', 'Pending', 'Re-defense', 'Failed'],
             datasets: [{
-                data: [15, 8, 12], // Sample data - replace with actual defense stats
+                data: [
+                    {{ $defenseStats['scheduled'] ?? 0 }},
+                    {{ $defenseStats['passed'] ?? 0 }},
+                    {{ $defenseStats['pending'] ?? 0 }},
+                    {{ $defenseStats['redefense'] ?? 0 }},
+                    {{ $defenseStats['failed'] ?? 0 }}
+                ],
                 backgroundColor: [
                     'rgba(54, 162, 235, 0.8)',
                     'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 205, 86, 0.8)'
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(255, 159, 64, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
                 ],
                 borderColor: [
                     'rgba(54, 162, 235, 1)',
                     'rgba(75, 192, 192, 1)',
-                    'rgba(255, 205, 86, 1)'
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(239, 68, 68, 1)'
                 ],
                 borderWidth: 1
             }]

@@ -210,6 +210,7 @@ Route::get('/defense-schedules/check', [DefenseScheduleController::class, 'check
 Route::get('/defense-schedules/by-type', [DefenseScheduleController::class, 'getByType'])->middleware('auth');
 Route::get('/defense-schedules/calendar', [DefenseScheduleController::class, 'getCalendarData'])->middleware('auth');
 Route::put('/defense-schedules/{id}/status', [DefenseScheduleController::class, 'updateStatus'])->middleware('auth');
+Route::post('/defense-schedules/update-status', [DefenseScheduleController::class, 'updateStatus'])->middleware('auth');
 Route::get('/defense-schedules/check-eligibility', [DefenseScheduleController::class, 'checkEligibility'])->middleware('auth');
 Route::delete('/defense-schedules/reset', [DefenseScheduleController::class, 'resetSchedules'])->middleware('auth');
 Route::delete('/defense-schedules/reset-group', [DefenseScheduleController::class, 'resetGroup'])->middleware('auth');
@@ -226,6 +227,7 @@ Route::post('/api/panel-availability-schedule', [DefenseScheduleController::clas
 // Defense Evaluation API Routes
 Route::post('/api/evaluations', [\App\Http\Controllers\DefenseEvaluationController::class, 'saveEvaluation'])->middleware('auth');
 Route::get('/api/group-status', [\App\Http\Controllers\DefenseEvaluationController::class, 'getGroupStatus'])->middleware('auth');
+Route::post('/api/send-feedback', [\App\Http\Controllers\FeedbackController::class, 'sendFeedback'])->middleware('auth');
 
 // Manage Coordinator Routes
 Route::middleware('auth' , 'admin')->group(function () {
