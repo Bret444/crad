@@ -41,7 +41,7 @@ class DefenseScheduleController extends Controller
                 'defense_type' => 'required|in:PRE-ORAL,FINAL DEFENSE,REDEFENSE',
                 'original_defense_type' => 'nullable|string',
                 'assignment_id' => 'nullable|integer',
-                'defense_date' => 'nullable|date',
+                'defense_date' => 'nullable|string',
                 'start_time' => 'nullable',
                 'end_time' => 'nullable',
                 'set_letter' => 'nullable|string|max:1',

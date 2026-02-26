@@ -1503,8 +1503,9 @@ window.handleBackFromSchedule = function() {
         const targetCell = document.querySelector(`[data-schedule-target="${schedule.group_id}"]`);
         if (!targetCell) return;
         
-        const dateObj = new Date(schedule.defense_date);
-        const dateDisplay = dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        // Parse date without timezone conversion
+        const [year, month, day] = schedule.defense_date.split('-');
+        const dateDisplay = `${month}/${day}/${year}`;
         
         const adviser = schedule.panel_data.adviser || 'No Adviser';
         const chair = schedule.panel_data.chairperson || 'No Chairperson';
@@ -1938,15 +1939,9 @@ window.handleBackFromSchedule = function() {
             const targetCell = document.querySelector(`[data-schedule-target="${schedule.group_id}"]`);
             console.log('🎯 Target cell found:', !!targetCell);
             if (targetCell && schedule.defense_date && schedule.start_time && schedule.end_time) {
-                const dateObj = new Date(schedule.defense_date);
-                let dateDisplay = 'Invalid Date';
-                
-                // Check if date is valid
-                if (!isNaN(dateObj.getTime()) && schedule.defense_date !== '1970-01-01') {
-                    dateDisplay = dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-                } else {
-                    return; // Skip invalid schedules
-                }
+                // Parse date without timezone conversion
+                const [year, month, day] = schedule.defense_date.split('-');
+                const dateDisplay = `${month}/${day}/${year}`;
                 
                 let panelData = schedule.panel_data || {};
                 

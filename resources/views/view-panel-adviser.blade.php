@@ -6,18 +6,6 @@
         <i class="fas fa-users"></i> Your Adviser & Panel Members
     </h2>
 
-    {{-- Debug Info (remove after testing) --}}
-    @if(config('app.debug'))
-        <div class="alert alert-info">
-            <strong>Debug Info:</strong><br>
-            Department: {{ auth()->user()->department ?? 'NULL' }}<br>
-            Cluster: {{ auth()->user()->cluster ?? 'NULL' }}<br>
-            Group Number: {{ auth()->user()->group_no ?? 'NULL' }}<br>
-            Group Found: {{ $group ? 'Yes' : 'No' }}<br>
-            Assignment Found: {{ $assignment ? 'Yes' : 'No' }}
-        </div>
-    @endif
-
     @if(isset($error))
         <div class="alert alert-warning text-center shadow-sm">
             <i class="fas fa-exclamation-triangle"></i> {{ $error }}

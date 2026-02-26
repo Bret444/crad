@@ -51,7 +51,8 @@
                         <div class="col-md-4">
                             @if($schedule->defense_date)
                                 @php
-                                    $date = \Carbon\Carbon::parse($schedule->defense_date);
+                                    // Parse date without timezone conversion
+                                    $date = \Carbon\Carbon::parse($schedule->defense_date)->startOfDay();
                                 @endphp
                                 <div class="calendar-card text-center">
                                     <div class="calendar-month">{{ $date->format('M') }}</div>
