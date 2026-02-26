@@ -179,7 +179,15 @@
     .status-badge { display: inline-block; padding: 0.3em 0.6em; font-size: 0.75rem; border-radius: 0.375rem; font-weight: 500;}
     .status-completed { color: var(--status-green); background-color: var(--status-light-green); }
 
-    .btn-eval { font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 0.375rem; font-weight: 500; border: none; margin: 0.2rem; }
+    .btn-eval { 
+        font-size: 0.75rem; 
+        padding: 0.35rem 0.5rem; 
+        border-radius: 0.25rem; 
+        font-weight: 500; 
+        border: none; 
+        margin: 0.15rem;
+        min-width: 70px;
+    }
     .btn-eval-passed { background-color: var(--status-light-green); color: var(--status-green); }
     .btn-eval-redefense { background-color: #fff3cd; color: #fd7e14; }
     .btn-eval-failed { background-color: var(--status-light-red); color: var(--status-red); }
@@ -359,11 +367,11 @@
                                 </td>
 
                                 <td class="evaluation-cell">
-                                    <div class="d-flex flex-column gap-1">
-                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')">Passed</button>
-                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')">Redefense</button>
-                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')">Failed</button>
-                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')">Feedback</button>
+                                    <div class="d-flex flex-wrap justify-content-center gap-1">
+                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed">✓</button>
+                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense">↻</button>
+                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed">✗</button>
+                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Feedback">💬</button>
                                     </div>
                                 </td>
                             </tr>
@@ -402,11 +410,11 @@
                                 </td>
 
                                 <td class="evaluation-cell">
-                                    <div class="d-flex flex-column gap-1">
-                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')">Passed</button>
-                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')">Redefense</button>
-                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')">Failed</button>
-                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')">Feedback</button>
+                                    <div class="d-flex flex-wrap justify-content-center gap-1">
+                                        <button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation('{{ $groupId }}', 'Passed')" title="Passed">✓</button>
+                                        <button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation('{{ $groupId }}', 'Redefense')" title="Redefense">↻</button>
+                                        <button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation('{{ $groupId }}', 'Failed')" title="Failed">✗</button>
+                                        <button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback('{{ $groupId }}')" title="Feedback">💬</button>
                                     </div>
                                 </td>
                             </tr>
@@ -499,9 +507,12 @@
                 <p><strong>Group:</strong> <span id="modalGroup"></span></p>
                 <p><strong>Status:</strong> <span id="modalStatus"></span></p>
                 <hr>
+                <p><strong>Group Members:</strong></p>
+                <div id="modalGroupMembers" class="ms-3 mb-3"></div>
+                <hr>
                 <p><strong>Adviser:</strong> <span id="modalAdviser"></span></p>
                 <p><strong>Chairperson:</strong> <span id="modalChairperson"></span></p>
-                <p><strong>Members:</strong> <span id="modalMembers"></span></p>
+                <p><strong>Panel Members:</strong> <span id="modalMembers"></span></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -932,6 +943,136 @@
         });
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelectionView = document.getElementById('type-selection-view');
+        const filterBar = document.getElementById('filter-bar');
+        const scheduleView = document.getElementById('schedule-view');
+        const deptSelect = document.getElementById('dept-select');
+        const clusterSelect = document.getElementById('cluster-select');
+        
+        document.querySelectorAll('.defense-type-button').forEach(button => {
+            button.addEventListener('click', function() {
+                currentDefenseType = this.getAttribute('data-defense-type');
+                document.getElementById('defense-type-display').textContent = currentDefenseType + ' EVALUATION';
+                
+                if (currentDefenseType === 'REDEFENSE') {
+                    document.getElementById('redefense-type-group').style.display = 'block';
+                } else {
+                    document.getElementById('redefense-type-group').style.display = 'none';
+                }
+                
+                typeSelectionView.classList.add('hidden');
+                filterBar.classList.remove('hidden');
+            });
+        });
+        
+        document.getElementById('backToFilterButton').addEventListener('click', function() {
+            filterBar.classList.add('hidden');
+            typeSelectionView.classList.remove('hidden');
+        });
+        
+        document.getElementById('backToFilterFromEval').addEventListener('click', function() {
+            scheduleView.style.display = 'none';
+            filterBar.classList.remove('hidden');
+        });
+        
+        document.getElementById('enterButton').addEventListener('click', function() {
+            const dept = deptSelect.value;
+            const cluster = clusterSelect.value;
+            
+            if (!dept || !cluster) {
+                showAlert('warning', 'Missing Selection', 'Please select both Department and Cluster.');
+                return;
+            }
+            
+            if (currentDefenseType === 'REDEFENSE' && !document.getElementById('redefense-type-select').value) {
+                showAlert('warning', 'Missing Selection', 'Please select Defense Type for redefense.');
+                return;
+            }
+            
+            filterBar.classList.add('hidden');
+            scheduleView.style.display = 'block';
+            
+            document.getElementById('dept-header').textContent = `${currentDefenseType} EVALUATION: DEPT. OF ${dept} (Cluster ${cluster})`;
+            
+            loadGroupsAndPanels(dept, cluster);
+        });
+    });
+    
+    function loadGroupsAndPanels(dept, cluster) {
+        const tbody = document.getElementById('schedule-table-body');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading groups...</td></tr>';
+        
+        Promise.all([
+            fetch(`/api/groups?department=${dept}&cluster=${cluster}`).then(r => r.json()),
+            fetch(`/api/assignments?department=${dept}&section=${cluster}`).then(r => r.json())
+        ])
+        .then(([groupsData, assignments]) => {
+            const groups = groupsData.groups || [];
+            const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+            
+            const adviser = assignment?.adviser || 'No Adviser';
+            const chairperson = assignment?.panels?.find(p => p.role === 'Chairperson');
+            const members = assignment?.panels?.filter(p => p.role === 'Member');
+            const chairName = chairperson?.name || 'No Chairperson';
+            const memberNames = members?.map(m => m.name).join(', ') || 'No Members';
+            
+            tbody.innerHTML = '';
+            
+            if (groups.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups found</td></tr>';
+                return;
+            }
+            
+            groups.forEach((group, index) => {
+                const groupId = group.group_id || group.id;
+                const displayNumber = index + 1;
+                const isFirstOfSet = index === 0 || index === Math.ceil(groups.length / 2);
+                const setSize = Math.ceil(groups.length / 2);
+                
+                let rowHTML = '<tr data-group-id="' + groupId + '">';
+                
+                if (isFirstOfSet) {
+                    rowHTML += '<td class="merged-cell cluster-value" rowspan="' + setSize + '">' + cluster + '</td>';
+                }
+                
+                rowHTML += '<td class="group-number" data-group-id="' + groupId + '">' + displayNumber + '</td>';
+                
+                if (isFirstOfSet) {
+                    rowHTML += '<td class="panel-details-table" rowspan="' + setSize + '">' +
+                        '<div><strong>Adviser:</strong> ' + adviser + '<br>' +
+                        '<strong>Chairperson:</strong> ' + chairName + '<br>' +
+                        'Members: ' + memberNames + '</div></td>';
+                }
+                
+                rowHTML += '<td class="status-column" id="status-' + groupId + '">' +
+                    '<span class="status-badge status-pending">Pending</span></td>';
+                
+                rowHTML += '<td class="evaluation-cell">' +
+                    '<div class="d-flex flex-wrap justify-content-center gap-1">' +
+                    '<button class="btn btn-eval btn-eval-passed" onclick="handleEvaluation(\'' + groupId + '\', \'Passed\')" title="Passed">✓</button>' +
+                    '<button class="btn btn-eval btn-eval-redefense" onclick="handleEvaluation(\'' + groupId + '\', \'Redefense\')" title="Redefense">↻</button>' +
+                    '<button class="btn btn-eval btn-eval-failed" onclick="handleEvaluation(\'' + groupId + '\', \'Failed\')" title="Failed">✗</button>' +
+                    '<button class="btn btn-eval btn-eval-feedback" onclick="handleFeedback(\'' + groupId + '\')" title="Feedback">💬</button>' +
+                    '</div></td>';
+                
+                rowHTML += '</tr>';
+                
+                if (index === setSize - 1) {
+                    rowHTML += '<tr class="divider-row"><td colspan="5" style="height: 1px; padding: 0; border-bottom: 1px solid #666;"></td></tr>';
+                }
+                
+                tbody.innerHTML += rowHTML;
+            });
+            
+            loadScheduleStatus();
+        })
+        .catch(error => {
+            console.error('Error loading groups:', error);
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading groups</td></tr>';
+        });
+    }
+    
     function loadScheduleStatus() {
         const dept = document.getElementById('dept-select').value;
         const cluster = document.getElementById('cluster-select').value;
@@ -1108,7 +1249,7 @@
             const group = groupId.substring(1);
             
             const row = `
-                <tr data-group-id="${groupId}">
+                <tr id="group-${group}" data-group-id="${groupId}">
                     <td class="cluster-value">${cluster}</td>
                     <td>${group}</td>
                     <td class="panel-details-table">
@@ -1134,6 +1275,18 @@
             tbody.innerHTML += row;
         });
         console.log('Table updated with', redefenseGroups.length, 'redefense groups');
+        
+        // Scroll to group if hash is present
+        if (window.location.hash) {
+            setTimeout(() => {
+                const targetElement = document.querySelector(window.location.hash);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetElement.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => { targetElement.style.backgroundColor = ''; }, 2000);
+                }
+            }, 500);
+        }
     }
     
     function updateTableWithAssignments(assignments, dept, cluster) {
@@ -1195,28 +1348,60 @@
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('group-number')) {
             const groupId = e.target.getAttribute('data-group-id');
-            const row = e.target.closest('tr');
-            const panelGroup = groupId.charAt(0);
-            const groupNumber = e.target.textContent.trim();
             const dept = document.getElementById('dept-select').value;
-            const cluster = document.querySelectorAll('.cluster-value')[0]?.textContent || '';
-            const statusCell = document.getElementById(`status-${groupId}`);
-            const status = statusCell ? statusCell.textContent.trim() : 'Pending';
+            const cluster = document.getElementById('cluster-select').value;
             
-            const panelCell = document.querySelector(`[data-panel-group="${panelGroup}"]`);
-            const adviser = panelCell?.getAttribute('data-adviser') || 'No Adviser';
-            const chair = panelCell?.getAttribute('data-chair') || 'No Chairperson';
-            const members = panelCell?.getAttribute('data-members') || 'No Members';
-            
-            document.getElementById('modalDepartment').textContent = dept;
-            document.getElementById('modalCluster').textContent = cluster;
-            document.getElementById('modalGroup').textContent = groupNumber;
-            document.getElementById('modalStatus').textContent = status;
-            document.getElementById('modalAdviser').textContent = adviser;
-            document.getElementById('modalChairperson').textContent = chair;
-            document.getElementById('modalMembers').textContent = members;
-            
-            new bootstrap.Modal(document.getElementById('groupInfoModal')).show();
+            // Fetch actual group data from database
+            fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
+            .then(r => r.json())
+            .then(data => {
+                const groups = data.groups || [];
+                const group = groups.find(g => (g.group_id || g.id) == groupId);
+                
+                if (group) {
+                    const members = [
+                        {name: group.member1_name, id: group.member1_student_id, leader: group.leader_member == 1},
+                        {name: group.member2_name, id: group.member2_student_id, leader: group.leader_member == 2},
+                        {name: group.member3_name, id: group.member3_student_id, leader: group.leader_member == 3},
+                        {name: group.member4_name, id: group.member4_student_id, leader: group.leader_member == 4},
+                        {name: group.member5_name, id: group.member5_student_id, leader: group.leader_member == 5}
+                    ].filter(m => m.name);
+                    
+                    const membersHTML = members.map(m => 
+                        `<div class="mb-1">${m.name} (${m.id})${m.leader ? ' <span class="badge bg-success">Leader</span>' : ''}</div>`
+                    ).join('');
+                    
+                    document.getElementById('modalDepartment').textContent = group.department;
+                    document.getElementById('modalCluster').textContent = group.cluster;
+                    document.getElementById('modalGroup').textContent = group.group_number;
+                    document.getElementById('modalGroupMembers').innerHTML = membersHTML || '<em class="text-muted">No members</em>';
+                    
+                    const statusCell = document.getElementById(`status-${groupId}`);
+                    document.getElementById('modalStatus').textContent = statusCell ? statusCell.textContent.trim() : 'Pending';
+                    
+                    // Get panel info
+                    return fetch(`/api/assignments?department=${dept}&section=${cluster}`);
+                } else {
+                    throw new Error('Group not found');
+                }
+            })
+            .then(r => r.json())
+            .then(assignments => {
+                const assignment = assignments.find(a => a.department === dept && a.section === cluster);
+                const adviser = assignment?.adviser || 'No Adviser';
+                const chairperson = assignment?.panels?.find(p => p.role === 'Chairperson');
+                const members = assignment?.panels?.filter(p => p.role === 'Member');
+                
+                document.getElementById('modalAdviser').textContent = adviser;
+                document.getElementById('modalChairperson').textContent = chairperson?.name || 'No Chairperson';
+                document.getElementById('modalMembers').textContent = members?.map(m => m.name).join(', ') || 'No Members';
+                
+                new bootstrap.Modal(document.getElementById('groupInfoModal')).show();
+            })
+            .catch(error => {
+                console.error('Error fetching group info:', error);
+                showAlert('error', 'Error', 'Failed to load group information');
+            });
         }
     });
 
@@ -1252,6 +1437,7 @@
             redefenseTypeGroup.style.display = 'none';
             
             updateScheduleView();
+            loadGroupsForEvaluation(department, cluster);
             
             // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);

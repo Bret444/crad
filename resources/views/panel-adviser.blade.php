@@ -526,10 +526,10 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <button class="btn btn-sm btn-success me-1" onclick="scheduleDefense('{{ $assignment->department }}', '{{ $assignment->section }}', {{ $assignment->id }})" title="Schedule Defense">
+                                                <button class="btn btn-sm btn-success me-1" onclick="scheduleDefense('{{ $assignment->department }}', '{{ $assignment->section }}', {{ $assignment->id }}, {{ !empty($assignmentGroups) ? $assignmentGroups[0] : 'null' }})" title="Schedule Defense">
                                                     <i class="bi bi-calendar-plus"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-warning me-1" onclick="evaluateDefense('{{ $assignment->department }}', '{{ $assignment->section }}', {{ $assignment->id }})" title="Evaluate Defense">
+                                                <button class="btn btn-sm btn-warning me-1" onclick="evaluateDefense('{{ $assignment->department }}', '{{ $assignment->section }}', {{ $assignment->id }}, {{ !empty($assignmentGroups) ? $assignmentGroups[0] : 'null' }})" title="Evaluate Defense">
                                                     <i class="bi bi-clipboard-check"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#editAssignmentModal{{ $assignment->id }}">
@@ -2319,24 +2319,26 @@ function permanentDeletePanel(panelId) {
 }
 
 // Schedule Defense Function
-function scheduleDefense(department, section, assignmentId) {
-    // Redirect to def-sched with assignment data as URL parameters
+function scheduleDefense(department, section, assignmentId, groupNumber) {
     const url = new URL('/def-sched', window.location.origin);
     url.searchParams.set('department', department);
     url.searchParams.set('cluster', section);
     url.searchParams.set('assignment_id', assignmentId);
-    
+    if (groupNumber) {
+        url.hash = 'group-' + groupNumber;
+    }
     window.location.href = url.toString();
 }
 
 // Evaluate Defense Function
-function evaluateDefense(department, section, assignmentId) {
-    // Redirect to def-eval with assignment data as URL parameters
+function evaluateDefense(department, section, assignmentId, groupNumber) {
     const url = new URL('/def-eval', window.location.origin);
     url.searchParams.set('department', department);
     url.searchParams.set('cluster', section);
     url.searchParams.set('assignment_id', assignmentId);
-    
+    if (groupNumber) {
+        url.hash = 'group-' + groupNumber;
+    }
     window.location.href = url.toString();
 }
 

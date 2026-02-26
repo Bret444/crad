@@ -64,7 +64,6 @@
     #filter-page {
         box-shadow: var(--card-shadow);
         min-height: 400px;
-        display: block;
     }
     #filter-page.hidden {
         display: none !important;
@@ -440,16 +439,121 @@
 @endsection
 
 @section('content')
+<script>
+// Define functions immediately so onclick handlers work
+var currentDefenseType = '';
+var groupStatuses = {};
+var scheduleData = {};
+
+window.selectDefenseType = function(type) {
+    console.log('selectDefenseType called with:', type);
+    currentDefenseType = type;
+    localStorage.setItem('selectedDefenseType', type);
+    localStorage.setItem('currentView', 'filter');
+    document.getElementById('type-selection-view').classList.add('hidden');
+    document.getElementById('filter-page').classList.remove('hidden');
+    document.getElementById('schedule-view').style.display = 'none';
+    document.getElementById('defense-type-display').textContent = type + ' SCHEDULING';
+    const redefenseTypeGroup = document.getElementById('redefense-type-group');
+    if (type === 'REDEFENSE') {
+        redefenseTypeGroup.style.display = 'block';
+    } else {
+        redefenseTypeGroup.style.display = 'none';
+    }
+    document.getElementById('dept-select').value = '';
+    document.getElementById('cluster-select').value = '';
+    document.getElementById('redefense-type-select').value = '';
+};
+
+window.showCalendar = function() {
+    console.log('showCalendar called');
+    localStorage.setItem('currentView', 'calendar');
+    localStorage.setItem('selectedDefenseType', 'CALENDAR');
+    document.getElementById('type-selection-view').classList.add('hidden');
+    document.getElementById('schedule-view').style.display = 'none';
+    document.getElementById('filter-page').classList.add('hidden');
+    document.getElementById('calendar-view').style.display = 'block';
+    if (window.loadCalendarData) window.loadCalendarData();
+};
+
+window.showTypeSelection = function() {
+    document.getElementById('type-selection-view').classList.remove('hidden');
+    document.getElementById('filter-page').classList.add('hidden');
+    document.getElementById('schedule-view').style.display = 'none';
+};
+
+window.showFilterPage = function() {
+    document.getElementById('type-selection-view').classList.add('hidden');
+    document.getElementById('filter-page').classList.remove('hidden');
+    document.getElementById('schedule-view').style.display = 'none';
+};
+
+window.showSchedulePage = function() {
+    document.getElementById('type-selection-view').classList.add('hidden');
+    document.getElementById('filter-page').classList.add('hidden');
+    document.getElementById('schedule-view').style.display = 'block';
+};
+
+// Department change handler - populate clusters
+document.addEventListener('DOMContentLoaded', function() {
+    const deptSelect = document.getElementById('dept-select');
+    const clusterSelect = document.getElementById('cluster-select');
+    
+    deptSelect.addEventListener('change', function() {
+        const clusterLabel = document.getElementById('cluster-label');
+        const clusterHeader = document.getElementById('cluster-header');
+        
+        clusterSelect.innerHTML = '<option selected disabled value="">Loading...</option>';
+        
+        if (this.value === 'BSIT') {
+            clusterLabel.textContent = 'Cluster';
+            if (clusterHeader) clusterHeader.textContent = 'Cluster';
+            
+            fetch('/api/clusters/bsit')
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch');
+                    return response.json();
+                })
+                .then(data => {
+                    const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
+                    clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                    if (clusters.length > 0) {
+                        clusters.forEach(cluster => {
+                            clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
+                        });
+                    } else {
+                        clusterSelect.innerHTML = '<option selected disabled value="">No clusters available</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading clusters:', error);
+                    clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                });
+        } else {
+            clusterLabel.textContent = 'Section';
+            if (clusterHeader) clusterHeader.textContent = 'Section';
+            clusterSelect.innerHTML = `
+                <option selected disabled value="">Select Section</option>
+                <option value="Section 1">Section 1</option>
+                <option value="Section 2">Section 2</option>
+                <option value="Section 3">Section 3</option>
+                <option value="Section 4">Section 4</option>
+                <option value="Section 5">Section 5</option>
+            `;
+        }
+    });
+});
+</script>
 <div class="container-fluid" id="main-container-bs">
     
     <div id="type-selection-view" class="text-center p-5 bg-white rounded-4 d-flex flex-column align-items-center justify-content-center mb-4">
         <h1 class="app-title fw-bold text-dark-blue mb-4">DEFENSE SCHEDULING</h1>
         <h4 class="text-muted">Select the type of defense to schedule:</h4>
         <div class="type-button-container d-flex justify-content-center flex-wrap mt-5">
-            <button class="defense-type-button" data-defense-type="PRE-ORAL">Pre-oral Defense</button>
-            <button class="defense-type-button" data-defense-type="FINAL DEFENSE">Final Defense</button>
-            <button class="defense-type-button" data-defense-type="REDEFENSE">Re-defense</button>
-            <button class="defense-type-button" id="calendar-view-btn" style="background-color: #28a745;">📅 Defense Calendar</button>
+            <button class="defense-type-button" onclick="selectDefenseType('PRE-ORAL')">Pre-oral Defense</button>
+            <button class="defense-type-button" onclick="selectDefenseType('FINAL DEFENSE')">Final Defense</button>
+            <button class="defense-type-button" onclick="selectDefenseType('REDEFENSE')">Re-defense</button>
+            <button class="defense-type-button" onclick="showCalendar()" style="background-color: #28a745;">📅 Defense Calendar</button>
         </div>
     </div>
     
@@ -492,7 +596,7 @@
                 </select>
             </div>
 
-            <button class="btn btn-custom-merged py-2" id="enterButton" onclick="viewSchedule()">
+            <button class="btn btn-custom-merged py-2" id="enterButton">
                 <i class="bi bi-arrow-right-circle"></i> View Schedule
             </button>
         </div>
@@ -650,6 +754,14 @@
                     <i class="bi bi-pencil"></i> Edit
                 </button>
                 <button type="button" class="btn btn-schedule-fixed text-white flex-fill" id="schedule-button" data-group-target="">Set Schedule</button>
+            </div>
+            <div class="mt-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="auto-schedule-checkbox">
+                    <label class="form-check-label" for="auto-schedule-checkbox">
+                        Auto-schedule remaining groups (up to group <input type="number" id="auto-schedule-limit" min="1" max="20" value="10" style="width: 60px; display: inline-block;" class="form-control form-control-sm d-inline">)
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -832,11 +944,20 @@
 
 @section('scripts')
 <script>
-    // Global variables
-    let currentDefenseType = '';
+    console.log('Script loaded');
+    
+    // CRITICAL: Remove ALL overlays immediately when script loads
+    document.querySelectorAll('.modal-backdrop, .sidebar-overlay').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+    
+    // Global variables (already declared in inline script above)
+    // let currentDefenseType = '';
+    // let groupStatuses = {};
+    // let scheduleData = {};
     let groupStatuses = {};
     let scheduleData = {};
-    
     // Global function for show availability button
     window.showAvailability = function() {
         console.log('showAvailability called');
@@ -884,65 +1005,6 @@
         document.getElementById('filter-page').classList.add('hidden');
     }
     
-    // Global function for defense type selection
-    window.selectDefenseType = function(type) {
-        console.log('selectDefenseType called with:', type);
-        currentDefenseType = type;
-        localStorage.setItem('selectedDefenseType', currentDefenseType);
-        localStorage.setItem('currentView', 'filter');
-        document.getElementById('type-selection-view').classList.add('hidden');
-        document.getElementById('filter-page').classList.remove('hidden');
-        document.getElementById('schedule-view').style.display = 'none';
-        document.getElementById('defense-type-display').textContent = currentDefenseType + ' SCHEDULING';
-        const redefenseTypeGroup = document.getElementById('redefense-type-group');
-        if (currentDefenseType === 'REDEFENSE') {
-            redefenseTypeGroup.style.display = 'block';
-        } else {
-            redefenseTypeGroup.style.display = 'none';
-        }
-        document.getElementById('dept-select').value = '';
-        document.getElementById('cluster-select').value = '';
-        document.getElementById('redefense-type-select').value = '';
-    }
-    
-    // Global function for calendar view
-    window.showCalendar = function() {
-        console.log('showCalendar called');
-        localStorage.setItem('currentView', 'calendar');
-        localStorage.setItem('selectedDefenseType', 'CALENDAR');
-        document.getElementById('type-selection-view').classList.add('hidden');
-        document.getElementById('schedule-view').style.display = 'none';
-        document.getElementById('filter-page').classList.add('hidden');
-        document.getElementById('calendar-view').style.display = 'block';
-        loadCalendarData();
-    }
-    
-    // Global function for view schedule button
-    window.viewSchedule = function() {
-        console.log('viewSchedule called');
-        const dept = document.getElementById('dept-select').value;
-        const cluster = document.getElementById('cluster-select').value;
-        const redefenseType = document.getElementById('redefense-type-select').value;
-        
-        localStorage.setItem('currentView', 'schedule');
-        localStorage.setItem('selectedDept', dept);
-        localStorage.setItem('selectedCluster', cluster);
-        if (currentDefenseType === 'REDEFENSE') {
-            localStorage.setItem('selectedRedefenseType', redefenseType);
-        }
-        
-        document.getElementById('type-selection-view').classList.add('hidden');
-        document.getElementById('filter-page').classList.add('hidden');
-        document.getElementById('schedule-view').style.display = 'block';
-        
-        // Call the update function that's defined in DOMContentLoaded
-        if (window.updateScheduleView) {
-            window.updateScheduleView();
-        }
-        if (window.loadScheduleData) {
-            window.loadScheduleData();
-        }
-    }
     
     // Global function for reset schedules
     window.resetSchedules = function() {
@@ -1009,29 +1071,82 @@
         
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading groups...</td></tr>';
         
-        // Fetch real groups from database
+        // For REDEFENSE, only show groups marked as "Re-defense"
+        if (currentDefenseType === 'REDEFENSE') {
+            const redefenseType = document.getElementById('redefense-type-select').value;
+            
+            fetch(`/defense-schedules/by-type?defense_type=${redefenseType}&department=${dept}&section=${cluster}`)
+                .then(response => response.json())
+                .then(schedules => {
+                    // Filter schedules with "Re-defense" status
+                    const redefenseGroups = schedules.filter(s => s.status === 'Re-defense');
+                    
+                    if (redefenseGroups.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups marked for re-defense</td></tr>';
+                        return;
+                    }
+                    
+                    // Fetch full group data for these groups
+                    fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const allGroups = data.groups || [];
+                            const groups = allGroups.filter(g => 
+                                redefenseGroups.some(rg => rg.group_id === (g.group_id || g.id))
+                            );
+                            
+                            renderGroupRows(groups, adviser, chairName, memberNames, tbody, cluster, dept);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching groups for redefense:', error);
+                            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading groups</td></tr>';
+                        });
+                })
+                .catch(error => {
+                    console.error('Error fetching redefense schedules:', error);
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading redefense data</td></tr>';
+                });
+            return;
+        }
+        
+        // For PRE-ORAL and FINAL DEFENSE, show all groups
         fetch(`/api/groups?department=${dept}&cluster=${cluster}`)
             .then(response => response.json())
             .then(data => {
                 const groups = data.groups || data || [];
-                tbody.innerHTML = '';
                 
                 if (groups.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups found</td></tr>';
                     return;
                 }
                 
-                const groupOffset = getGroupOffset(cluster);
-                let rowsHTML = '';
-                
-                // Build all rows first
-                groups.forEach((group, index) => {
+                renderGroupRows(groups, adviser, chairName, memberNames, tbody, cluster, dept);
+            })
+            .catch(error => {
+                console.error('Error fetching groups:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading groups</td></tr>';
+            });
+    }
+    
+    function renderGroupRows(groups, adviser, chairName, memberNames, tbody, cluster, dept) {
+        tbody.innerHTML = '';
+        
+        if (groups.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No groups found</td></tr>';
+            return;
+        }
+        
+        const groupOffset = getGroupOffset(cluster);
+        let rowsHTML = '';
+        
+        // Build all rows first
+        groups.forEach((group, index) => {
                     const groupId = group.group_id || group.id;
                     const displayNumber = index + 1 + groupOffset;
                     const setLetter = index < Math.ceil(groups.length / 2) ? 'A' : 'B';
                     
                     rowsHTML += `
-                        <tr data-group-id="${groupId}" data-set="${setLetter}">
+                        <tr id="group-${displayNumber}" data-group-id="${groupId}" data-set="${setLetter}">
                             ${index === 0 ? `<td class="merged-cell cluster-value" rowspan="${groups.length}">${cluster}</td>` : ''}
                             <td class="group-number" onclick="showGroupInfo('${displayNumber}', '${groupId}')">${displayNumber}</td>
                             <td><span class="status-badge status-incomplete">Loading...</span></td>
@@ -1049,6 +1164,18 @@
                 
                 // Insert all rows at once
                 tbody.innerHTML = rowsHTML;
+                
+                // Scroll to group if hash is present
+                if (window.location.hash) {
+                    setTimeout(() => {
+                        const targetElement = document.querySelector(window.location.hash);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            targetElement.style.backgroundColor = '#fff3cd';
+                            setTimeout(() => { targetElement.style.backgroundColor = ''; }, 2000);
+                        }
+                    }, 500);
+                }
                 
                 // Now fetch document status for each group
                 groups.forEach((group, index) => {
@@ -1439,6 +1566,7 @@
         adviserNameElement.textContent = adviserName;
 
         const deptParam = dept || document.getElementById('dept-select').value;
+        const clusterParam = cluster || document.getElementById('cluster-select').value;
         
         fetch(`/api/panels?department=${deptParam}&cluster=${clusterParam}`)
             .then(r => r.json())
@@ -1869,12 +1997,15 @@
             return response.json();
         })
         .then(schedules => {
-            console.log('Calendar schedules loaded:', schedules.length, schedules);
+            console.log('Calendar schedules loaded:', schedules.length);
+            console.log('First schedule date:', schedules[0]?.defense_date);
+            console.log('All schedule dates:', schedules.map(s => s.defense_date));
             window.calendarSchedules = schedules;
             
             // If we have schedules, navigate to the month of the first schedule
             if (schedules.length > 0) {
-                const firstScheduleDate = new Date(schedules[0].defense_date);
+                const firstScheduleDate = new Date(schedules[0].defense_date + 'T00:00:00');
+                console.log('First schedule date object:', firstScheduleDate);
                 if (!isNaN(firstScheduleDate.getTime())) {
                     currentCalendarDate = new Date(firstScheduleDate.getFullYear(), firstScheduleDate.getMonth(), 1);
                     console.log('Navigated calendar to:', currentCalendarDate.toLocaleDateString());
@@ -1940,14 +2071,18 @@
             dayNumber.textContent = cellDate.getDate();
             dayCell.appendChild(dayNumber);
             
+            // Create date string in YYYY-MM-DD format for comparison
+            const year = cellDate.getFullYear();
+            const monthNum = String(cellDate.getMonth() + 1).padStart(2, '0');
+            const dayNum = String(cellDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${monthNum}-${dayNum}`;
+            
             // Add events for this date
-            const dateStr = cellDate.toISOString().split('T')[0];
             const dayEvents = (window.calendarSchedules || []).filter(schedule => {
-                const scheduleDate = new Date(schedule.defense_date);
-                const scheduleDateStr = scheduleDate.getFullYear() + '-' + 
-                    String(scheduleDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(scheduleDate.getDate()).padStart(2, '0');
-                return scheduleDateStr === dateStr;
+                if (!schedule.defense_date) return false;
+                // Handle both date formats: YYYY-MM-DD and full ISO string
+                const scheduleDate = schedule.defense_date.split('T')[0];
+                return scheduleDate === dateStr;
             });
             
             dayEvents.forEach(schedule => {
@@ -1959,12 +2094,15 @@
             
             // Add click event to show date details
             dayCell.addEventListener('click', () => {
+                const year = cellDate.getFullYear();
+                const monthNum = String(cellDate.getMonth() + 1).padStart(2, '0');
+                const dayNum = String(cellDate.getDate()).padStart(2, '0');
+                const clickedDateStr = `${year}-${monthNum}-${dayNum}`;
+                
                 const allEvents = (window.calendarSchedules || []).filter(schedule => {
-                    const scheduleDate = new Date(schedule.defense_date);
-                    const scheduleDateStr = scheduleDate.getFullYear() + '-' + 
-                        String(scheduleDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                        String(scheduleDate.getDate()).padStart(2, '0');
-                    return scheduleDateStr === dateStr;
+                    if (!schedule.defense_date) return false;
+                    const scheduleDate = schedule.defense_date.split('T')[0];
+                    return scheduleDate === clickedDateStr;
                 });
                 showDateDetails(cellDate, allEvents);
             });
@@ -1984,16 +2122,22 @@
         document.getElementById('selected-date-title').textContent = `Defenses for ${dateStr}`;
         const detailsBody = document.getElementById('date-details-body');
         
-        // Debug: show what we're looking for vs what we have
         const clickedDateStr = date.toISOString().split('T')[0];
         console.log('Looking for date:', clickedDateStr);
         console.log('Available schedule dates:', (window.calendarSchedules || []).map(s => s.defense_date));
         
-        if (events.length === 0) {
+        // Re-filter to ensure we get the right events
+        const allEvents = (window.calendarSchedules || []).filter(schedule => {
+            if (!schedule.defense_date) return false;
+            const scheduleDate = schedule.defense_date.split('T')[0];
+            return scheduleDate === clickedDateStr;
+        });
+        
+        if (allEvents.length === 0) {
             detailsBody.innerHTML = `<p class="text-muted">No defenses scheduled for this date.</p>`;
         } else {
             let html = '';
-            events.forEach(schedule => {
+            allEvents.forEach(schedule => {
                 html += `<div class="mb-1"><small><strong>${schedule.defense_type}</strong> Group ${schedule.group_id} - ${schedule.start_time}-${schedule.end_time} (${schedule.department}-${schedule.section})</small></div>`;
             });
             detailsBody.innerHTML = html;
@@ -2002,6 +2146,138 @@
         document.getElementById('date-details').style.display = 'block';
     }
 
+    function saveScheduleWithAutoSchedule(targetId, startTime, endTime, dateActual, limit) {
+        console.log('saveScheduleWithAutoSchedule called:', {targetId, startTime, endTime, dateActual, limit});
+        const dept = document.getElementById('dept-select').value;
+        const cluster = document.getElementById('cluster-select').value;
+        const adviser = document.getElementById('modal-adviser').textContent;
+        const chair = document.getElementById('modal-chairperson').textContent;
+        const members = document.getElementById('modal-members').textContent;
+        const defenseType = currentDefenseType === 'REDEFENSE' ? document.getElementById('redefense-type-select').value : currentDefenseType;
+        
+        console.log('Fetching groups and existing schedules for:', {dept, cluster});
+        
+        // Fetch both groups and existing schedules
+        Promise.all([
+            fetch(`/api/groups?department=${dept}&cluster=${cluster}`).then(r => r.json()),
+            fetch(`/defense-schedules/by-type?defense_type=${defenseType}&department=${dept}&section=${cluster}`).then(r => r.json())
+        ])
+        .then(([groupsData, existingSchedules]) => {
+            console.log('Groups fetched:', groupsData);
+            console.log('Existing schedules:', existingSchedules);
+            
+            const allGroups = groupsData.groups || [];
+            const scheduledGroupIds = new Set(existingSchedules.map(s => s.group_id));
+            
+            // Filter out groups that already have schedules
+            const unscheduledGroups = allGroups.filter(g => {
+                const groupId = g.group_id || g.id;
+                return !scheduledGroupIds.has(groupId);
+            }).slice(0, limit);
+            
+            console.log('Unscheduled groups to schedule:', unscheduledGroups.length, unscheduledGroups);
+            
+            if (unscheduledGroups.length === 0) {
+                showAlert('info', 'No Groups to Schedule', 'All groups up to the limit already have schedules.');
+                return;
+            }
+            
+            const schedules = [];
+            let currentStart = startTime;
+            
+            const start = new Date(`2000-01-01T${startTime}`);
+            const end = new Date(`2000-01-01T${endTime}`);
+            const durationMinutes = (end - start) / 60000;
+            
+            console.log('Duration per group:', durationMinutes, 'minutes');
+            
+            unscheduledGroups.forEach(group => {
+                const groupId = group.group_id || group.id;
+                const currentEnd = addMinutes(currentStart, durationMinutes);
+                
+                schedules.push({
+                    department: dept,
+                    section: cluster,
+                    group_id: groupId,
+                    defense_type: defenseType,
+                    assignment_id: 1,
+                    defense_date: dateActual,
+                    start_time: currentStart,
+                    end_time: currentEnd,
+                    panel_data: { adviser, chairperson: chair, members }
+                });
+                
+                currentStart = currentEnd;
+            });
+            
+            console.log('Schedules to save:', schedules);
+            
+            Promise.all(schedules.map(schedule => 
+                fetch('/defense-schedules', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(schedule)
+                }).then(r => {
+                    console.log('Response for group', schedule.group_id, 'status:', r.status);
+                    if (!r.ok) {
+                        return r.json().then(err => {
+                            console.log('Error response:', err);
+                            return { success: false, error: err.error, conflicts: err.conflicts, schedule };
+                        });
+                    }
+                    return r.json().then(data => {
+                        console.log('Success response:', data);
+                        return data;
+                    });
+                }).catch(err => {
+                    console.error('Fetch error for group', schedule.group_id, err);
+                    return { success: false, error: err.message, schedule };
+                })
+            ))
+            .then(results => {
+                console.log('All results:', results);
+                
+                const failures = results.filter(r => r.success === false);
+                const successes = results.filter(r => r.success === true);
+                
+                console.log('Successes:', successes.length, 'Failures:', failures.length);
+                
+                const modalElement = document.getElementById('scheduleModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) modalInstance.hide();
+                
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+                
+                if (failures.length > 0) {
+                    let conflictMsg = `${successes.length} groups scheduled successfully.\n\n${failures.length} conflicts detected:\n\n`;
+                    failures.forEach(f => {
+                        const groupNum = f.schedule.group_id.replace(/[^0-9]/g, '');
+                        conflictMsg += `Group ${groupNum}: ${f.conflicts ? f.conflicts.join(', ') : f.error}\n`;
+                    });
+                    showAlert('warning', 'Partial Success', conflictMsg);
+                } else {
+                    showAlert('success', 'Auto-Schedule Complete', `${successes.length} groups scheduled successfully!`);
+                }
+                
+                setTimeout(() => loadScheduleData(), 500);
+            })
+            .catch(error => {
+                console.error('Error in auto-schedule:', error);
+                showAlert('error', 'Auto-Schedule Failed', error.message);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            showAlert('error', 'Failed to Load Data', error.message);
+        });
+    }
+    
     function saveScheduleToDatabase(targetId) {
         const startTime = document.getElementById('start-time-input').value;
         const endTime = document.getElementById('end-time-input').value;
@@ -2010,6 +2286,7 @@
         const cluster = document.getElementById('cluster-select').value;
         
         console.log('DEBUG: saveScheduleToDatabase', {targetId, startTime, endTime, dateActual, dept, cluster});
+        console.log('Date input value:', dateActual);
         
         if (!startTime || !endTime || !dateActual) {
             showAlert('warning', 'Missing Information', 'Please select a Start Time, End Time, and Date before scheduling.');
@@ -2038,6 +2315,7 @@
         };
         
         console.log('Sending schedule data:', scheduleData);
+        console.log('Defense date being sent:', scheduleData.defense_date);
         
         fetch('/defense-schedules', {
             method: 'POST',
@@ -2050,6 +2328,21 @@
         })
         .then(response => {
             console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        if (errorData.conflicts && errorData.conflicts.length > 0) {
+                            throw new Error('Conflict: ' + errorData.conflicts.join('\n'));
+                        }
+                        throw new Error(errorData.error || 'Failed to save schedule');
+                    } catch(e) {
+                        if (e.message.startsWith('Conflict:')) throw e;
+                        throw new Error('Invalid response: ' + text.substring(0, 100));
+                    }
+                });
+            }
             return response.text().then(text => {
                 console.log('Response text:', text);
                 try {
@@ -2062,16 +2355,33 @@
         .then(data => {
             console.log('Response data:', data);
             if (data.success) {
+                const modalElement = document.getElementById('scheduleModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                // Remove backdrop manually
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+                
                 showAlert('success', 'Success', 'Schedule saved successfully!');
                 simulateScheduleSuccess(targetId);
                 setTimeout(() => loadScheduleData(), 500);
-                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
             } else {
                 showAlert('error', 'Save Failed', data.error || data.message || 'Failed to save schedule.');
             }
         })
         .catch(error => {
             console.error('Error saving schedule:', error);
+            
+            // Clean up modal backdrop on error too
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+            
             showAlert('error', 'Save Failed', error.message);
         });
     }
@@ -2131,6 +2441,13 @@
         if (modalInstance) {
             modalInstance.hide();
         }
+        // Clean up any leftover backdrops
+        setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 300);
         
         // Save state before any potential reload
         localStorage.setItem('currentView', 'schedule');
@@ -2142,7 +2459,7 @@
     }
     
     // Global function for group info modal
-    function showGroupInfo(displayNumber, groupId) {
+    window.showGroupInfo = function(displayNumber, groupId) {
         console.log('showGroupInfo called:', displayNumber, groupId);
         
         const dept = document.getElementById('dept-select')?.value || 'BSIT';
@@ -2251,7 +2568,10 @@
             });
     }
     
+    
     document.addEventListener('DOMContentLoaded', function () {
+        
+        // Defense type buttons now use onclick handlers directly in HTML
 
         const typeSelectionView = document.getElementById('type-selection-view');
         const filterPage = document.getElementById('filter-page');
@@ -2276,27 +2596,69 @@
         const defenseType = urlParams.get('defense_type');
         const originalType = urlParams.get('original_type');
         
+        console.log('URL Params:', { department, cluster, assignmentId, defenseType });
+        
         if (department && cluster) {
+            console.log('Auto-loading schedule for:', department, cluster);
+            // Clear localStorage to prevent conflicts, but save new values
+            localStorage.setItem('selectedDefenseType', defenseType || 'PRE-ORAL');
+            localStorage.setItem('currentView', 'schedule');
+            localStorage.setItem('selectedDept', department);
+            localStorage.setItem('selectedCluster', cluster);
+            if (defenseType === 'REDEFENSE' && originalType) {
+                localStorage.setItem('selectedRedefenseType', originalType);
+            }
+            
             // Auto-select defense type based on URL parameter or default to PRE-ORAL
             currentDefenseType = defenseType || 'PRE-ORAL';
-            showSchedulePage();
+            window.showSchedulePage();
+            console.log('Schedule page shown');
             
             document.getElementById('defense-type-display').textContent = `${currentDefenseType} SCHEDULING`;
             
             // Pre-populate department and cluster
             deptSelect.value = department;
-            clusterSelect.value = cluster;
             
-            // Handle redefense type dropdown
-            const redefenseTypeGroup = document.getElementById('redefense-type-group');
-            if (currentDefenseType === 'REDEFENSE' && originalType) {
-                redefenseTypeGroup.style.display = 'block';
-                document.getElementById('redefense-type-select').value = originalType;
+            // Ensure cluster dropdown is populated before setting value
+            if (department === 'BSIT') {
+                fetch('/api/clusters')
+                    .then(r => r.json())
+                    .then(data => {
+                        const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
+                        clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                        clusters.forEach(c => {
+                            clusterSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                        });
+                        clusterSelect.value = cluster;
+                        
+                        const redefenseTypeGroup = document.getElementById('redefense-type-group');
+                        if (currentDefenseType === 'REDEFENSE' && originalType) {
+                            redefenseTypeGroup.style.display = 'block';
+                            document.getElementById('redefense-type-select').value = originalType;
+                        } else {
+                            redefenseTypeGroup.style.display = 'none';
+                        }
+                        
+                        updateScheduleView();
+                        setTimeout(() => {
+                            console.log('Calling loadScheduleData');
+                            loadScheduleData();
+                        }, 300);
+                    });
             } else {
-                redefenseTypeGroup.style.display = 'none';
+                clusterSelect.value = cluster;
+                
+                const redefenseTypeGroup = document.getElementById('redefense-type-group');
+                if (currentDefenseType === 'REDEFENSE' && originalType) {
+                    redefenseTypeGroup.style.display = 'block';
+                    document.getElementById('redefense-type-select').value = originalType;
+                } else {
+                    redefenseTypeGroup.style.display = 'none';
+                }
+                
+                updateScheduleView();
+                setTimeout(() => loadScheduleData(), 300);
             }
-            
-            updateScheduleView();
             
             // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -2336,16 +2698,31 @@
                 if (savedView === 'schedule' && savedDept && savedCluster) {
                     console.log('✅ Restoring schedule view...');
                     deptSelect.value = savedDept;
-                    clusterSelect.value = savedCluster;
-                    showSchedulePage();
-                    updateScheduleView();
-                    console.log('🔄 Calling loadScheduleData...');
-                    setTimeout(() => loadScheduleData(), 200);
-                    if (currentDefenseType === 'FINAL DEFENSE') {
-                        loadEvaluationStatuses(savedDept, savedCluster);
+                    
+                    // Load clusters first if BSIT
+                    if (savedDept === 'BSIT') {
+                        fetch('/api/clusters/bsit')
+                            .then(response => response.json())
+                            .then(data => {
+                                const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
+                                clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
+                                clusters.forEach(cluster => {
+                                    clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
+                                });
+                                clusterSelect.value = savedCluster;
+                                
+                                window.showSchedulePage();
+                                updateScheduleView();
+                                setTimeout(() => loadScheduleData(), 200);
+                            });
+                    } else {
+                        clusterSelect.value = savedCluster;
+                        window.showSchedulePage();
+                        updateScheduleView();
+                        setTimeout(() => loadScheduleData(), 200);
                     }
                 } else {
-                    showFilterPage();
+                    window.showFilterPage();
                     if (savedDept) deptSelect.value = savedDept;
                     if (savedCluster) clusterSelect.value = savedCluster;
                 }
@@ -2415,83 +2792,7 @@
         }
 
 
-        // Navigation functions
-        function showTypeSelection() {
-            typeSelectionView.classList.remove('hidden');
-            filterPage.classList.add('hidden');
-            scheduleView.style.display = 'none';
-        }
-        
-        function showFilterPage() {
-            typeSelectionView.classList.add('hidden');
-            filterPage.classList.remove('hidden');
-            scheduleView.style.display = 'none';
-        }
-        
-        function showSchedulePage() {
-            typeSelectionView.classList.add('hidden');
-            filterPage.classList.add('hidden');
-            scheduleView.style.display = 'block';
-        }
-
-        document.querySelectorAll('.defense-type-button:not(#calendar-view-btn)').forEach(button => {
-            button.addEventListener('click', function() {
-                const defenseType = this.getAttribute('data-defense-type');
-                if (defenseType) {
-                    window.selectDefenseType(defenseType);
-                }
-            });
-        });
-        
-        document.getElementById('calendar-view-btn').addEventListener('click', function() {
-            window.showCalendar();
-        });
-        
-        // Update cluster/section options based on department
-        deptSelect.addEventListener('change', function() {
-            const clusterSelect = document.getElementById('cluster-select');
-            const clusterLabel = document.getElementById('cluster-label');
-            const clusterHeader = document.getElementById('cluster-header');
-            
-            clusterSelect.innerHTML = '<option selected disabled value="">Loading...</option>';
-            
-            if (this.value === 'BSIT') {
-                clusterLabel.textContent = 'Cluster';
-                if (clusterHeader) clusterHeader.textContent = 'Cluster';
-                
-                fetch('/api/clusters/bsit')
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to fetch');
-                        return response.json();
-                    })
-                    .then(data => {
-                        const clusters = (data.clusters || []).sort((a, b) => parseInt(a) - parseInt(b));
-                        clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
-                        if (clusters.length > 0) {
-                            clusters.forEach(cluster => {
-                                clusterSelect.innerHTML += `<option value="${cluster}">${cluster}</option>`;
-                            });
-                        } else {
-                            clusterSelect.innerHTML = '<option selected disabled value="">No clusters available</option>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading clusters:', error);
-                        clusterSelect.innerHTML = '<option selected disabled value="">Select Cluster</option>';
-                    });
-            } else {
-                clusterLabel.textContent = 'Section';
-                if (clusterHeader) clusterHeader.textContent = 'Section';
-                clusterSelect.innerHTML = `
-                    <option selected disabled value="">Select Section</option>
-                    <option value="Section 1">Section 1</option>
-                    <option value="Section 2">Section 2</option>
-                    <option value="Section 3">Section 3</option>
-                    <option value="Section 4">Section 4</option>
-                    <option value="Section 5">Section 5</option>
-                `;
-            }
-        });
+        // Navigation functions now defined globally in inline script
         
         document.getElementById('backToFilterButton').addEventListener('click', function() {
             localStorage.removeItem('selectedDefenseType');
@@ -2499,12 +2800,16 @@
             localStorage.removeItem('selectedDept');
             localStorage.removeItem('selectedCluster');
             localStorage.removeItem('selectedRedefenseType');
-            showTypeSelection();
+            window.showTypeSelection();
         });
         
         document.getElementById('backToFilterFromSchedule').addEventListener('click', function() {
-            showFilterPage();
+            window.showFilterPage();
         });
+
+
+        
+        // Department change handler moved to inline script above
 
         enterButton.addEventListener('click', () => {
             const dept = deptSelect.value;
@@ -2518,7 +2823,7 @@
                 localStorage.setItem('selectedRedefenseType', redefenseType);
             }
             
-            showSchedulePage();
+            window.showSchedulePage();
             updateScheduleView();
             loadScheduleData();
             if (currentDefenseType === 'FINAL DEFENSE') {
@@ -2534,12 +2839,7 @@
             loadScheduleData();
         });
         
-        // Load schedules when department or cluster changes
-        deptSelect.addEventListener('change', () => {
-            if (document.getElementById('schedule-view').style.display === 'block') {
-                setTimeout(() => loadScheduleData(), 100);
-            }
-        });
+        // Department change handler moved to inline script above
         
         clusterSelect.addEventListener('change', () => {
             if (document.getElementById('schedule-view').style.display === 'block') {
@@ -2566,12 +2866,19 @@
 
         scheduleModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
+            if (!button) {
+                console.error('No button found for modal trigger');
+                return;
+            }
+            
             const isEditing = button.classList.contains('scheduled-container');
             
             const cluster = clusterSelect.value;
             const set = button.getAttribute('data-set'); 
             const group = button.getAttribute('data-group');
             const realGroupId = button.getAttribute('data-real-group-id') || (set + group);
+            
+            console.log('Modal opening for:', {cluster, set, group, realGroupId, isEditing});
             
             // Show/hide edit button based on whether schedule exists
             const editBtn = document.getElementById('edit-schedule-button');
@@ -2601,6 +2908,8 @@
             const chair = button.getAttribute('data-chair') || 'No Chairperson';
             const members = button.getAttribute('data-members') || 'No Members';
 
+            console.log('Panel data:', {adviser, chair, members});
+
             document.getElementById('modal-title-display').textContent = `Schedule Defense: ${cluster} Group ${group}`;
             document.getElementById('modal-adviser').textContent = adviser;
             document.getElementById('modal-chairperson').textContent = chair;
@@ -2621,6 +2930,9 @@
             } else {
                 dateDisplayInput.value = '';
             }
+            
+            // Reset auto-schedule checkbox
+            document.getElementById('auto-schedule-checkbox').checked = false;
         });
 
         panelEditModal.addEventListener('show.bs.modal', function(event) {
@@ -2651,16 +2963,23 @@
             const startTime = document.getElementById('start-time-input').value;
             const endTime = document.getElementById('end-time-input').value;
             const dateActual = document.getElementById('date-actual-input').value;
+            const autoSchedule = document.getElementById('auto-schedule-checkbox').checked;
+            const autoLimit = parseInt(document.getElementById('auto-schedule-limit').value) || 10;
             
-            console.log('=== SCHEDULE BUTTON CLICKED ===');
-            console.log('targetId:', targetId, 'Values:', {startTime, endTime, dateActual});
+            console.log('Schedule button clicked:', {targetId, startTime, endTime, dateActual, autoSchedule, autoLimit});
             
             if (!startTime || !endTime || !dateActual) {
                 showAlert('warning', 'Missing Information', 'Please select a Start Time, End Time, and Date before scheduling.');
                 return;
             }
             
-            saveScheduleToDatabase(targetId);
+            if (autoSchedule) {
+                console.log('Auto-schedule enabled, calling saveScheduleWithAutoSchedule');
+                saveScheduleWithAutoSchedule(targetId, startTime, endTime, dateActual, autoLimit);
+            } else {
+                console.log('Auto-schedule disabled, calling saveScheduleToDatabase');
+                saveScheduleToDatabase(targetId);
+            }
         });
 
         document.getElementById('edit-schedule-button').addEventListener('click', function() {
@@ -2716,124 +3035,104 @@
             }, 100); 
         });
         
-        document.getElementById('backToScheduleBtn').addEventListener('click', function() {
-            const infoModalElement = document.getElementById('infoModal');
-            const scheduleModalElement = document.getElementById('scheduleModal');
-
-            const infoModalInstance = bootstrap.Modal.getInstance(infoModalElement);
-            if (infoModalInstance) { 
-                infoModalInstance.hide(); 
-            }
-            
-            setTimeout(() => { 
-                const scheduleModalInstance = bootstrap.Modal.getOrCreateInstance(scheduleModalElement);
-                scheduleModalInstance.show(); 
-            }, 100); 
-        });
-        
         document.getElementById('generateScheduleBtn').addEventListener('click', function() {
-            const tbody = document.getElementById('availability-table-body');
-            const tableHeadRow = document.querySelector('#infoModal thead tr');
-            const allRows = tbody.querySelectorAll('tr');
-            
-            // Only check assigned panels (rows with "Assigned" badge), skip backup panels and separator rows
-            const assignedRows = Array.from(allRows).filter(row => {
-                const firstCell = row.querySelector('td');
-                return firstCell && firstCell.innerHTML.includes('Assigned');
-            });
-            
-            if (assignedRows.length === 0) {
-                showAlert('warning', 'No Data', 'No assigned panel availability data to analyze.');
-                return;
-            }
-            
-            // Get all dates from table headers
-            const dates = [];
-            for (let i = 1; i < tableHeadRow.children.length; i++) {
-                dates.push(tableHeadRow.children[i].textContent);
-            }
-            
-            // Find common available slots (only check assigned panels)
-            const commonSlots = [];
-            dates.forEach((dateHeader, dateIdx) => {
-                let allAvailable = true;
-                let timeSlot = null;
+            try {
+                const tbody = document.getElementById('availability-table-body');
+                const tableHeadRow = document.querySelector('#infoModal thead tr');
                 
-                assignedRows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    const cell = cells[dateIdx + 1];
+                if (!tbody || !tableHeadRow) {
+                    showAlert('error', 'Error', 'Could not load availability data.');
+                    return;
+                }
+                
+                const assignedRows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+                    const firstCell = row.querySelector('td');
+                    return firstCell && firstCell.innerHTML.includes('Assigned');
+                });
+                
+                if (assignedRows.length === 0) {
+                    showAlert('warning', 'No Data', 'No assigned panel availability data.');
+                    return;
+                }
+                
+                const dates = [];
+                for (let i = 1; i < tableHeadRow.children.length; i++) {
+                    dates.push(tableHeadRow.children[i].textContent);
+                }
+                
+                if (dates.length === 0) {
+                    const today = new Date();
+                    const suggestedDate = new Date(today);
+                    suggestedDate.setDate(suggestedDate.getDate() + 7);
+                    const dateStr = suggestedDate.toISOString().split('T')[0];
+                    const [year, month, day] = dateStr.split('-');
                     
-                    // Only mark as unavailable if cell has conflict or is explicitly unavailable
-                    // N/A means no conflicts = available
-                    if (!cell || cell.classList.contains('availability-unavailable') || cell.textContent === 'Conflict') {
-                        allAvailable = false;
-                    } else if (cell.classList.contains('availability-available') || cell.textContent === 'N/A') {
-                        // Get time slot from available cells, or use default for N/A
-                        if (cell.textContent !== 'N/A') {
-                            timeSlot = cell.textContent;
-                        } else if (!timeSlot) {
-                            timeSlot = '08:00 - 21:00';
+                    document.getElementById('date-actual-input').value = dateStr;
+                    document.getElementById('date-display-input').value = `${month}/${day}/${year}`;
+                    document.getElementById('start-time-input').value = '08:00';
+                    document.getElementById('end-time-input').value = '09:00';
+                    
+                    showAlert('info', 'Default Suggestion', `Panels haven't set availability. Suggested: ${month}/${day}/${year} at 8:00 AM - 9:00 AM.`, () => {
+                        bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
+                        setTimeout(() => new bootstrap.Modal(document.getElementById('scheduleModal')).show(), 300);
+                    });
+                    return;
+                }
+                
+                const availableDates = [];
+                dates.forEach((dateHeader, dateIdx) => {
+                    let allAvailable = true;
+                    let timeSlot = null;
+                    
+                    assignedRows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        const cell = cells[dateIdx + 1];
+                        
+                        if (!cell || cell.textContent === 'N/A') {
+                            allAvailable = false;
+                        } else if (cell.classList.contains('availability-available')) {
+                            if (!timeSlot && cell.textContent !== 'N/A' && cell.textContent !== 'Conflict') {
+                                timeSlot = cell.textContent;
+                            }
                         }
+                    });
+                    
+                    if (allAvailable && timeSlot) {
+                        availableDates.push({ date: dateHeader, time: timeSlot });
                     }
                 });
                 
-                if (allAvailable && timeSlot) {
-                    commonSlots.push({ date: dateHeader, time: timeSlot });
+                if (availableDates.length === 0) {
+                    showAlert('info', 'No Available Dates', 'No common available dates found. Use "Back to Scheduling" to enter manually.');
+                    return;
                 }
-            });
-            
-            if (commonSlots.length === 0) {
-                showAlert('warning', 'No Common Availability', 'No dates found where all panel members are available without conflicts.');
-                return;
-            }
-            
-            // Show results and auto-fill first available slot
-            const firstSlot = commonSlots[0];
-            let message = `Found ${commonSlots.length} available slot(s):\n\n`;
-            commonSlots.slice(0, 5).forEach(slot => {
-                message += `• ${slot.date} at ${slot.time}\n`;
-            });
-            message += `\nThe first available slot will be auto-filled.`;
-            
-            showAlert('success', 'Schedule Generated', message, () => {
-                // Parse date and time
+                
+                const firstSlot = availableDates[0];
                 const dateParts = firstSlot.date.match(/(\d{2})\/(\d{2})/);
-                const timeParts = firstSlot.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+                const timeParts = firstSlot.time.match(/(\d{1,2}):(\d{2})/);
                 
                 if (dateParts && timeParts) {
                     const month = dateParts[1];
                     const day = dateParts[2];
                     const year = new Date().getFullYear();
+                    const startHour = timeParts[1].padStart(2, '0');
+                    const startMin = timeParts[2];
+                    const endHour = String((parseInt(startHour) + 1) % 24).padStart(2, '0');
                     
-                    // Set date
                     document.getElementById('date-actual-input').value = `${year}-${month}-${day}`;
                     document.getElementById('date-display-input').value = `${month}/${day}/${year}`;
+                    document.getElementById('start-time-input').value = `${startHour}:${startMin}`;
+                    document.getElementById('end-time-input').value = `${endHour}:${startMin}`;
                     
-                    // Set time (parse and convert to 24h format if needed)
-                    let hours = parseInt(timeParts[1]);
-                    const minutes = timeParts[2];
-                    const period = timeParts[3];
-                    
-                    if (period && period.toUpperCase() === 'PM' && hours !== 12) {
-                        hours += 12;
-                    } else if (period && period.toUpperCase() === 'AM' && hours === 12) {
-                        hours = 0;
-                    }
-                    
-                    const startTime = `${String(hours).padStart(2, '0')}:${minutes}`;
-                    document.getElementById('start-time-input').value = startTime;
-                    
-                    // Set end time (1 hour later)
-                    const endHours = (hours + 1) % 24;
-                    document.getElementById('end-time-input').value = `${String(endHours).padStart(2, '0')}:${minutes}`;
+                    showAlert('success', 'Available Date Found', `Suggested: ${month}/${day}/${year} at ${startHour}:${startMin}. Adjust as needed.`, () => {
+                        bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
+                        setTimeout(() => new bootstrap.Modal(document.getElementById('scheduleModal')).show(), 300);
+                    });
                 }
-                
-                // Close availability modal and show schedule modal
-                bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
-                setTimeout(() => {
-                    new bootstrap.Modal(document.getElementById('scheduleModal')).show();
-                }, 300);
-            });
+            } catch (error) {
+                console.error('Generate Schedule Error:', error);
+                showAlert('error', 'Error', 'An error occurred. Please try again.');
+            }
         });
         
         // Edit Panel button handler
@@ -2944,48 +3243,29 @@
         // Make updateScheduleView globally accessible
         window.updateScheduleView = updateScheduleView;
         window.loadScheduleData = loadScheduleData;
+        
+        // Calendar navigation buttons
+        const prevBtn = document.getElementById('prev-month');
+        const nextBtn = document.getElementById('next-month');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                renderCalendar();
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+        
         const initialView = localStorage.getItem('currentView');
         if (!initialView || (!urlParams.get('department') && !localStorage.getItem('selectedDefenseType'))) {
             typeSelectionView.classList.remove('hidden');
             filterPage.classList.add('hidden');
             scheduleView.style.display = 'none';
         }
-
-        
-        // Use event delegation for all buttons to ensure they work
-        document.addEventListener('click', function(e) {
-            // Back to selection button
-            if (e.target.id === 'back-to-selection') {
-                console.log('Back to selection clicked');
-                localStorage.clear();
-                document.getElementById('calendar-view').style.display = 'none';
-                document.getElementById('type-selection-view').classList.remove('hidden');
-                document.getElementById('schedule-view').style.display = 'none';
-                document.getElementById('filter-page').classList.add('hidden');
-            }
-            
-            // Calendar view button
-            if (e.target.id === 'calendar-view-btn') {
-                localStorage.setItem('currentView', 'calendar');
-                localStorage.setItem('selectedDefenseType', 'CALENDAR');
-                document.getElementById('type-selection-view').classList.add('hidden');
-                document.getElementById('schedule-view').style.display = 'none';
-                document.getElementById('filter-page').classList.add('hidden');
-                document.getElementById('calendar-view').style.display = 'block';
-                loadCalendarData();
-            }
-            
-            // Calendar navigation
-            if (e.target.id === 'prev-month') {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-                renderCalendar();
-            }
-            
-            if (e.target.id === 'next-month') {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-                renderCalendar();
-            }
-        });
 
     });
 </script>

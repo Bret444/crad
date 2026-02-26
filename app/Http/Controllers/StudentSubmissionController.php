@@ -127,14 +127,30 @@ class StudentSubmissionController extends Controller
     {
         $user = auth()->user();
         
-        // Get assignment data for the user's department and cluster
-        // User cluster field maps to Assignment section field
-        $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels'])
-            ->where('department', $user->department)
-            ->where('section', $user->cluster ?? '4101')
+        // Check if user has required fields
+        if (!$user->department) {
+            \Log::warning('User missing department', ['user_id' => $user->id]);
+            return view('view-panel-adviser', ['assignment' => null, 'group' => null, 'error' => 'Your account is missing department information. Please contact the administrator.']);
+        }
+        
+        if (!$user->cluster) {
+            \Log::warning('User missing cluster', ['user_id' => $user->id, 'department' => $user->department]);
+            return view('view-panel-adviser', ['assignment' => null, 'group' => null, 'error' => 'Your account is missing cluster information. Please contact the administrator.']);
+        }
+        
+        // Get group data
+        $group = \App\Models\Group::where('department', $user->department)
+            ->where('cluster', $user->cluster)
+            ->where('group_number', $user->group_no)
             ->first();
         
-        return view('view-panel-adviser', compact('assignment'));
+        // Get assignment data for the user's department and cluster
+        $assignment = \App\Models\Assignment::with(['adviser', 'assignmentPanels'])
+            ->where('department', $user->department)
+            ->where('section', $user->cluster)
+            ->first();
+        
+        return view('view-panel-adviser', compact('assignment', 'group'));
     }
 
     public function viewSchedules()

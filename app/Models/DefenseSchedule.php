@@ -26,8 +26,7 @@ class DefenseSchedule extends Model
     ];
 
     protected $casts = [
-        'panel_data' => 'array',
-        'defense_date' => 'date'
+        'panel_data' => 'array'
     ];
 
     public function assignment()

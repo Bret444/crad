@@ -28,14 +28,7 @@ class DefenseScheduleController extends Controller
     {
         try {
             \Log::info('Defense Schedule Store Request', $request->all());
-            \Log::info('Attempting updateOrCreate with keys', [
-                'department' => $request->input('department'),
-                'section' => $request->input('section'),
-                'group_id' => $request->input('group_id'),
-                'defense_type' => $request->input('defense_type')
-            ]);
             
-            // Check if table exists
             if (!\Schema::hasTable('defense_schedules')) {
                 \Log::error('defense_schedules table does not exist');
                 return response()->json(['success' => false, 'error' => 'Database table does not exist. Please run migrations.'], 500);
@@ -56,7 +49,35 @@ class DefenseScheduleController extends Controller
                 'panel_data' => 'nullable|array'
             ]);
             
-            \Log::info('Validation passed', $validated);
+            // Check for time conflicts
+            if ($validated['defense_date'] && $validated['start_time'] && $validated['end_time'] && isset($validated['panel_data'])) {
+                $panelData = $validated['panel_data'];
+                $panelNames = array_filter([
+                    $panelData['adviser'] ?? null,
+                    $panelData['chairperson'] ?? null
+                ]);
+                if (isset($panelData['members'])) {
+                    $members = explode(',', $panelData['members']);
+                    $panelNames = array_merge($panelNames, array_map('trim', $members));
+                }
+                
+                $conflicts = $this->checkTimeConflicts(
+                    $validated['defense_date'],
+                    $validated['start_time'],
+                    $validated['end_time'],
+                    $panelNames,
+                    $validated['group_id'],
+                    $validated['defense_type']
+                );
+                
+                if (!empty($conflicts)) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Schedule conflict detected',
+                        'conflicts' => $conflicts
+                    ], 422);
+                }
+            }
             
             if (!$validated['assignment_id']) {
                 $validated['assignment_id'] = 1;
@@ -66,28 +87,71 @@ class DefenseScheduleController extends Controller
                 $validated['status'] = 'scheduled';
             }
 
-            \Log::info('Saving Defense Schedule', $validated);
-
-            $schedule = DefenseSchedule::updateOrCreate(
-                [
-                    'department' => $validated['department'],
-                    'section' => $validated['section'],
-                    'group_id' => $validated['group_id'],
-                    'defense_type' => $validated['defense_type']
-                ],
-                $validated
-            );
-
-            \Log::info('Schedule Saved Successfully', ['id' => $schedule->id, 'data' => $schedule->toArray()]);
+            // Check if schedule already exists
+            $existingSchedule = DefenseSchedule::where('department', $validated['department'])
+                ->where('section', $validated['section'])
+                ->where('group_id', $validated['group_id'])
+                ->where('defense_type', $validated['defense_type'])
+                ->first();
+            
+            if ($existingSchedule) {
+                // Update existing schedule
+                $existingSchedule->update($validated);
+                $schedule = $existingSchedule;
+            } else {
+                // Create new schedule
+                $schedule = DefenseSchedule::create($validated);
+            }
 
             return response()->json(['success' => true, 'schedule' => $schedule]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation Error', ['errors' => $e->errors()]);
             return response()->json(['success' => false, 'error' => 'Validation failed', 'details' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Schedule Save Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            \Log::error('Schedule Save Error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+    
+    private function checkTimeConflicts($date, $startTime, $endTime, $panelNames, $excludeGroupId, $excludeDefenseType)
+    {
+        $conflicts = [];
+        
+        foreach ($panelNames as $panelName) {
+            $query = DefenseSchedule::where('defense_date', $date)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->where(function($q) use ($startTime, $endTime) {
+                    $q->where(function($sub) use ($startTime, $endTime) {
+                        $sub->where('start_time', '<=', $startTime)
+                            ->where('end_time', '>', $startTime);
+                    })->orWhere(function($sub) use ($startTime, $endTime) {
+                        $sub->where('start_time', '<', $endTime)
+                            ->where('end_time', '>=', $endTime);
+                    })->orWhere(function($sub) use ($startTime, $endTime) {
+                        $sub->where('start_time', '>', $startTime)
+                            ->where('end_time', '<', $endTime);
+                    });
+                })
+                ->where(function($q) use ($excludeGroupId, $excludeDefenseType) {
+                    $q->where('group_id', '!=', $excludeGroupId)
+                      ->orWhere('defense_type', '!=', $excludeDefenseType);
+                })
+                ->get();
+            
+            foreach ($query as $schedule) {
+                if ($schedule->panel_data) {
+                    $panelData = is_string($schedule->panel_data) ? json_decode($schedule->panel_data, true) : $schedule->panel_data;
+                    
+                    if ((isset($panelData['adviser']) && $panelData['adviser'] === $panelName) ||
+                        (isset($panelData['chairperson']) && $panelData['chairperson'] === $panelName) ||
+                        (isset($panelData['members']) && strpos($panelData['members'], $panelName) !== false)) {
+                        $conflicts[] = "$panelName is already scheduled for {$schedule->defense_type} Group {$schedule->group_id} at {$schedule->start_time}-{$schedule->end_time}";
+                    }
+                }
+            }
+        }
+        
+        return $conflicts;
     }
 
     public function update(Request $request, DefenseSchedule $defenseSchedule)
@@ -260,17 +324,17 @@ class DefenseScheduleController extends Controller
                 ->whereNotNull('end_time')
                 ->where(function($q) use ($validated) {
                     $q->where(function($sub) use ($validated) {
-                        // New schedule starts during existing schedule
+                        // New schedule starts during existing schedule (exclusive end)
                         $sub->where('start_time', '<=', $validated['start_time'])
                             ->where('end_time', '>', $validated['start_time']);
                     })->orWhere(function($sub) use ($validated) {
-                        // New schedule ends during existing schedule
+                        // New schedule ends during existing schedule (exclusive start)
                         $sub->where('start_time', '<', $validated['end_time'])
                             ->where('end_time', '>=', $validated['end_time']);
                     })->orWhere(function($sub) use ($validated) {
                         // New schedule completely contains existing schedule
-                        $sub->where('start_time', '>=', $validated['start_time'])
-                            ->where('end_time', '<=', $validated['end_time']);
+                        $sub->where('start_time', '>', $validated['start_time'])
+                            ->where('end_time', '<', $validated['end_time']);
                     });
                 });
             
@@ -455,15 +519,30 @@ class DefenseScheduleController extends Controller
     {
         \Log::info('getCalendarData called');
         
-        $schedules = DefenseSchedule::whereNotNull('defense_date')
+        $schedules = \DB::table('defense_schedules')
+            ->whereNotNull('defense_date')
             ->whereNotNull('start_time')
             ->whereNotNull('end_time')
+            ->whereNull('deleted_at')
             ->orderBy('defense_date')
             ->orderBy('start_time')
-            ->get();
+            ->get()
+            ->map(function($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'department' => $schedule->department,
+                    'section' => $schedule->section,
+                    'group_id' => $schedule->group_id,
+                    'defense_type' => $schedule->defense_type,
+                    'defense_date' => $schedule->defense_date,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'status' => $schedule->status
+                ];
+            });
 
-        \Log::info('Calendar schedules found', ['count' => $schedules->count(), 'schedules' => $schedules->toArray()]);
+        \Log::info('Calendar schedules', ['count' => count($schedules), 'first_date' => $schedules->first()->defense_date ?? null]);
 
-        return response()->json($schedules);
+        return response()->json($schedules->values());
     }
 }
