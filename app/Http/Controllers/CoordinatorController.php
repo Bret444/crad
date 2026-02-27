@@ -60,10 +60,10 @@ class CoordinatorController extends Controller
         
         // Defense schedules
         $upcomingDefenses = \App\Models\DefenseSchedule::where('department', $department)
-            ->where('defense_date', '>=', now())
+            ->where('defense_date', '>=', now()->toDateString())
             ->whereNotNull('defense_date')
-            ->where('defense_date', '!=', '1970-01-01')
             ->orderBy('defense_date')
+            ->orderBy('start_time')
             ->limit(5)
             ->get();
         
@@ -446,6 +446,15 @@ class CoordinatorController extends Controller
             'notifications' => $notifications,
             'unread_count' => \App\Models\Notification::where('user_id', auth()->id())->where('read', false)->count()
         ]);
+    }
+
+    public function markAllAsRead()
+    {
+        \App\Models\Notification::where('user_id', auth()->id())
+            ->where('read', false)
+            ->update(['read' => true]);
+        
+        return response()->json(['success' => true]);
     }
 
     public function subjectLoadProxy()

@@ -61,9 +61,16 @@ class StudentSubmissionController extends Controller
 
     public function store(Request $request)
     {
+        // Check if document is Research Forum to allow images
+        $isResearchForum = stripos($request->documents, 'research forum') !== false;
+        
+        $fileValidation = $isResearchForum 
+            ? 'nullable|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
+            : 'nullable|mimes:pdf,doc,docx|max:5120';
+        
         $request->validate([
             'documents' => 'required|string|max:255',
-            'file'  => 'nullable|mimes:pdf,doc,docx|max:2048',
+            'file'  => $fileValidation,
             'drive_link' => 'nullable|url'
         ]);
         
@@ -121,7 +128,23 @@ class StudentSubmissionController extends Controller
     public function viewFile($id)
     {
         $submission = Submission::findOrFail($id);
-        return response()->file(storage_path('app/public/' . $submission->file_path));
+        
+        if (!$submission->file_path) {
+            abort(404, 'File not found');
+        }
+        
+        // Check if it's a URL (Google Drive link)
+        if (filter_var($submission->file_path, FILTER_VALIDATE_URL)) {
+            return redirect($submission->file_path);
+        }
+        
+        $filePath = storage_path('app/public/' . $submission->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+        
+        return response()->file($filePath);
     }
     public function viewPanelAdviser()
     {
@@ -196,9 +219,16 @@ public function resubmit(Request $request, $id)
     $submission = Submission::findOrFail($id);
     $user = auth()->user();
 
+    // Check if document is Research Forum to allow images
+    $isResearchForum = stripos($request->documents, 'research forum') !== false;
+    
+    $fileValidation = $isResearchForum 
+        ? 'required|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
+        : 'required|mimes:pdf,doc,docx|max:5120';
+
     $request->validate([
         'documents' => 'required|string|max:255',
-        'file'  => 'required|mimes:pdf,doc,docx|max:2048',
+        'file'  => $fileValidation,
     ]);
 
     $submission->documents = $request->documents;

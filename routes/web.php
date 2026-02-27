@@ -68,6 +68,7 @@ Route::middleware(['auth' , 'admin'])->group(function () {
     Route::get('/admin-dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
     Route::get('/api/admin/notifications', [AdminController::class, 'getNotifications'])->name('admin.api.notifications');
+    Route::post('/api/admin/notifications/mark-all-read', [AdminController::class, 'markAllAsRead'])->name('admin.api.notifications.markAllRead');
 
     Route::get('/track-proposal', [AdminSubmissionController::class, 'trackProposal'])->name('admin.track-proposal');
     Route::get('/admin/submissions', [AdminSubmissionController::class, 'trackProposal'])->name('admin.submissions.index');
@@ -270,6 +271,10 @@ Route::get('/coordinator-manage-adviser', [CoordinatorController::class, 'manage
 Route::get('/api/coordinator/notifications', [CoordinatorController::class, 'getNotifications'])
     ->middleware('auth', 'coordinator')
     ->name('coordinator.api.notifications');
+
+Route::post('/api/coordinator/notifications/mark-all-read', [CoordinatorController::class, 'markAllAsRead'])
+    ->middleware('auth', 'coordinator')
+    ->name('coordinator.api.notifications.markAllRead');
 
 Route::get('/coordinator-manage-groups', [\App\Http\Controllers\GroupController::class, 'index'])
     ->middleware('auth', 'coordinator')

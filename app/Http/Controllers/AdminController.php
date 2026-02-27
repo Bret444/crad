@@ -287,4 +287,13 @@ public function getNotifications()
     ]);
 }
 
+public function markAllAsRead()
+{
+    Notification::where('user_id', auth()->id())
+        ->where('read', false)
+        ->update(['read' => true]);
+    
+    return response()->json(['success' => true]);
+}
+
 }

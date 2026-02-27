@@ -1,36 +1,4 @@
-<IfModule mod_rewrite.c>
-    Options +FollowSymLinks -Indexes
-    RewriteEngine On
-
-    # Serve /storage/* files
-    RewriteCond %{DOCUMENT_ROOT}/storage/app/public/$1 -f
-    RewriteRule ^storage/(.*)$ storage/app/public/$1 [L]
-
-    # --- 2. Laravel routing fallback ---
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/$1 [L]
-
-    # --- 3. Redirect root URL to public/index.php ---
-    RewriteRule ^$ public/index.php [L]
-</IfModule>
-
-<Files .env>
- Order allow,deny
- Deny from all
-</Files>
-RedirectMatch 404 /\.
-
-<FilesMatch "^(\.env|artisan|composer\.json|composer\.lock|package\.json|webpack\.mix\.js|server\.php|.gitignore|.gitattributes)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-Options -Indexes
+php_value upload_max_filesize 5M
+php_value post_max_size 6M
+php_value max_execution_time 300
+php_value max_input_time 300

@@ -185,14 +185,14 @@
         padding: 0.35rem 0.5rem; 
         border-radius: 0.25rem; 
         font-weight: 500; 
-        border: none; 
+        border: 1px solid; 
         margin: 0.15rem;
         min-width: 70px;
     }
-    .btn-eval-passed { background-color: var(--status-light-green); color: var(--status-green); }
-    .btn-eval-redefense { background-color: #fff3cd; color: #fd7e14; }
-    .btn-eval-failed { background-color: var(--status-light-red); color: var(--status-red); }
-    .btn-eval-feedback { background-color: #e7f1ff; color: var(--primary-blue); }
+    .btn-eval-passed { border-color: #28a745; color: #28a745; background-color: transparent; }
+    .btn-eval-redefense { border-color: #ffc107; color: #ffc107; background-color: transparent; }
+    .btn-eval-failed { border-color: #dc3545; color: #dc3545; background-color: transparent; }
+    .btn-eval-feedback { border-color: #0d6efd; color: #0d6efd; background-color: transparent; }
     .btn-eval:hover { opacity: 0.8; }
 
     .alert-modal .modal-header {

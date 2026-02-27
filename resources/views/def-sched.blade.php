@@ -605,7 +605,48 @@ window.handleBackToFilter = function() {
 };
 
 window.handleBackFromSchedule = function() {
+    // Preserve filter values from localStorage
+    const dept = localStorage.getItem('selectedDept');
+    const cluster = localStorage.getItem('selectedCluster');
+    const defenseType = localStorage.getItem('selectedDefenseType');
+    const redefenseType = localStorage.getItem('selectedRedefenseType');
+    
+    // Update view state
+    localStorage.setItem('currentView', 'filter');
+    
+    // Show filter page
     window.showFilterPage();
+    
+    // Restore department selection
+    if (dept) {
+        document.getElementById('dept-select').value = dept;
+    }
+    
+    // Repopulate and restore cluster
+    if (dept && cluster) {
+        if (window.populateClusters) window.populateClusters();
+        setTimeout(() => {
+            document.getElementById('cluster-select').value = cluster;
+        }, 150);
+    }
+    
+    // Restore defense type display and redefense options
+    if (defenseType) {
+        currentDefenseType = defenseType;
+        document.getElementById('defense-type-display').textContent = defenseType + ' SCHEDULING';
+        
+        const redefenseTypeGroup = document.getElementById('redefense-type-group');
+        if (defenseType === 'REDEFENSE') {
+            redefenseTypeGroup.style.display = 'block';
+            if (redefenseType) {
+                setTimeout(() => {
+                    document.getElementById('redefense-type-select').value = redefenseType;
+                }, 50);
+            }
+        } else {
+            redefenseTypeGroup.style.display = 'none';
+        }
+    }
 };
 </script>
 <div class="container-fluid" id="main-container-bs">
@@ -688,7 +729,6 @@ window.handleBackFromSchedule = function() {
                             <th style="width: 15%;">Status</th>
                             <th style="width: 14%;">Set Schedule</th>
                         </tr>
-                    </thead>
                     </thead>
                     <tbody id="schedule-table-body">
                         <!-- Groups will be loaded dynamically via JavaScript -->
@@ -1668,7 +1708,7 @@ window.handleBackFromSchedule = function() {
         const deptParam = dept || document.getElementById('dept-select').value;
         const clusterParam = cluster || document.getElementById('cluster-select').value;
         
-        fetch(`/api/panels?department=${deptParam}&cluster=${clusterParam}`)
+        fetch(`/api/panels?department=${deptParam}`)
             .then(r => r.json())
             .then(allPanels => {
                 const allDates = new Set();
@@ -1728,15 +1768,16 @@ window.handleBackFromSchedule = function() {
                     });
                 });
                 
-                // Show backup panels
+                // Show backup panels with matching availability
                 const backupPanels = allPanels.filter(p => !names.includes(p.name));
                 if (backupPanels.length > 0) {
                     const separatorRow = tbody.insertRow();
                     const separatorCell = separatorRow.insertCell();
                     separatorCell.colSpan = sortedDates.length + 1;
-                    separatorCell.innerHTML = '<strong class="text-muted">Backup Panels Available:</strong>';
-                    separatorCell.style.backgroundColor = '#f8f9fa';
-                    separatorCell.style.padding = '0.5rem';
+                    separatorCell.innerHTML = '<hr class="my-2"><h6 class="text-primary mb-0"><i class="bi bi-people"></i> Backup Panels (Same Availability)</h6>';
+                    separatorCell.style.backgroundColor = '#e7f1ff';
+                    separatorCell.style.padding = '0.75rem';
+                    separatorCell.style.fontWeight = 'bold';
                     
                     backupPanels.forEach(panel => {
                         if (panel.availability) {
@@ -1751,7 +1792,7 @@ window.handleBackFromSchedule = function() {
                         
                         const row = tbody.insertRow();
                         const nameCell = row.insertCell();
-                        nameCell.innerHTML = `${panel.name} <span class="badge bg-secondary">Backup</span>`;
+                        nameCell.innerHTML = `<strong>${panel.name}</strong> <span class="badge bg-info">Backup</span>`;
                         
                         sortedDates.forEach(dateStr => {
                             const cell = row.insertCell();
@@ -1760,6 +1801,7 @@ window.handleBackFromSchedule = function() {
                                 cell.textContent = timeSlot;
                                 cell.classList.add('availability-available');
                                 cell.title = `Available: ${timeSlot}`;
+                                cell.style.fontWeight = '600';
                             } else {
                                 cell.textContent = 'N/A';
                                 cell.classList.add('availability-unavailable');

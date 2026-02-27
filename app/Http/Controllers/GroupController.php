@@ -233,38 +233,45 @@ class GroupController extends Controller
             return response()->json(['status' => 'Incomplete']);
         }
         
+        // Define required documents for each defense type
+        $requiredDocs = [
+            'PRE-ORAL' => ['Research Title Proposal', 'Research Forum', 'Clearance', 'Manuscript Chapter 1-3'],
+            'FINAL DEFENSE' => ['Summary of Corrections', 'Clearance', 'Manuscript Chapter 1-5']
+        ];
+        
+        $required = $requiredDocs[$defenseType] ?? [];
+        
+        if (empty($required)) {
+            return response()->json(['status' => 'Incomplete']);
+        }
+        
         // Get all submissions for this group and defense type
         $submissions = \App\Models\Submission::where('group_no', $groupId)
             ->where('defense_type', $defenseType)
+            ->whereIn('documents', $required)
             ->get();
         
-        if ($submissions->isEmpty()) {
+        // Check if all required documents are submitted and approved
+        $submittedDocs = $submissions->pluck('documents')->toArray();
+        $approvedDocs = $submissions->where('status', 'Approved')->pluck('documents')->toArray();
+        
+        // Check if all required documents are submitted
+        $allSubmitted = count(array_intersect($required, $submittedDocs)) === count($required);
+        
+        if (!$allSubmitted) {
             return response()->json(['status' => 'Incomplete']);
         }
         
-        // Check if all submissions are approved by both coordinator and admin
-        $allApproved = true;
-        $hasPending = false;
-        
-        foreach ($submissions as $submission) {
-            // Check if document needs admin approval (clearance, research forum)
-            $needsAdmin = stripos($submission->documents, 'clearance') !== false || 
-                         stripos($submission->documents, 'research forum') !== false;
-            
-            if ($submission->status === 'Pending') {
-                $hasPending = true;
-                $allApproved = false;
-            } elseif ($submission->status !== 'Approved') {
-                $allApproved = false;
-            }
-        }
+        // Check if all required documents are approved
+        $allApproved = count(array_intersect($required, $approvedDocs)) === count($required);
         
         if ($allApproved) {
             return response()->json(['status' => 'Complete']);
-        } elseif ($hasPending) {
-            return response()->json(['status' => 'Pending']);
-        } else {
-            return response()->json(['status' => 'Incomplete']);
         }
+        
+        // Check if any are pending
+        $hasPending = $submissions->where('status', 'Pending')->isNotEmpty();
+        
+        return response()->json(['status' => $hasPending ? 'Pending' : 'Incomplete']);
     }
 }

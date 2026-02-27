@@ -106,16 +106,17 @@
                                         <div>
                                             <h6 class="mb-1">{{ $defense->defense_type }}</h6>
                                             <small class="text-muted">
-                                                <i class="fas fa-users"></i> Group {{ $defense->group_id }} | 
-                                                <i class="fas fa-layer-group"></i> {{ $defense->section }}
+                                                <i class="fas fa-building"></i> {{ $defense->department }} | 
+                                                <i class="fas fa-layer-group"></i> {{ $defense->section }} | 
+                                                <i class="fas fa-users"></i> Group {{ $defense->group_id }}
                                             </small>
                                         </div>
                                         <span class="badge bg-info text-dark">
-                                            {{ \Carbon\Carbon::parse($defense->defense_date)->format('M d') }}
+                                            {{ \Carbon\Carbon::parse($defense->defense_date)->format('M d, Y') }}
                                         </span>
                                     </div>
                                     <small class="text-muted">
-                                        <i class="fas fa-clock"></i> {{ $defense->start_time }} - {{ $defense->end_time }}
+                                        <i class="fas fa-clock"></i> {{ date('g:i A', strtotime($defense->start_time)) }} - {{ date('g:i A', strtotime($defense->end_time)) }}
                                     </small>
                                 </div>
                             @endforeach

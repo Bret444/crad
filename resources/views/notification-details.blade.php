@@ -71,7 +71,7 @@
                             <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
                         </a>
                         @if($notification->submission && $notification->submission->file_path)
-                            <a href="{{ Storage::url($notification->submission->file_path) }}" target="_blank" class="btn btn-primary">
+                            <a href="{{ route('submission.file', $notification->submission->id) }}" target="_blank" class="btn btn-primary">
                                 <i class="bi bi-file-earmark-pdf me-2"></i>View Document
                             </a>
                         @endif

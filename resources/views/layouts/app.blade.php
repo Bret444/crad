@@ -563,11 +563,31 @@
             const confirmModal = bootstrap.Modal.getInstance(document.getElementById('markReadModal'));
             confirmModal.hide();
             
-            // Show success modal
-            setTimeout(() => {
-                const successModal = new bootstrap.Modal(document.getElementById('markReadSuccessModal'));
-                successModal.show();
-            }, 300);
+            // Call API to mark all as read
+            fetch('/api/admin/notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update badge to 0
+                    document.querySelector('.badge.bg-danger').textContent = '0';
+                    
+                    // Reload notifications
+                    loadNotifications();
+                    
+                    // Show success modal
+                    setTimeout(() => {
+                        const successModal = new bootstrap.Modal(document.getElementById('markReadSuccessModal'));
+                        successModal.show();
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error marking notifications as read:', error));
         }
     </script>
     @yield('scripts')
