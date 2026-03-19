@@ -622,14 +622,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Page loaded, checking for success message...');
+    
     @if(session('success'))
-        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
-        
-        // Reload page after modal is closed to show updated submissions
-        document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
-            window.location.reload();
-        });
+        console.log('Success message found: {{ session('success') }}');
+        const successModalElement = document.getElementById('successModal');
+        if (successModalElement) {
+            const successModal = new bootstrap.Modal(successModalElement);
+            successModal.show();
+            
+            // Reload page after modal is closed to show updated submissions
+            successModalElement.addEventListener('hidden.bs.modal', function () {
+                window.location.href = '{{ route('submission') }}';
+            }, { once: true });
+        } else {
+            console.error('Success modal element not found!');
+        }
+    @else
+        console.log('No success message in session');
     @endif
 
     let currentForm = null;
@@ -652,17 +662,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLinkForm) {
             const linkInput = e.target.querySelector('input[name="drive_link"]');
             const fileInput = e.target.querySelector('input[type="file"]');
-            const linkValue = linkInput.value;
-            const file = fileInput.files[0];
+            const linkValue = linkInput ? linkInput.value : '';
+            const file = fileInput ? fileInput.files[0] : null;
             
             if (!linkValue && !file) {
                 alert('Please enter a Google Drive link or upload a file.');
                 return false;
             }
-            inputValue = linkValue || file.name;
+            inputValue = linkValue || (file ? file.name : '');
         } else {
             const fileInput = e.target.querySelector('input[type="file"]');
-            const file = fileInput.files[0];
+            const file = fileInput ? fileInput.files[0] : null;
             if (!file) {
                 alert('Please choose a file to upload.');
                 return false;
@@ -670,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
             inputValue = file.name;
         }
 
-        if (!termsCheckbox.checked) {
+        if (!termsCheckbox || !termsCheckbox.checked) {
             alert('Please accept the Terms and Conditions.');
             return false;
         }
@@ -687,8 +697,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
         if (currentForm) {
             const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
-            confirmModal.hide();
+            if (confirmModal) {
+                confirmModal.hide();
+            }
             
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+            
+            console.log('Submitting form...');
+            // Submit the form
             currentForm.submit();
         }
     });

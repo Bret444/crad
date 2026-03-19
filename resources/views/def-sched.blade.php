@@ -1327,6 +1327,20 @@ window.handleBackFromSchedule = function() {
                                 if (docCell) {
                                     docCell.innerHTML = `<span class="status-badge ${docStatusClass}">${docStatus}</span>`;
                                 }
+                                
+                                // Disable Set Schedule button if document status is Incomplete
+                                if (docStatus === 'Incomplete') {
+                                    const scheduleCell = row.querySelector('.schedule-cell');
+                                    const scheduleBtn = scheduleCell?.querySelector('.btn-set-schedule');
+                                    if (scheduleBtn) {
+                                        scheduleBtn.disabled = true;
+                                        scheduleBtn.style.opacity = '0.5';
+                                        scheduleBtn.style.cursor = 'not-allowed';
+                                        scheduleBtn.innerHTML = '<i class="bi bi-lock"></i> Documents Required';
+                                        scheduleBtn.removeAttribute('data-bs-toggle');
+                                        scheduleBtn.removeAttribute('data-bs-target');
+                                    }
+                                }
                             }
                         })
                         .catch(() => {});

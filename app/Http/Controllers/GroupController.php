@@ -233,10 +233,14 @@ class GroupController extends Controller
             return response()->json(['status' => 'Incomplete']);
         }
         
+        // Convert group_id (e.g., "A1") to numeric group_no
+        $groupNo = (int) preg_replace('/[^0-9]/', '', $groupId);
+        
         // Define required documents for each defense type
         $requiredDocs = [
             'PRE-ORAL' => ['Research Title Proposal', 'Research Forum', 'Clearance', 'Manuscript Chapter 1-3'],
-            'FINAL DEFENSE' => ['Summary of Corrections', 'Clearance', 'Manuscript Chapter 1-5']
+            'FINAL DEFENSE' => ['Summary of Corrections', 'Clearance', 'Manuscript Chapter 1-5'],
+            'REDEFENSE' => ['Summary of Corrections', 'Clearance']
         ];
         
         $required = $requiredDocs[$defenseType] ?? [];
@@ -245,33 +249,45 @@ class GroupController extends Controller
             return response()->json(['status' => 'Incomplete']);
         }
         
-        // Get all submissions for this group and defense type
-        $submissions = \App\Models\Submission::where('group_no', $groupId)
+        // Get all submissions for this group with matching defense type
+        $submissions = \App\Models\Submission::where('group_no', $groupNo)
             ->where('defense_type', $defenseType)
-            ->whereIn('documents', $required)
             ->get();
         
-        // Check if all required documents are submitted and approved
-        $submittedDocs = $submissions->pluck('documents')->toArray();
-        $approvedDocs = $submissions->where('status', 'Approved')->pluck('documents')->toArray();
-        
-        // Check if all required documents are submitted
-        $allSubmitted = count(array_intersect($required, $submittedDocs)) === count($required);
-        
-        if (!$allSubmitted) {
+        if ($submissions->isEmpty()) {
             return response()->json(['status' => 'Incomplete']);
         }
         
-        // Check if all required documents are approved
-        $allApproved = count(array_intersect($required, $approvedDocs)) === count($required);
+        // Check each required document
+        $approvedCount = 0;
+        $pendingCount = 0;
         
-        if ($allApproved) {
+        foreach ($required as $docName) {
+            $submission = $submissions->where('documents', $docName)->first();
+            
+            if (!$submission) {
+                // Document not submitted
+                continue;
+            }
+            
+            if ($submission->status === 'Approved') {
+                $approvedCount++;
+            } elseif ($submission->status === 'Pending') {
+                $pendingCount++;
+            }
+        }
+        
+        // All required documents are approved
+        if ($approvedCount === count($required)) {
             return response()->json(['status' => 'Complete']);
         }
         
-        // Check if any are pending
-        $hasPending = $submissions->where('status', 'Pending')->isNotEmpty();
+        // Some documents are pending
+        if ($pendingCount > 0 && ($approvedCount + $pendingCount) === count($required)) {
+            return response()->json(['status' => 'Pending']);
+        }
         
-        return response()->json(['status' => $hasPending ? 'Pending' : 'Incomplete']);
+        // Not all documents submitted or some rejected
+        return response()->json(['status' => 'Incomplete']);
     }
 }
