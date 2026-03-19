@@ -542,18 +542,44 @@
             return;
         }
         
+        // Filter unassigned students
+        const unassignedStudents = studentList.filter(student => {
+            const studentId = student.StudentID || student.student_id || 'N/A';
+            return !assignedStudents.includes(studentId);
+        });
+        
         let html = `
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle"></i> Loaded ${studentList.length} students
+            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-info-circle"></i> Total Students: ${studentList.length} | 
+                    <span class="text-success">Unassigned: ${unassignedStudents.length}</span> | 
+                    <span class="text-secondary">Assigned: ${assignedStudents.length}</span>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="showAssignedToggle" onchange="toggleAssignedStudents()">
+                    <label class="form-check-label" for="showAssignedToggle">
+                        Show Assigned Students
+                    </label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <button class="btn btn-sm btn-primary" onclick="selectAllUnassigned()">
+                    <i class="bi bi-check-square"></i> Select All Unassigned
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="clearSelection()">
+                    <i class="bi bi-x-square"></i> Clear Selection
+                </button>
+                <span class="ms-3 badge bg-info" id="selectedCount">0 selected</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-striped table-hover" id="studentTable">
                     <thead>
                         <tr>
-                            <th>Select</th>
+                            <th width="50">Select</th>
                             <th>Student ID</th>
                             <th>Name</th>
                             <th>Course</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -566,11 +592,20 @@
             const isAssigned = assignedStudents.includes(studentId);
             
             html += `
-                <tr ${isAssigned ? 'class="table-secondary"' : ''}>
-                    <td><input type="checkbox" class="student-checkbox" data-id="${studentId}" data-name="${fullName.trim()}" onchange="handleCheckboxChange(this)" ${isAssigned ? 'disabled' : ''}></td>
+                <tr class="${isAssigned ? 'table-secondary assigned-row' : 'unassigned-row'}" style="${isAssigned ? 'display: none;' : ''}">
+                    <td>
+                        ${isAssigned ? '' : `<input type="checkbox" 
+                               class="form-check-input student-checkbox unassigned-checkbox" 
+                               data-id="${studentId}" 
+                               data-name="${fullName.trim()}" 
+                               onchange="handleCheckboxChange(this)">`}
+                    </td>
                     <td>${studentId}</td>
-                    <td>${fullName}${isAssigned ? ' <span class="badge bg-secondary">Assigned</span>' : ''}</td>
+                    <td>${fullName.trim()}</td>
                     <td>${course}</td>
+                    <td>
+                        ${isAssigned ? '<span class="badge bg-secondary"><i class="bi bi-check-circle"></i> Assigned</span>' : '<span class="badge bg-success"><i class="bi bi-circle"></i> Available</span>'}
+                    </td>
                 </tr>
             `;
         });
@@ -583,6 +618,7 @@
         
         content.innerHTML = html;
         setupStudentSearch();
+        updateSelectedCount();
     }
 
     function setupStudentSearch() {
@@ -599,7 +635,7 @@
     }
 
     function handleCheckboxChange(checkbox) {
-        const checked = document.querySelectorAll('.student-checkbox:checked').length;
+        const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
         
         if (checked > 5) {
             checkbox.checked = false;
@@ -608,28 +644,80 @@
         }
         
         // Disable unchecked checkboxes if 5 are selected
-        const allCheckboxes = document.querySelectorAll('.student-checkbox:not(:disabled)');
+        const allCheckboxes = document.querySelectorAll('.unassigned-checkbox');
         allCheckboxes.forEach(cb => {
             if (!cb.checked && checked === 5) {
                 cb.disabled = true;
-            } else if (checked < 5 && cb.dataset.id) {
+                cb.parentElement.parentElement.classList.add('table-light');
+            } else if (checked < 5) {
                 cb.disabled = false;
+                cb.parentElement.parentElement.classList.remove('table-light');
             }
         });
         
         updateAddButton();
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const countBadge = document.getElementById('selectedCount');
+        if (countBadge) {
+            const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
+            countBadge.textContent = `${checked} selected (max 5)`;
+            countBadge.className = checked > 0 ? 'ms-3 badge bg-primary' : 'ms-3 badge bg-info';
+        }
+    }
+
+    function selectAllUnassigned() {
+        const unassignedCheckboxes = document.querySelectorAll('.unassigned-checkbox:not(:disabled)');
+        
+        // Select first 5 unassigned students
+        let count = 0;
+        unassignedCheckboxes.forEach(cb => {
+            if (count < 5) {
+                cb.checked = true;
+                count++;
+            }
+        });
+        
+        if (unassignedCheckboxes.length > 0) {
+            handleCheckboxChange(unassignedCheckboxes[0]);
+        }
+    }
+
+    function clearSelection() {
+        const allCheckboxes = document.querySelectorAll('.student-checkbox');
+        allCheckboxes.forEach(cb => {
+            cb.checked = false;
+            cb.disabled = false;
+            cb.parentElement.parentElement.classList.remove('table-light');
+        });
+        updateAddButton();
+        updateSelectedCount();
+    }
+
+    function toggleAssignedStudents() {
+        const showAssigned = document.getElementById('showAssignedToggle').checked;
+        const assignedRows = document.querySelectorAll('.assigned-row');
+        
+        assignedRows.forEach(row => {
+            row.style.display = showAssigned ? '' : 'none';
+        });
     }
 
     function updateAddButton() {
-        const checked = document.querySelectorAll('.student-checkbox:checked').length;
+        const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
         const btn = document.getElementById('addToGroupBtn');
-        btn.style.display = checked > 0 && checked <= 5 ? 'inline-block' : 'none';
+        if (btn) {
+            btn.style.display = checked > 0 && checked <= 5 ? 'inline-block' : 'none';
+            btn.innerHTML = `<i class="bi bi-plus-circle"></i> Add ${checked} Selected to Group`;
+        }
     }
 
     function addSelectedToGroup() {
-        const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'));
+        const selected = Array.from(document.querySelectorAll('.unassigned-checkbox:checked'));
         if (selected.length === 0 || selected.length > 5) {
-            alert('Please select 1-5 students');
+            alert('Please select 1-5 unassigned students');
             return;
         }
         
@@ -640,12 +728,27 @@
         const addModal = new bootstrap.Modal(document.getElementById('addGroupModal'));
         addModal.show();
         
-        // Populate member fields
+        // Clear all member fields first
+        for (let i = 1; i <= 5; i++) {
+            document.querySelector(`input[name="member${i}_student_id"]`).value = '';
+            document.querySelector(`input[name="member${i}_name"]`).value = '';
+        }
+        
+        // Populate member fields with selected students
         selected.forEach((checkbox, index) => {
             const memberNum = index + 1;
             document.querySelector(`input[name="member${memberNum}_student_id"]`).value = checkbox.dataset.id;
             document.querySelector(`input[name="member${memberNum}_name"]`).value = checkbox.dataset.name;
         });
+        
+        // Show success message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="bi bi-check-circle"></i> ${selected.length} student(s) added to the form. Please fill in remaining details and submit.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('#addGroupModal .modal-body').prepend(alertDiv);
     }
 </script>
 @endsection
