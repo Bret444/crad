@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_admin',
         'department',
         'contact',
         'cluster',

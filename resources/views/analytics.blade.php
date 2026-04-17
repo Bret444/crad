@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 @section('content')
 
 <div class="container py-4">
@@ -294,8 +294,8 @@
                     <tbody>
                         @forelse($recentSubmissions as $submission)
                             <tr>
-                                <td>{{ $submission->user->name ?? 'Unknown' }}</td>
-                                <td>{{ $submission->documents ?? $submission->documents ?? 'N/A' }}</td>
+                                <td>{{ $submission->user_name ?? 'Unknown' }}</td>
+                                <td>{{ $submission->documents ?? 'N/A' }}</td>
                                 <td>{{ $submission->department }}</td>
                                 <td>
                                     <span class="badge 
@@ -304,7 +304,7 @@
                                         {{ $submission->status }}
                                     </span>
                                 </td>
-                                <td>{{ $submission->created_at->format('M d, Y') }}</td>
+                                <td>{{ $submission->created_at ? $submission->created_at->format('M d, Y') : 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -376,9 +376,12 @@
     @endif
 
     <!-- Export -->
-    <div class="text-end no-print">
+    <div class="text-end mb-3">
+        <a href="{{ route('analytics.export', ['department' => $selectedDepartment]) }}" class="btn btn-success me-2">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </a>
         <button class="btn btn-outline-primary" onclick="window.print()">
-            <i class="fas fa-print"></i> Print / Export Report
+            <i class="fas fa-print"></i> Print Report
         </button>
     </div>
 </div>

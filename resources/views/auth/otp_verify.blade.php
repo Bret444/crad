@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Verify OTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ asset('img/sms.png') }}">
+    <link rel="icon" href="{{ asset('img/Untitled_design-removebg-preview.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -122,7 +122,7 @@
         <div class="login-form-container">
             <div class="login-form-wrapper">
                 <div class="text-center mb-4">
-                    <img src="{{ asset('img/sms.png') }}" alt="Logo" style="width: 90px;">
+                    <img src="{{ asset('img/crad.png') }}" alt="Logo" style="width: 90px;">
                     <h2 class="mt-3 fw-bold">Verify Your Account</h2>
                 </div>
 

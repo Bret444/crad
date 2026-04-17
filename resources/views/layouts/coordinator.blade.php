@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CRAD</title>
 
-    <link rel="icon" href="{{ asset('img/sms.png') }}">
+    <link rel="icon"  style="height: 10px; width: 10px;" href="{{ asset('img/Untitled_design-removebg-preview.png') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -27,9 +27,9 @@
                 <i class="bi bi-chevron-left"></i>
             </button>
             <div class="user-profile">
-                <img src="{{ asset('img/sms.png') }}" alt="Logo" class="img-fluid rounded-circle mb-2"
-                    style="width: 60px; height: 60px;">
-                <h5 class="mb-0">CRAD</h5>
+                 <img src="{{ asset('img/images-removebg-preview.png') }}" alt="BCP Logo" class="img-fluid" style="height: 60px; width: auto;">
+                    <img src="{{ asset('img/crad-removebg-preview.jpg') }}" alt="CRAD Logo" class="img-fluid" style="height: 60px; width: auto;">
+                <h6 class="mb-0" style="margin-top: 15px;">Center for Research & Development</h6>
                 <small>COORDINATOR</small>
             </div>
 

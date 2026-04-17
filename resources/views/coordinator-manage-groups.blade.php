@@ -125,6 +125,21 @@
                                             @if($group->member5_name)
                                                 <li><small>{{ $group->member5_name }} ({{ $group->member5_student_id }})</small></li>
                                             @endif
+                                            @if($group->member6_name)
+                                                <li><small>{{ $group->member6_name }} ({{ $group->member6_student_id }})</small></li>
+                                            @endif
+                                            @if($group->member7_name)
+                                                <li><small>{{ $group->member7_name }} ({{ $group->member7_student_id }})</small></li>
+                                            @endif
+                                            @if($group->member8_name)
+                                                <li><small>{{ $group->member8_name }} ({{ $group->member8_student_id }})</small></li>
+                                            @endif
+                                            @if($group->member9_name)
+                                                <li><small>{{ $group->member9_name }} ({{ $group->member9_student_id }})</small></li>
+                                            @endif
+                                            @if($group->member10_name)
+                                                <li><small>{{ $group->member10_name }} ({{ $group->member10_student_id }})</small></li>
+                                            @endif
                                         </ul>
                                     </td>
                                     <td>
@@ -186,13 +201,18 @@
                             <option value="3">Member 3</option>
                             <option value="4">Member 4</option>
                             <option value="5">Member 5</option>
+                            <option value="6">Member 6</option>
+                            <option value="7">Member 7</option>
+                            <option value="8">Member 8</option>
+                            <option value="9">Member 9</option>
+                            <option value="10">Member 10</option>
                         </select>
                         <small class="text-muted">Select which member is the group leader</small>
                     </div>
 
-                    <h6 class="mb-3">Group Members (Up to 5)</h6>
+                    <h6 class="mb-3">Group Members (Up to 10)</h6>
                     
-                    @for($i = 1; $i <= 5; $i++)
+                    @for($i = 1; $i <= 10; $i++)
                         <div class="member-input-group">
                             <h6 class="text-primary mb-2">{{ $i == 1 ? 'Group Leader' : 'Member ' . $i }}</h6>
                             <div class="row">
@@ -258,13 +278,18 @@
                                 <option value="3" {{ $group->leader_member == 3 ? 'selected' : '' }}>Member 3</option>
                                 <option value="4" {{ $group->leader_member == 4 ? 'selected' : '' }}>Member 4</option>
                                 <option value="5" {{ $group->leader_member == 5 ? 'selected' : '' }}>Member 5</option>
+                                <option value="6" {{ $group->leader_member == 6 ? 'selected' : '' }}>Member 6</option>
+                                <option value="7" {{ $group->leader_member == 7 ? 'selected' : '' }}>Member 7</option>
+                                <option value="8" {{ $group->leader_member == 8 ? 'selected' : '' }}>Member 8</option>
+                                <option value="9" {{ $group->leader_member == 9 ? 'selected' : '' }}>Member 9</option>
+                                <option value="10" {{ $group->leader_member == 10 ? 'selected' : '' }}>Member 10</option>
                             </select>
                             <small class="text-muted">Select which member is the group leader</small>
                         </div>
 
                         <h6 class="mb-3">Group Members</h6>
                         
-                        @for($i = 1; $i <= 5; $i++)
+                        @for($i = 1; $i <= 10; $i++)
                             <div class="member-input-group">
                                 <h6 class="text-primary mb-2">{{ $i == 1 ? 'Group Leader' : 'Member ' . $i }}</h6>
                                 <div class="row">
@@ -637,19 +662,19 @@
     function handleCheckboxChange(checkbox) {
         const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
         
-        if (checked > 5) {
+        if (checked > 10) {
             checkbox.checked = false;
-            alert('Maximum 5 students per group');
+            alert('Maximum 10 students per group');
             return;
         }
         
-        // Disable unchecked checkboxes if 5 are selected
+        // Disable unchecked checkboxes if 10 are selected
         const allCheckboxes = document.querySelectorAll('.unassigned-checkbox');
         allCheckboxes.forEach(cb => {
-            if (!cb.checked && checked === 5) {
+            if (!cb.checked && checked === 10) {
                 cb.disabled = true;
                 cb.parentElement.parentElement.classList.add('table-light');
-            } else if (checked < 5) {
+            } else if (checked < 10) {
                 cb.disabled = false;
                 cb.parentElement.parentElement.classList.remove('table-light');
             }
@@ -663,7 +688,7 @@
         const countBadge = document.getElementById('selectedCount');
         if (countBadge) {
             const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
-            countBadge.textContent = `${checked} selected (max 5)`;
+            countBadge.textContent = `${checked} selected (max 10)`;
             countBadge.className = checked > 0 ? 'ms-3 badge bg-primary' : 'ms-3 badge bg-info';
         }
     }
@@ -671,10 +696,10 @@
     function selectAllUnassigned() {
         const unassignedCheckboxes = document.querySelectorAll('.unassigned-checkbox:not(:disabled)');
         
-        // Select first 5 unassigned students
+        // Select first 10 unassigned students
         let count = 0;
         unassignedCheckboxes.forEach(cb => {
-            if (count < 5) {
+            if (count < 10) {
                 cb.checked = true;
                 count++;
             }
@@ -709,15 +734,15 @@
         const checked = document.querySelectorAll('.unassigned-checkbox:checked').length;
         const btn = document.getElementById('addToGroupBtn');
         if (btn) {
-            btn.style.display = checked > 0 && checked <= 5 ? 'inline-block' : 'none';
+            btn.style.display = checked > 0 && checked <= 10 ? 'inline-block' : 'none';
             btn.innerHTML = `<i class="bi bi-plus-circle"></i> Add ${checked} Selected to Group`;
         }
     }
 
     function addSelectedToGroup() {
         const selected = Array.from(document.querySelectorAll('.unassigned-checkbox:checked'));
-        if (selected.length === 0 || selected.length > 5) {
-            alert('Please select 1-5 unassigned students');
+        if (selected.length === 0 || selected.length > 10) {
+            alert('Please select 1-10 unassigned students');
             return;
         }
         
@@ -729,7 +754,7 @@
         addModal.show();
         
         // Clear all member fields first
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 10; i++) {
             document.querySelector(`input[name="member${i}_student_id"]`).value = '';
             document.querySelector(`input[name="member${i}_name"]`).value = '';
         }

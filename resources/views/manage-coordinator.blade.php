@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('styles')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -48,6 +48,15 @@
                     <option value="Psychology">Psychology</option>
                     <option value="BSHM">BSHM</option>
                     <option value="BSTM">BSTM</option>
+                    <option value="BSAIS">BSAIS</option>
+                    <option value="BSOA">BSOA</option>
+                    <option value="BSENTREP">BSENTREP</option>
+                    <option value="BLIS">BLIS</option>
+                    <option value="BSCpE">BSCpE</option>
+                    <option value="BPED">BPED</option>
+                    <option value="BTLED">BTLED</option>
+                    <option value="BEED">BEED</option>
+                    <option value="BSED">BSED</option>
                 </select>
             </div>
             <div class="card-body">
@@ -163,6 +172,15 @@
                             <option value="Psychology">Psychology</option>
                             <option value="BSHM">BSHM</option>
                             <option value="BSTM">BSTM</option>
+                            <option value="BSAIS">BSAIS</option>
+                            <option value="BSOA">BSOA</option>
+                            <option value="BSENTREP">BSENTREP</option>
+                            <option value="BLIS">BLIS</option>
+                            <option value="BSCpE">BSCpE</option>
+                            <option value="BPED">BPED</option>
+                            <option value="BTLED">BTLED</option>
+                            <option value="BEED">BEED</option>
+                            <option value="BSED">BSED</option>
                         </select>
                     </div>
                     <div class="mb-3">

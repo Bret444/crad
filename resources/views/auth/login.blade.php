@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="{{ asset('img/sms.png') }}">
+  <link rel="icon" href="{{ asset('img/crad.png') }}">
 
   <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -159,7 +159,10 @@
         
 
         <div class="text-center mb-4">
-          <img src="{{ asset('img/sms.png') }}" alt="Logo" style="width: 90px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 1rem;">
+            <img src="{{ asset('img/images-removebg-preview.png') }}" alt="BCP Logo" style="height: 90px; width: auto;">
+            <img src="{{ asset('img/crad.png') }}" alt="CRAD Logo" style="height: 90px; width: auto;">
+          </div>
           <h2 class="mt-3 fw-bold">Sign in</h2>
         </div>
 
@@ -195,7 +198,7 @@
     <!-- Branding Column -->
     <div class="branding-container">
       <h1>School Management<br>System III</h1>
-      <p>Center For Research And Development (CRAD)</p>
+      <p>Center for Research & Development (CRAD)</p>
     </div>
   </div>
 

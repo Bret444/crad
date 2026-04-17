@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CRAD</title>
 
-    <link rel="icon" href="{{ asset('img/sms.png') }}">
+    <link rel="icon" style="height: 10px; width: 10px;" href="{{ asset('img/crad.png') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
@@ -27,9 +27,11 @@
                 <i class="bi bi-chevron-left"></i>
             </button>
             <div class="user-profile">
-                <img src="{{ asset('img/sms.png') }}" alt="Logo" class="img-fluid rounded-circle mb-2"
-                    style="width: 60px; height: 60px;">
-                <h5 class="mb-0">CRAD</h5>
+                <div class="d-flex align-items-center justify-content-center mb-3" style="gap: 15px;">
+                    <img src="{{ asset('img/images-removebg-preview.png') }}" alt="BCP Logo" class="img-fluid" style="height: 60px; width: auto;">
+                    <img src="{{ asset('img/crad-removebg-preview.jpg') }}" alt="CRAD Logo" class="img-fluid" style="height: 60px; width: auto;">
+                </div>
+                <h6 class="mb-0 fw-bold">Center for Research & Development</h6>
                 <small>ADMIN</small>
             </div>
 
@@ -78,6 +80,13 @@
                 </li>
 
                 <li><hr class="dropdown-divider mx-3 my-3" style="border-top: 1px solid rgba(255, 255, 255, 0.3);"></li>
+                
+                <li>
+                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                        <i class="bi bi-plus-circle-fill fs-5"></i>
+                        <span>Add Email</span>
+                    </a>
+                </li>
                 
                 <li>
                     <a href="#userManagementSubmenu" class="nav-link d-flex align-items-center" data-bs-toggle="collapse" aria-expanded="false">
@@ -346,6 +355,69 @@
         @csrf
     </form>
 
+    <!-- Add Email Modal -->
+    <div class="modal fade" id="addEmailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="bi bi-envelope-plus"></i> Manage Notification Emails</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if(session('notif_success'))
+                        <div class="alert alert-success py-2">{{ session('notif_success') }}</div>
+                    @endif
+                    @if(session('notif_error'))
+                        <div class="alert alert-danger py-2">{{ session('notif_error') }}</div>
+                    @endif
+
+                    <form method="POST" action="{{ route('admin.notification-emails.store') }}" class="d-flex gap-2 mb-3">
+                        @csrf
+                        <input type="email" name="email" class="form-control" placeholder="Enter email address" required>
+                        <button type="submit" class="btn btn-dark text-nowrap">
+                            <i class="bi bi-plus-circle"></i> Add
+                        </button>
+                    </form>
+                    @error('email')
+                        <div class="text-danger small mb-2">{{ $message }}</div>
+                    @enderror
+
+                    <hr>
+                    <h6 class="fw-bold mb-3">Email List</h6>
+                    @php
+                        $notificationEmails = \App\Models\NotificationEmail::orderBy('created_at', 'desc')->get();
+                    @endphp
+                    @if($notificationEmails->isEmpty())
+                        <p class="text-muted text-center my-3">No notification emails added yet.</p>
+                    @else
+                        <ul class="list-group">
+                            @foreach($notificationEmails as $ne)
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span>{{ $ne->email }}</span>
+                                    @if($ne->confirmed)
+                                        <span class="badge bg-success ms-2">Confirmed</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark ms-2">Pending</span>
+                                    @endif
+                                </div>
+                                <form method="POST" action="{{ route('admin.notification-emails.destroy', $ne->id) }}" onsubmit="return confirm('Remove this email?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
 
@@ -473,6 +545,12 @@
         .addEventListener('click', () => {
         document.getElementById('adminProfileInput').click();
       });
+
+        // Reopen Add Email Modal if there are session messages
+        @if(session('notif_success') || session('notif_error'))
+            var addEmailModal = new bootstrap.Modal(document.getElementById('addEmailModal'));
+            addEmailModal.show();
+        @endif
     </script>
     <style>
         .notification-item:hover {

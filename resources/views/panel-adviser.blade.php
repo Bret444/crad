@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('styles')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -206,6 +206,17 @@
                             <option value="Psychology">Psychology</option>
                             <option value="BSHM">BSHM</option>
                             <option value="BSTM">BSTM</option>
+                            <option value="BSAIS">BSAIS</option>
+                            <option value="BSOA">BSOA</option>
+                            <option value="BSENTREP">BSENTREP</option>
+                            <option value="BLIS">BLIS</option>
+                            <option value="BSCpE">BSCpE</option>
+                            <option value="BPED">BPED</option>
+                            <option value="BTLED">BTLED</option>
+                            <option value="BEED">BEED</option>
+                            <option value="BSED">BSED</option>
+                            <option value="External">External</option>
+                            <option value="Others">Others</option>
                         </select>
                     </div>
                     <div class="card-body">
@@ -299,6 +310,17 @@
                             <option value="Psychology">Psychology</option>
                             <option value="BSHM">BSHM</option>
                             <option value="BSTM">BSTM</option>
+                            <option value="BSAIS">BSAIS</option>
+                            <option value="BSOA">BSOA</option>
+                            <option value="BSENTREP">BSENTREP</option>
+                            <option value="BLIS">BLIS</option>
+                            <option value="BSCpE">BSCpE</option>
+                            <option value="BPED">BPED</option>
+                            <option value="BTLED">BTLED</option>
+                            <option value="BEED">BEED</option>
+                            <option value="BSED">BSED</option>
+                            <option value="External">External</option>
+                            <option value="Others">Others</option>
                         </select>
                     </div>
                     <div class="card-body">
@@ -420,6 +442,17 @@
                             <option value="Psychology">Psychology</option>
                             <option value="BSHM">BSHM</option>
                             <option value="BSTM">BSTM</option>
+                            <option value="BSAIS">BSAIS</option>
+                            <option value="BSOA">BSOA</option>
+                            <option value="BSENTREP">BSENTREP</option>
+                            <option value="BLIS">BLIS</option>
+                            <option value="BSCpE">BSCpE</option>
+                            <option value="BPED">BPED</option>
+                            <option value="BTLED">BTLED</option>
+                            <option value="BEED">BEED</option>
+                            <option value="BSED">BSED</option>
+                            <option value="External">External</option>
+                            <option value="Others">Others</option>
                         </select>
                         <label for="adviserFilterAssignment" class="form-label ms-3 me-2">Filter by Adviser:</label>
                         <select id="adviserFilterAssignment" class="form-select w-auto d-inline-block" style="width: auto;" onchange="filterAssignments()">
@@ -610,7 +643,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="department" class="form-label">Department *</label>
-                            <select name="department" class="form-select" required onchange="updateAdviserSections()">
+                            <select name="department" class="form-select" required onchange="updateAdviserSections(); toggleAdviserDepartmentOthers(this);">
                                 <option value="">Select Department</option>
                                 <option value="BSIT">BSIT</option>
                                 <option value="CRIM">CRIM</option>
@@ -619,7 +652,22 @@
                                 <option value="Psychology">Psychology</option>
                                 <option value="BSHM">BSHM</option>
                                 <option value="BSTM">BSTM</option>
+                                <option value="BSAIS">BSAIS</option>
+                                <option value="BSOA">BSOA</option>
+                                <option value="BSENTREP">BSENTREP</option>
+                                <option value="BLIS">BLIS</option>
+                                <option value="BSCpE">BSCpE</option>
+                                <option value="BPED">BPED</option>
+                                <option value="BTLED">BTLED</option>
+                                <option value="BEED">BEED</option>
+                                <option value="BSED">BSED</option>
+                                <option value="External">External</option>
+                                <option value="Others">Others</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="adviserDepartmentOthersDiv" style="display: none;">
+                            <label for="adviserDepartmentOthersInput" class="form-label">Specify Other Department</label>
+                            <input type="text" id="adviserDepartmentOthersInput" name="others_department" class="form-control" placeholder="Specify">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Sections *</label>
@@ -655,7 +703,7 @@
                                 <option value="Assistant Professor">Assistant Professor</option>
                                 <option value="Associate Professor">Associate Professor</option>
                                 <option value="Professor">Professor</option>
-                                <option value="Doctoral">Doctoral</option>
+                                <option value="External">External</option>
                                 <option value="Industry Expert">Industry Expert</option>
                                 <option value="Research Specialist">Research Specialist</option>
                                 <option value="Others">Others</option>
@@ -690,7 +738,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="department" class="form-label">Department *</label>
-                                    <select name="department" class="form-select" required>
+                                    <select name="department" class="form-select" required onchange="togglePanelDepartmentOthers(this)">
                                         <option value="">Select Department</option>
                                         <option value="BSIT">BSIT</option>
                                         <option value="CRIM">CRIM</option>
@@ -699,7 +747,22 @@
                                         <option value="Psychology">Psychology</option>
                                         <option value="BSHM">BSHM</option>
                                         <option value="BSTM">BSTM</option>
+                                        <option value="BSAIS">BSAIS</option>
+                                        <option value="BSOA">BSOA</option>
+                                        <option value="BSENTREP">BSENTREP</option>
+                                        <option value="BLIS">BLIS</option>
+                                        <option value="BSCpE">BSCpE</option>
+                                        <option value="BPED">BPED</option>
+                                        <option value="BTLED">BTLED</option>
+                                        <option value="BEED">BEED</option>
+                                        <option value="BSED">BSED</option>
+                                        <option value="External">External</option>
+                                        <option value="Others">Others</option>
                                     </select>
+                                </div>
+                                <div class="mb-3" id="panelDepartmentOthersDiv" style="display: none;">
+                                    <label for="panelDepartmentOthersInput" class="form-label">Specify Other Department</label>
+                                    <input type="text" id="panelDepartmentOthersInput" name="others_department" class="form-control" placeholder="Specify">
                                 </div>
                                 <div class="mb-3">
                                     <label for="name" class="form-label">Name *</label>
@@ -713,7 +776,7 @@
                                         <option value="Assistant Professor">Assistant Professor</option>
                                         <option value="Associate Professor">Associate Professor</option>
                                         <option value="Professor">Professor</option>
-                                        <option value="Doctoral">Doctoral</option>
+                                        <option value="External">External</option>
                                         <option value="Industry Expert">Industry Expert</option>
                                         <option value="Research Specialist">Research Specialist</option>
                                         <option value="Others">Others</option>
@@ -820,7 +883,7 @@
                                     <option value="Assistant Professor" {{ $adviser->expertise == 'Assistant Professor' ? 'selected' : '' }}>Assistant Professor</option>
                                     <option value="Associate Professor" {{ $adviser->expertise == 'Associate Professor' ? 'selected' : '' }}>Associate Professor</option>
                                     <option value="Professor" {{ $adviser->expertise == 'Professor' ? 'selected' : '' }}>Professor</option>
-                                    <option value="Doctoral" {{ $adviser->expertise == 'Doctoral' ? 'selected' : '' }}>Doctoral</option>
+                                    <option value="External" {{ $adviser->expertise == 'External' ? 'selected' : '' }}>External</option>
                                     <option value="Industry Expert" {{ $adviser->expertise == 'Industry Expert' ? 'selected' : '' }}>Industry Expert</option>
                                     <option value="Research Specialist" {{ $adviser->expertise == 'Research Specialist' ? 'selected' : '' }}>Research Specialist</option>
                                 </select>
@@ -906,15 +969,15 @@
                                             <option value="Assistant Professor" {{ $panel->expertise == 'Assistant Professor' ? 'selected' : '' }}>Assistant Professor</option>
                                             <option value="Associate Professor" {{ $panel->expertise == 'Associate Professor' ? 'selected' : '' }}>Associate Professor</option>
                                             <option value="Professor" {{ $panel->expertise == 'Professor' ? 'selected' : '' }}>Professor</option>
-                                            <option value="Doctoral" {{ $panel->expertise == 'Doctoral' ? 'selected' : '' }}>Doctoral</option>
+                                            <option value="External" {{ $panel->expertise == 'External' ? 'selected' : '' }}>External</option>
                                             <option value="Industry Expert" {{ $panel->expertise == 'Industry Expert' ? 'selected' : '' }}>Industry Expert</option>
                                             <option value="Research Specialist" {{ $panel->expertise == 'Research Specialist' ? 'selected' : '' }}>Research Specialist</option>
-                                            <option value="Others" {{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'Doctoral', 'Industry Expert', 'Research Specialist']) ? 'selected' : '' }}>Others</option>
+                                            <option value="Others" {{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'External', 'Industry Expert', 'Research Specialist']) ? 'selected' : '' }}>Others</option>
                                         </select>
                                     </div>
-                                    <div class="mb-3" id="editOthersInputDiv{{ $panel->id }}" style="display: {{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'Doctoral', 'Industry Expert', 'Research Specialist']) ? 'block' : 'none' }};">
+                                    <div class="mb-3" id="editOthersInputDiv{{ $panel->id }}" style="display: {{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'External', 'Industry Expert', 'Research Specialist']) ? 'block' : 'none' }};">
                                         <label for="editOthersInput{{ $panel->id }}" class="form-label">Specify Other Expertise</label>
-                                        <input type="text" id="editOthersInput{{ $panel->id }}" name="others_expertise" class="form-control" placeholder="Enter specific expertise" value="{{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'Doctoral', 'Industry Expert', 'Research Specialist']) ? $panel->expertise : '' }}">
+                                        <input type="text" id="editOthersInput{{ $panel->id }}" name="others_expertise" class="form-control" placeholder="Enter specific expertise" value="{{ !in_array($panel->expertise, ['Instructor', 'Assistant Professor', 'Associate Professor', 'Professor', 'External', 'Industry Expert', 'Research Specialist']) ? $panel->expertise : '' }}">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Role *</label>
@@ -1049,7 +1112,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Department *</label>
-                                <select name="department" class="form-select" required onchange="filterModalMembers()">
+                                <select name="department" class="form-select" required onchange="filterModalMembers(); toggleAssignmentDepartmentOthers(this);">
                                     <option value="">Select Department</option>
                                     <option value="BSIT">BSIT</option>
                                     <option value="CRIM">CRIM</option>
@@ -1058,7 +1121,22 @@
                                     <option value="Psychology">Psychology</option>
                                     <option value="BSHM">BSHM</option>
                                     <option value="BSTM">BSTM</option>
+                                    <option value="BSAIS">BSAIS</option>
+                                    <option value="BSOA">BSOA</option>
+                                    <option value="BSENTREP">BSENTREP</option>
+                                    <option value="BLIS">BLIS</option>
+                                    <option value="BSCpE">BSCpE</option>
+                                    <option value="BPED">BPED</option>
+                                    <option value="BTLED">BTLED</option>
+                                    <option value="BEED">BEED</option>
+                                    <option value="BSED">BSED</option>
+                                    <option value="External">External</option>
+                                    <option value="Others">Others</option>
                                 </select>
+                            </div>
+                            <div class="col-md-12" id="assignmentDepartmentOthersDiv" style="display: none;">
+                                <label class="form-label">Specify Other Department</label>
+                                <input type="text" id="assignmentDepartmentOthersInput" name="others_department" class="form-control" placeholder="Specify">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Section/Cluster *</label>
@@ -1428,6 +1506,48 @@ function toggleAdviserOthersInput(select) {
 function toggleEditOthersInput(select, panelId) {
     const othersDiv = document.getElementById(`editOthersInputDiv${panelId}`);
     const othersInput = document.getElementById(`editOthersInput${panelId}`);
+    
+    if (select.value === 'Others') {
+        othersDiv.style.display = 'block';
+        othersInput.required = true;
+    } else {
+        othersDiv.style.display = 'none';
+        othersInput.required = false;
+        othersInput.value = '';
+    }
+}
+
+function toggleAdviserDepartmentOthers(select) {
+    const othersDiv = document.getElementById('adviserDepartmentOthersDiv');
+    const othersInput = document.getElementById('adviserDepartmentOthersInput');
+    
+    if (select.value === 'Others') {
+        othersDiv.style.display = 'block';
+        othersInput.required = true;
+    } else {
+        othersDiv.style.display = 'none';
+        othersInput.required = false;
+        othersInput.value = '';
+    }
+}
+
+function togglePanelDepartmentOthers(select) {
+    const othersDiv = document.getElementById('panelDepartmentOthersDiv');
+    const othersInput = document.getElementById('panelDepartmentOthersInput');
+    
+    if (select.value === 'Others') {
+        othersDiv.style.display = 'block';
+        othersInput.required = true;
+    } else {
+        othersDiv.style.display = 'none';
+        othersInput.required = false;
+        othersInput.value = '';
+    }
+}
+
+function toggleAssignmentDepartmentOthers(select) {
+    const othersDiv = document.getElementById('assignmentDepartmentOthersDiv');
+    const othersInput = document.getElementById('assignmentDepartmentOthersInput');
     
     if (select.value === 'Others') {
         othersDiv.style.display = 'block';

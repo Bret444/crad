@@ -98,6 +98,16 @@ class GroupController extends Controller
                 'member4_student_id' => $request->member4_student_id,
                 'member5_name' => $request->member5_name,
                 'member5_student_id' => $request->member5_student_id,
+                'member6_name' => $request->member6_name,
+                'member6_student_id' => $request->member6_student_id,
+                'member7_name' => $request->member7_name,
+                'member7_student_id' => $request->member7_student_id,
+                'member8_name' => $request->member8_name,
+                'member8_student_id' => $request->member8_student_id,
+                'member9_name' => $request->member9_name,
+                'member9_student_id' => $request->member9_student_id,
+                'member10_name' => $request->member10_name,
+                'member10_student_id' => $request->member10_student_id,
                 'leader_member' => $request->leader_member
             ]);
             
@@ -149,6 +159,16 @@ class GroupController extends Controller
                 'member4_student_id' => $request->member4_student_id,
                 'member5_name' => $request->member5_name,
                 'member5_student_id' => $request->member5_student_id,
+                'member6_name' => $request->member6_name,
+                'member6_student_id' => $request->member6_student_id,
+                'member7_name' => $request->member7_name,
+                'member7_student_id' => $request->member7_student_id,
+                'member8_name' => $request->member8_name,
+                'member8_student_id' => $request->member8_student_id,
+                'member9_name' => $request->member9_name,
+                'member9_student_id' => $request->member9_student_id,
+                'member10_name' => $request->member10_name,
+                'member10_student_id' => $request->member10_student_id,
                 'leader_member' => $request->leader_member
             ];
             
@@ -208,7 +228,7 @@ class GroupController extends Controller
         
         $groups = Group::where('department', $coordinatorDepartment)->get();
         foreach ($groups as $group) {
-            for ($i = 1; $i <= 5; $i++) {
+            for ($i = 1; $i <= 10; $i++) {
                 $studentId = $group->{"member{$i}_student_id"};
                 if ($studentId) {
                     $assigned[] = $studentId;

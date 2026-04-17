@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('styles')
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -676,6 +676,15 @@ window.handleBackFromSchedule = function() {
                 <select id="dept-select" class="form-select" onchange="if(window.populateClusters) window.populateClusters()">
                     <option selected disabled value="">Select Department</option>
                     <option value="BSIT">BSIT</option>
+                    <option value="BSAIS">BSAIS</option>
+                    <option value="BSOA">BSOA</option>
+                    <option value="BSENTREP">BSENTREP</option>
+                    <option value="BLIS">BLIS</option>
+                    <option value="BSCpE">BSCpE</option>
+                    <option value="BPED">BPED</option>
+                    <option value="BTLED">BTLED</option>
+                    <option value="BEED">BEED</option>
+                    <option value="BSED">BSED</option>
                     <option value="CRIM">CRIM</option>
                     <option value="EDUC">EDUC</option>
                     <option value="BSBA">BSBA</option>

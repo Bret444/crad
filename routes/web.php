@@ -15,9 +15,18 @@ use App\Http\Controllers\PanelController;
 use App\Http\Controllers\PanelAdviserController;
 use App\Http\Controllers\DefenseScheduleController;
 use App\Http\Controllers\CoordinatorController;
+use App\Http\Controllers\NotificationEmailController;
 
 // Redirect root to login page
 Route::get('/', fn() => redirect()->route('login'));
+
+// Test route
+Route::get('/test-confirm', function() {
+    return 'Route is working!';
+});
+
+// Notification Email Confirmation (Public Route - Must be before auth middleware)
+Route::get('/admin/notification-emails/confirm/{token}', [NotificationEmailController::class, 'confirm'])->name('admin.notification-emails.confirm');
 
 // Login & Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -45,6 +54,7 @@ Route::get('/view-panel-adviser', fn() => view('view-panel-adviser'));
 
 // Analytics & Reporting
 Route::get('/analytics', fn() => view('analytics'));
+Route::get('/analytics/export', [\App\Http\Controllers\AnalyticsController::class, 'export'])->middleware('auth', 'admin')->name('analytics.export');
 
 
 
@@ -66,7 +76,7 @@ Route::middleware(['auth', 'student'])->group(function () {
 // Admin routes
 Route::middleware(['auth' , 'admin'])->group(function () {
     Route::get('/admin-dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
+    Route::get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'create'])->name('admin.analytics');
     Route::get('/api/admin/notifications', [AdminController::class, 'getNotifications'])->name('admin.api.notifications');
     Route::post('/api/admin/notifications/mark-all-read', [AdminController::class, 'markAllAsRead'])->name('admin.api.notifications.markAllRead');
 
@@ -229,6 +239,12 @@ Route::post('/api/panel-availability-schedule', [DefenseScheduleController::clas
 Route::post('/api/evaluations', [\App\Http\Controllers\DefenseEvaluationController::class, 'saveEvaluation'])->middleware('auth');
 Route::get('/api/group-status', [\App\Http\Controllers\DefenseEvaluationController::class, 'getGroupStatus'])->middleware('auth');
 Route::post('/api/send-feedback', [\App\Http\Controllers\FeedbackController::class, 'sendFeedback'])->middleware('auth');
+
+// Notification Email Routes
+Route::middleware('auth', 'admin')->group(function () {
+    Route::post('/admin/notification-emails', [NotificationEmailController::class, 'store'])->name('admin.notification-emails.store');
+    Route::delete('/admin/notification-emails/{id}', [NotificationEmailController::class, 'destroy'])->name('admin.notification-emails.destroy');
+});
 
 // Manage Coordinator Routes
 Route::middleware('auth' , 'admin')->group(function () {

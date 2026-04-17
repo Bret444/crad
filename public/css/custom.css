@@ -243,8 +243,12 @@ body.sidebar-collapsed .sidebar-chevron-toggle i {
                 left: 55px;
             }
             .sidebar .user-profile h5,
+            .sidebar .user-profile h6,
             .sidebar .user-profile small {
                 display: none;
+            }
+            .sidebar .user-profile img {
+                height: 40px !important;
             }
             .sidebar .nav-link span {
                 display: none;
@@ -267,8 +271,12 @@ body.sidebar-collapsed .sidebar-chevron-toggle i {
                 left: 265px;
             }
             body.sidebar-toggled .sidebar .user-profile h5,
+            body.sidebar-toggled .sidebar .user-profile h6,
             body.sidebar-toggled .sidebar .user-profile small {
                 display: block;
+            }
+            body.sidebar-toggled .sidebar .user-profile img {
+                height: 60px !important;
             }
             body.sidebar-toggled .sidebar .nav-link span {
                 display: inline;
