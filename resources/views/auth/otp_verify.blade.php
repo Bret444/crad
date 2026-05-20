@@ -5,116 +5,11 @@
     <meta charset="UTF-8">
     <title>Verify OTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ asset('img/Untitled_design-removebg-preview.png') }}">
+    <link rel="icon" href="{{ asset('img/crad-removebg-preview.jpg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body,
-        html {
-            height: 100%;
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa; /* Light gray background */
-        }
-
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-        }
-
-        .login-form-container {
-            max-width: 400px;
-            margin: auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05); /* Softer shadow */
-        }
-
-        .login-form-wrapper {
-            width: 100%;
-            max-width: 320px;
-            margin: auto;
-        }
-
-        .branding-container {
-            display: none;
-        }
-
-        .btn-custom-verify {
-            background-color: #007FFF;
-            background-image: linear-gradient(to right, #40b6ed, #447ce4);
-            border: none;
-            color: white;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 1rem;
-            border-radius: 2rem;
-            font-weight: 700;
-            transition: background-image 0.3s;
-        }
-
-        .btn-custom-verify:hover {
-            background-image: linear-gradient(to right, #004C99, #40b6ed);
-        }
-        
-        .form-control {
-            border-radius: 0.5rem;
-        }
-
-        .form-control:focus {
-            border-color: #007FFF;
-            box-shadow: 0 0 0 0.25rem rgba(98, 89, 202, 0.25);
-        }
-
-        /* Desktop Layout */
-        @media (min-width: 992px) {
-            .main-container {
-                flex-direction: row;
-            }
-
-            .login-form-container {
-                width: 45%;
-                order: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .branding-container {
-                width: 55%;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-direction: column;
-                text-align: center;
-                background-color: #172b5c; /* Solid blue for simplicity */
-                background-image: url("{{ asset('img/background.jpg') }}");
-                background-size: cover;
-                background-position: center;
-                order: 2;
-                padding: 4rem;
-            }
-            
-            .branding-container h1 {
-                font-size: 3.5rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-            }
-
-            .branding-container p {
-                margin-top: 0.5rem;
-                margin-bottom: 0.5rem;
-                font-size: 1.2rem;
-                text-align: center;
-            }
-        }
-    </style>
+     <link rel="stylesheet" href="{{ asset('css/otp-verify.css') }}">
 </head>
 
 <body>
@@ -122,7 +17,8 @@
         <div class="login-form-container">
             <div class="login-form-wrapper">
                 <div class="text-center mb-4">
-                    <img src="{{ asset('img/crad.png') }}" alt="Logo" style="width: 90px;">
+                    <img src="{{ asset('img/images-removebg-preview.png') }}" alt="BCP Logo" style="height: 90px; width: auto;">
+                    <img src="{{ asset('img/crad-removebg-preview.jpg') }}" alt="CRAD Logo" style="height: 90px; width: auto;">
                     <h2 class="mt-3 fw-bold">Verify Your Account</h2>
                 </div>
 

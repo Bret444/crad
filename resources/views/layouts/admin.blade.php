@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CRAD</title>
 
-    <link rel="icon" style="height: 10px; width: 10px;" href="{{ asset('img/crad.png') }}">
+    <link rel="icon" style="height: 10px; width: 10px;" href="{{ asset('img/crad-removebg-preview.jpg') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
@@ -28,8 +28,8 @@
             </button>
             <div class="user-profile">
                 <div class="d-flex align-items-center justify-content-center mb-3" style="gap: 15px;">
-                    <img src="{{ asset('img/images-removebg-preview.png') }}" alt="BCP Logo" class="img-fluid" style="height: 60px; width: auto;">
-                    <img src="{{ asset('img/crad-removebg-preview.jpg') }}" alt="CRAD Logo" class="img-fluid" style="height: 60px; width: auto;">
+                    <img src="{{ asset('img/BCP-3.png') }}" alt="BCP Logo" class="img-fluid" style="height: 60px; width: auto;">
+                    <img src="{{ asset('img/CRAD-2.png') }}" alt="CRAD Logo" class="img-fluid" style="height: 60px; width: auto;">
                 </div>
                 <h6 class="mb-0 fw-bold">Center for Research & Development</h6>
                 <small>ADMIN</small>
@@ -373,7 +373,7 @@
 
                     <form method="POST" action="{{ route('admin.notification-emails.store') }}" class="d-flex gap-2 mb-3">
                         @csrf
-                        <input type="email" name="email" class="form-control" placeholder="Enter email address" required>
+                        <input type="email"  id="email" autocomplete="email" class="form-control" placeholder="Enter email address" required>
                         <button type="submit" class="btn btn-dark text-nowrap">
                             <i class="bi bi-plus-circle"></i> Add
                         </button>
