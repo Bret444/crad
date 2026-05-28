@@ -48,7 +48,8 @@ The **Center for Research and Development (CRAD)** system at Bestlink College of
 ##  Project Snippets
 <img width="1234" height="587" alt="image" src="https://github.com/user-attachments/assets/82d6f1d5-1e7c-4b24-a31a-28483945704c" />
 <img width="1343" height="625" alt="image" src="https://github.com/user-attachments/assets/072ea278-73ed-4e08-95f8-d38b05335a88" />
-<img width="1330" height="694" alt="image" src="https://github.com/user-attachments/assets/3a61e55d-686d-4c06-8e08-df06cdca0372" />
+<img width="1331" height="641" alt="image" src="https://github.com/user-attachments/assets/5c29ff7b-50cd-498a-90e4-bb7e0a65d7f2" />
+
 <img width="1321" height="610" alt="image" src="https://github.com/user-attachments/assets/cc5ee908-b73e-44d5-a4a7-505c9b1b0fe6" />
 <img width="1336" height="563" alt="image" src="https://github.com/user-attachments/assets/77accd62-6b17-436a-beee-1a0b67ee7391" />
 
