@@ -42,8 +42,22 @@ The **Center for Research and Development (CRAD)** system at Bestlink College of
 ## 👥 Development Team (Cluster 7)
 | Role | Name |
 | :--- | :--- |
-| **Project Manager** | Jairo Luis L. Indoso |
-| **Lead Programmer** | Bret Baa |
-| **System Analyst** | Kim Kenneth V. Elacion |
-| **Business Analyst** | Michael Angelo A. Amata |
-| **Document Specialist** | Ana Juego |
+| **Project Manager/System Analyst** | Jairo Luis L. Indoso |
+| **Programmer** | Bret Baa |
+| **System Analyst/Document Specialist** | Kim Kenneth V. Elacion |
+##  Screenshots
+<img width="1234" height="587" alt="image" src="https://github.com/user-attachments/assets/82d6f1d5-1e7c-4b24-a31a-28483945704c" />
+<img width="1343" height="625" alt="image" src="https://github.com/user-attachments/assets/072ea278-73ed-4e08-95f8-d38b05335a88" />
+<img width="1330" height="694" alt="image" src="https://github.com/user-attachments/assets/3a61e55d-686d-4c06-8e08-df06cdca0372" />
+<img width="1321" height="610" alt="image" src="https://github.com/user-attachments/assets/cc5ee908-b73e-44d5-a4a7-505c9b1b0fe6" />
+<img width="1336" height="563" alt="image" src="https://github.com/user-attachments/assets/77accd62-6b17-436a-beee-1a0b67ee7391" />
+
+<img width="1329" height="581" alt="image" src="https://github.com/user-attachments/assets/7f860dda-6d54-4cf0-a6b4-1a3ad463a88e" />
+<img width="1306" height="615" alt="image" src="https://github.com/user-attachments/assets/1a1092d0-6645-496e-aa74-34a0b2a23d9f" />
+<img width="1334" height="606" alt="image" src="https://github.com/user-attachments/assets/0845b6c2-8b38-4f3e-bfdf-de9257f6fc71" />
+<img width="1330" height="650" alt="image" src="https://github.com/user-attachments/assets/2a723bb6-6fa2-448d-b928-e815e74fab90" />
+<img width="1338" height="629" alt="image" src="https://github.com/user-attachments/assets/6df3b710-466f-4d69-a280-d0797f897f2e" />
+<img width="1333" height="469" alt="image" src="https://github.com/user-attachments/assets/be547bef-964b-44d6-9cb4-5673d4ddf5b5" />
+<img width="1347" height="612" alt="image" src="https://github.com/user-attachments/assets/c8791a49-f82b-49a0-8a4c-d37f17652d56" />
+<img width="1302" height="630" alt="image" src="https://github.com/user-attachments/assets/5ca6311c-b9eb-4b93-a958-e88b75e89f3e" />
+
