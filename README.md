@@ -70,15 +70,20 @@ The **Center for Research and Development (CRAD)** system at Bestlink College of
 <img width="1343" height="643" alt="image" src="https://github.com/user-attachments/assets/3902d9b2-3aa4-4b90-ba91-50bda70b044b" />
 <img width="1356" height="644" alt="image" src="https://github.com/user-attachments/assets/c9ac53aa-7fa9-44f9-82b8-8a7892b980b5" />
 <img width="1350" height="644" alt="image" src="https://github.com/user-attachments/assets/14e2c000-96de-479a-b320-ffb518996848" />
+<img width="1306" height="615" alt="image" src="https://github.com/user-attachments/assets/1a1092d0-6645-496e-aa74-34a0b2a23d9f" />
 
 <img width="1336" height="611" alt="image" src="https://github.com/user-attachments/assets/9e32183b-a125-457d-ba60-75bc5d09b79b" />
 <img width="1349" height="643" alt="image" src="https://github.com/user-attachments/assets/44169085-6ea2-4801-8468-7127312ffc0a" />
 <img width="1348" height="639" alt="image" src="https://github.com/user-attachments/assets/f21f883c-9a13-4c1f-a1c2-ac689cbf6d05" />
 <img width="1347" height="642" alt="image" src="https://github.com/user-attachments/assets/c77a88ed-1d84-468c-9111-f2b2ea0c26cf" />
 
-<img width="1306" height="615" alt="image" src="https://github.com/user-attachments/assets/1a1092d0-6645-496e-aa74-34a0b2a23d9f" />
-<img width="1334" height="606" alt="image" src="https://github.com/user-attachments/assets/0845b6c2-8b38-4f3e-bfdf-de9257f6fc71" />
-<img width="1330" height="650" alt="image" src="https://github.com/user-attachments/assets/2a723bb6-6fa2-448d-b928-e815e74fab90" />
+<img width="1335" height="646" alt="image" src="https://github.com/user-attachments/assets/5041aa22-06e9-4619-8e15-4976e8272a35" />
+<img width="1342" height="647" alt="image" src="https://github.com/user-attachments/assets/fcb79a44-fd61-4862-ae46-99133a5d2b5b" />
+
+<img width="1330" height="647" alt="image" src="https://github.com/user-attachments/assets/b1a3e8fa-a252-497c-8526-60d8fbf1e0d3" />
+<img width="1340" height="643" alt="image" src="https://github.com/user-attachments/assets/136dbc11-1a49-4021-8190-67b14262bba7" />
+<img width="1336" height="643" alt="image" src="https://github.com/user-attachments/assets/de57d11f-3c68-4f8a-b162-9686dccdcede" />
+
 <img width="1338" height="629" alt="image" src="https://github.com/user-attachments/assets/6df3b710-466f-4d69-a280-d0797f897f2e" />
 <img width="1333" height="469" alt="image" src="https://github.com/user-attachments/assets/be547bef-964b-44d6-9cb4-5673d4ddf5b5" />
 <img width="1347" height="612" alt="image" src="https://github.com/user-attachments/assets/c8791a49-f82b-49a0-8a4c-d37f17652d56" />
