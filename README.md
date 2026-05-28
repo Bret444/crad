@@ -45,7 +45,7 @@ The **Center for Research and Development (CRAD)** system at Bestlink College of
 | **Project Manager/System Analyst** | Jairo Luis L. Indoso |
 | **Programmer** | Bret Baa |
 | **System Analyst/Document Specialist** | Kim Kenneth V. Elacion |
-##  Screenshots
+##  Project Snippets
 <img width="1234" height="587" alt="image" src="https://github.com/user-attachments/assets/82d6f1d5-1e7c-4b24-a31a-28483945704c" />
 <img width="1343" height="625" alt="image" src="https://github.com/user-attachments/assets/072ea278-73ed-4e08-95f8-d38b05335a88" />
 <img width="1330" height="694" alt="image" src="https://github.com/user-attachments/assets/3a61e55d-686d-4c06-8e08-df06cdca0372" />
